@@ -147,6 +147,10 @@ package body Excel_Out is
                             WriteFmtStr("#'##0");
         when percent_0  =>  WriteFmtStr("0%");
         when percent_2  =>  WriteFmtStr("0.00%");
+        when percent_0_plus  =>
+          WriteFmtStr("+0%;-0%;0%");
+        when percent_2_plus  =>
+          WriteFmtStr("+0.00%;-0.00%;0.00%");
         when scientific =>  WriteFmtStr("0.00E+00");
       end case;
     end loop;

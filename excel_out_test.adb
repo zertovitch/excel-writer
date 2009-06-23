@@ -4,7 +4,7 @@
 
 with Excel_Out;                         use Excel_Out;
 
-with Ada.Sequential_IO;
+with Ada.Streams.Stream_IO;
 
 procedure Excel_Out_Test is
 
@@ -24,7 +24,7 @@ procedure Excel_Out_Test is
   procedure Big_demo is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4: Font_Type;
-    fmt_1, fmt_2, fmt_3, fmt_4: Format_type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5: Format_type;
   begin
     Create(xl, "Big.xls");
     --
@@ -46,6 +46,7 @@ procedure Excel_Out_Test is
     Define_format(xl, font_2, decimal_2, fmt_2);
     Define_format(xl, font_3, decimal_0, fmt_3, centred);
     Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
+    Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel_Out");
@@ -68,9 +69,11 @@ procedure Excel_Out_Test is
     for column in 1 .. 20 loop
       Write(xl, 9, column, Character'Val(64 + column) & "");
     end loop;
-    Use_format(xl, fmt_1);
     for row in 13 .. 300 loop
+      Use_format(xl, fmt_1);
       Write(xl, row, 3, Long_Float(row) * 0.01);
+      Use_format(xl, fmt_5);
+      Put(xl, Long_Float(row-100) * 0.001);
     end loop;
     Close(xl);
   end Big_demo;
@@ -88,15 +91,11 @@ procedure Excel_Out_Test is
   end My_nice_sheet;
 
   procedure String_demo is
-    package CIO is new Ada.Sequential_IO(Character);
-    xls: constant String:= My_nice_sheet;
-    use CIO;
+    use Ada.Streams.Stream_IO;
     f: File_Type;
   begin
     Create(f, Out_File, "From_string.xls");
-    for i in xls'Range loop
-      Write(f, xls(i));
-    end loop;
+    String'Write(Stream(f), My_nice_sheet);
     Close(f);
   end String_demo;
 

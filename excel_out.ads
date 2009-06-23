@@ -152,8 +152,9 @@ package Excel_Out is
   type Number_format_type is
     ( general,
       decimal_0, decimal_2,
-      decimal_0_thousands_separator,
-      percent_0, percent_2,
+      decimal_0_thousands_separator,  -- 1'234'000
+      percent_0, percent_2,           --  3%, 0%, -4%
+      percent_0_plus, percent_2_plus, -- +3%, 0%, -4%
       scientific
     );
   -- Number formats are all predefined: must be listed as built-in, grouped;
