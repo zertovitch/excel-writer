@@ -145,7 +145,9 @@ package body Excel_Out is
         when decimal_2  =>  WriteFmtStr("0.00");
         when decimal_0_thousands_separator =>
                             WriteFmtStr("#'##0");
-        when percent_0  =>  WriteFmtStr("0%");
+        when decimal_2_thousands_separator =>     -- 'Comma' built-in style
+                            WriteFmtStr("#'##0.00");
+        when percent_0  =>  WriteFmtStr("0%");    -- 'Percent' built-in style
         when percent_2  =>  WriteFmtStr("0.00%");
         when percent_0_plus  =>
           WriteFmtStr("+0%;-0%;0%");

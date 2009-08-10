@@ -72,6 +72,9 @@ with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 
 package Excel_Out is
 
+  web: constant String:= "http://excel-writer.sf.net/";
+  -- ^-- hopefully the latest version is there
+
   ----------------------------------------------------------------
   -- The Excel output stream root type. Cannot be used as such. --
   -- From this package, you can use the following types:        --
@@ -153,6 +156,7 @@ package Excel_Out is
     ( general,
       decimal_0, decimal_2,
       decimal_0_thousands_separator,  -- 1'234'000
+      decimal_2_thousands_separator,  -- 1'234'000.00
       percent_0, percent_2,           --  3%, 0%, -4%
       percent_0_plus, percent_2_plus, -- +3%, 0%, -4%
       scientific
