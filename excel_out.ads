@@ -7,7 +7,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009 Gautier de Montmollin
+--  Copyright (c) 2009..2010 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -58,6 +58,12 @@
 --------------------------------------------------------------------------
 --
 -- Main changes:
+-- ============
+--
+-- 05: 10-Feb-2010: - added 'width' and 'base' optional parameters
+--                      to Put(xl, int), to facilitate transition
+--                      from Ada.Text_IO.* to Excel_Out
+--                  - added function Is_Open(xl : in Excel_Out_File)
 --
 -- 03: 15-Feb-2009: - data stream can by any; supplied:
 --                      Excel_Out_File, Excel_Out_String
@@ -69,11 +75,9 @@
 
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 package Excel_Out is
-
-  web: constant String:= "http://excel-writer.sf.net/";
-  -- ^-- hopefully the latest version is there
 
   ----------------------------------------------------------------
   -- The Excel output stream root type. Cannot be used as such. --
@@ -208,7 +212,11 @@ package Excel_Out is
 
   -- Ada.Text_IO - like. No need to specify row & column each time
   procedure Put(xl: in out Excel_Out_Stream; num : Long_Float);
-  procedure Put(xl: in out Excel_Out_Stream; num : Integer);
+  procedure Put(xl    : in out Excel_Out_Stream;
+                num   : in Integer;
+                width : in Ada.Text_IO.Field := 0; -- ignored
+                base  : in Ada.Text_IO.Number_Base := 10
+            );
   procedure Put(xl: in out Excel_Out_Stream; str : String);
   procedure Put(xl: in out Excel_Out_Stream; str : Unbounded_String);
   --
@@ -238,9 +246,9 @@ package Excel_Out is
   Row_out_of_range,
   Column_out_of_range : exception;
 
-  ---------------------------------------------------------
-  -- Here, the stream types pre-defined in this package. --
-  ---------------------------------------------------------
+  -----------------------------------------------------------------
+  -- Here, the derived stream types pre-defined in this package. --
+  -----------------------------------------------------------------
   -- * Output to file:
 
   type Excel_Out_File is new Excel_Out_Stream with private;
@@ -252,6 +260,8 @@ package Excel_Out is
   );
 
   procedure Close(xl : in out Excel_Out_File);
+
+  function Is_Open(xl : in Excel_Out_File) return Boolean;
 
   -- * Output to string:
 
@@ -266,12 +276,18 @@ package Excel_Out is
 
   function Contents(xl: Excel_Out_String) return String;
 
+  ------------------------------------
+  -- Information about this package --
+  ------------------------------------
+
+  version   : constant String:= "05";
+  reference : constant String:= "xx-Feb-2010";
+  web: constant String:= "http://excel-writer.sf.net/";
+  -- ^-- hopefully the latest version is at that URL...
+
   ----------------------------------
   -- End of the part for the user --
   ----------------------------------
-
-  version   : constant String:= "03";
-  reference : constant String:= "16-Feb-2009";
 
   -- Set the index on the stream
   procedure Set_Index (xl: in out Excel_Out_Stream;
@@ -281,6 +297,7 @@ package Excel_Out is
   -- Return the index of the stream
   function Index (xl: Excel_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
+
 
 private
 
@@ -364,7 +381,7 @@ private
     access Ada.Streams.Stream_IO.File_Type;
 
   type Excel_Out_File is new Excel_Out_Stream with record
-    xl_file   : XL_file_acc;
+    xl_file   : XL_file_acc:= null; -- access to the "physical" Excel file
   end record;
 
   -- Set the index on the file

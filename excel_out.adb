@@ -13,6 +13,7 @@
 
 with Ada.Unchecked_Deallocation;
 with Ada.Streams.Stream_IO;             use Ada.Streams.Stream_IO, Ada.Streams;
+with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
 
 with Interfaces;                        use Interfaces;
 
@@ -469,44 +470,67 @@ package body Excel_Out is
   procedure Put(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
     Write(xl, xl.curr_row, xl.curr_col, num);
-  end;
-  procedure Put(xl: in out Excel_Out_Stream; num : Integer) is
+  end Put;
+
+  procedure Put(xl    : in out Excel_Out_Stream;
+                num   : in Integer;
+                width : in Ada.Text_IO.Field := 0; -- ignored
+                base  : in Ada.Text_IO.Number_Base := 10
+            )
+  is
   begin
-    Write(xl, xl.curr_row, xl.curr_col, num);
-  end;
+    if base = 10 then
+      Write(xl, xl.curr_row, xl.curr_col, num);
+    else
+      declare
+        s: String(1..50 + 0*width);
+        -- 0*width is just to skip a warning of width being unused
+        package IIO is new Ada.Text_IO.Integer_IO(Integer);
+      begin
+        IIO.Put(s, num, base => base);
+        Put(xl, Trim(s, Ada.Strings.Left));
+      end;
+    end if;
+  end Put;
+
   procedure Put(xl: in out Excel_Out_Stream; str : String) is
   begin
     Write(xl, xl.curr_row, xl.curr_col, str);
-  end;
+  end Put;
+
   procedure Put(xl: in out Excel_Out_Stream; str : Unbounded_String) is
   begin
     Put(xl, To_String(str));
-  end;
+  end Put;
 
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
     Put(xl, num);
     New_Line(xl);
-  end;
+  end Put_Line;
+
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Integer) is
   begin
     Put(xl, num);
     New_Line(xl);
-  end;
+  end Put_Line;
+
   procedure Put_Line(xl: in out Excel_Out_Stream; str : String) is
   begin
     Put(xl, str);
     New_Line(xl);
-  end;
+  end Put_Line;
+
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String) is
   begin
     Put_Line(xl, To_String(str));
-  end;
+  end Put_Line;
 
   procedure New_Line(xl: in out Excel_Out_Stream) is
   begin
     Jump_to(xl, xl.curr_row + 1, 1);
-  end;
+  end New_Line;
+
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural) is
   begin
@@ -620,6 +644,14 @@ package body Excel_Out is
   begin
     return Ada.Streams.Stream_IO.Index(xl.xl_file.all);
   end;
+
+  function Is_Open(xl : in Excel_Out_File) return Boolean is
+  begin
+    if xl.xl_file = null then
+      return False;
+    end if;
+    return Ada.Streams.Stream_IO.Is_Open(xl.xl_file.all);
+  end Is_Open;
 
   ------------------------
   -- Output to a string --
