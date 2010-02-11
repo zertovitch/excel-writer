@@ -38,10 +38,18 @@ procedure BIFF_Dump is
     end;
   end str8;
 
-  row  : constant:= 16#0008#;
-  style: constant:= 16#0293#;
-  xf_2 : constant:= 16#0043#;
-  xf_3 : constant:= 16#0243#;
+  row_2   : constant:= 16#0008#;
+  row_3   : constant:= 16#0208#;
+  style   : constant:= 16#0293#;
+  xf_2    : constant:= 16#0043#;
+  xf_3    : constant:= 16#0243#;
+  xf_5    : constant:= 16#00E0#;
+  ole_2   : constant:= 16#CFD0#;
+  window1 : constant:= 16#003D#;
+  hideobj : constant:= 16#008D#;
+  format4 : constant:= 16#041E#;
+  number3 : constant:= 16#0203#;
+  labelsst: constant:= 16#00FD#;
 
   b: Unsigned_8;
   xfs: Natural:= 0;
@@ -51,20 +59,25 @@ procedure BIFF_Dump is
 
 begin
   if Argument_Count = 0 then
-    Open(f, In_File, "big.xls");
+    Open(f, In_File, "Big.xls");
   else
     Open(f, In_File, Argument(1));
   end if;
   Create(xl, "$Dump$.xls");
+  Write_column_width(xl, 1, 11);
+  Write_column_width(xl, 3, 3);
+  Write_column_width(xl, 4, 20);
+  --
   Define_format(xl, Default_font(xl), general, fmt_ul, border => bottom);
   --
   Put_Line(xl, "Dump of the BIFF (Excel .xls) file: " & Name(f));
   New_Line(xl);
   --
   Use_format(xl, fmt_ul);
-  Put(xl, "Code");
-  Put(xl, "Length");
+  Put(xl, "BIFF Code");
+  Put(xl, "Bytes");
   Put(xl, " ");
+  Put(xl, "BIFF Topic");
   Put_Line(xl, "Comments");
   --
   Use_format(xl, Default_format(xl));
@@ -75,11 +88,13 @@ begin
     Put(xl, length);
     Put(xl, "    ");
     case code is
+      --
       when 16#0009# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
       when 16#0209# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
-      when 16#0409# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel , BIFF4)");
-      when 16#0809# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel , BIFF5/8)");
+      when 16#0409# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
+      when 16#0809# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
       when 16#000A# => Put(xl, "EOF"); Put(xl, "End of File");
+      --
       when 16#0000# => Put(xl, "DIMENSION");
       when 16#000D# => Put(xl, "CALCMODE");
       when 16#000F# => Put(xl, "REFMODE");
@@ -88,37 +103,50 @@ begin
       when 16#0024# => Put(xl, "COLWIDTH");
       when 16#0055# => Put(xl, "DEFCOLWIDTH");
       when 16#0025# => Put(xl, "DEFAULTROWHEIGHT");
-      when row      => Put(xl, "ROW");
-      when 16#001E# => Put(xl, "FORMAT");
+      when row_2    => Put(xl, "ROW (BIFF2)");
+      when row_3    => Put(xl, "ROW (BIFF3+)");
+      when 16#001E# => Put(xl, "FORMAT (BIFF2-3)");
+      when format4  => Put(xl, "FORMAT (BIFF4+)"); -- 5.49
+      when xf_2 |       -- Extended Format, BIFF2  -- 5.115
+           xf_3 |       -- Extended Format, BIFF3
+           xf_5     =>  -- Extended Format, BIFF5+
+        xfs:= xfs + 1;
+        Put(xl, "XF Nb" & Integer'Image(xfs));
       when 16#001F# => Put(xl, "BUILTINFMTCOUNT");
       when 16#0031# => Put(xl, "FONT");
       when 16#0045# => Put(xl, "FONTCOLOR");
       when 16#0001# => Put(xl, "BLANK");
       when 16#0002# => Put(xl, "INTEGER");
-      when 16#0003# => Put(xl, "NUMBER");
+      when 16#0003# => Put(xl, "NUMBER (BIFF2)");
+      when number3  => Put(xl, "NUMBER (BIFF3+)");
       when 16#0004# => Put(xl, "LABEL");
-      when xf_2 |       -- Extended Format, BIFF2
-           xf_3     =>  -- Extended Format, BIFF3
-        Put(xl, "XF");
-        xfs:= xfs + 1;
-        Put(xl, Integer'Image(xfs));
+      when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
       when 16#0019# => Put(xl, "WINDOWPROTECT");
       when 16#0040# => Put(xl, "BACKUP");
-      when style    => Put(xl, "STYLE");
+      when style    => Put(xl, "STYLE");   -- 5.103
+      when window1  => Put(xl, "WINDOW1"); -- 5.109
+      when hideobj  => Put(xl, "HIDEOBJ"); -- 5.56
       when others =>   Put(xl, "- ??? -");
     end case;
+    --
     case code is
-      when row =>
-        Put(xl, "  row="); Put(xl, in16,0);
-        Put(xl, " col1="); Put(xl, in16,0);
-        Put(xl, " col2="); Put(xl, in16,0);
-        Put(xl, " height="); Put(xl, in16,0);
-        for i in 1..5 loop
+      when row_2 | row_3=>
+        Put(xl, "row=" & Integer'Image(in16));
+        Put(xl, "col1=" & Integer'Image(in16));
+        Put(xl, "col2=" & Integer'Image(in16));
+        Put(xl, "height=" & Integer'Image(in16));
+        for i in 9..length loop
           Read(f,b);
         end loop;
       when 1..4 =>
-        Put(xl, "  row="); Put(xl, in16,0);
-        Put(xl, "  col="); Put(xl, in16,0);
+        Put(xl, "row=" & Integer'Image(in16));
+        Put(xl, "col=" & Integer'Image(in16));
+        for i in 5..length loop
+          Read(f,b);
+        end loop;
+      when labelsst => -- SST = shared string table
+        Put(xl, "row=" & Integer'Image(in16));
+        Put(xl, "col=" & Integer'Image(in16));
         for i in 5..length loop
           Read(f,b);
         end loop;
@@ -153,8 +181,17 @@ begin
         for i in 2..length loop -- skip remaining contents
           Read(f,b);
         end loop;
+      when ole_2 =>
+        Put_Line(xl, "This is an OLE-OLE 2 file, eventually wrapping a BIFF one");
+        Put_Line(xl, "Check: Microsoft Compound Document File Format, compdocfileformat.pdf");
+        Put_Line(xl, "Aborting dump");
+        Close(f);
+        Close(xl);
+        return;
       when others =>
-        Put(xl, " skipping contents");
+        --  if length > 0 then
+        --    Put(xl, "skipping contents");
+        --  end if;
         for i in 1..length loop -- just skip the contents
           Read(f,b);
         end loop;

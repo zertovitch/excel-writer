@@ -276,14 +276,14 @@ package Excel_Out is
 
   function Contents(xl: Excel_Out_String) return String;
 
-  ------------------------------------
-  -- Information about this package --
-  ------------------------------------
+  --------------------------------------------------------------
+  -- Information about this package - e.g. for an "about" box --
+  --------------------------------------------------------------
 
   version   : constant String:= "05";
   reference : constant String:= "xx-Feb-2010";
-  web: constant String:= "http://excel-writer.sf.net/";
-  -- ^-- hopefully the latest version is at that URL...
+  web       : constant String:= "http://excel-writer.sf.net/";
+  -- hopefully the latest version is at that URL...  ---^
 
   ----------------------------------
   -- End of the part for the user --
@@ -297,7 +297,6 @@ package Excel_Out is
   -- Return the index of the stream
   function Index (xl: Excel_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
-
 
 private
 
