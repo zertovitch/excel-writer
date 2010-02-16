@@ -313,7 +313,12 @@ private
   max_font  : constant:= 62;
   max_format: constant:= 62;
 
-  type Excel_Out_Stream is abstract tagged record
+  -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
+  -- type. A variable of that type is initialized with default values and
+  -- can help re-initialize a Excel_Out_Stream when re-used several times.
+  -- See the Reset procedure in body.
+  --
+  type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
     format     : Excel_type:= Default_Excel_type;
     dimrecpos  : Ada.Streams.Stream_IO.Positive_Count;
@@ -329,6 +334,8 @@ private
     curr_row   : Positive:= 1;
     curr_col   : Positive:= 1;
   end record;
+
+  type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;
 
   type Font_style_single is
     (bold_single,

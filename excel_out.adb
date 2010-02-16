@@ -580,20 +580,20 @@ package body Excel_Out is
     return xl.def_fmt;
   end;
 
-  procedure Init(
+  procedure Reset(
     xl        : in out Excel_Out_Stream'Class;
     format    :        Excel_type:= Default_Excel_type
   )
   is
-    dummy_xl_with_defaults: Excel_Out_File;
+    dummy_xl_with_defaults: Excel_Out_Pre_Root_Type; 
   begin
     -- Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
       raise Excel_Stream_Not_Closed;
     end if;
     dummy_xl_with_defaults.format:= format;
-    Excel_Out_Stream(xl):= Excel_Out_Stream(dummy_xl_with_defaults);
-  end Init;
+    Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults; 
+  end Reset;
 
   procedure Finish(xl : in out Excel_Out_Stream'Class) is
   begin
@@ -614,7 +614,7 @@ package body Excel_Out is
   )
   is
   begin
-    Init(xl, format);
+    Reset(xl, format);
     xl.xl_file:= new Ada.Streams.Stream_IO.File_Type;
     Create(xl.xl_file.all, Out_File, file_name);
     xl.xl_stream:= XL_Raw_Stream_Class(Stream(xl.xl_file.all));
@@ -720,7 +720,7 @@ package body Excel_Out is
   )
   is
   begin
-    Init(xl, format);
+    Reset(xl, format);
     xl.xl_memory:= new Unbounded_Stream;
     xl.xl_memory.unb:= Null_Unbounded_String;
     xl.xl_memory.loc:= 1;
