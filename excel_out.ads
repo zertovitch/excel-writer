@@ -60,11 +60,12 @@
 -- Main changes:
 -- ============
 --
--- 05: 10-Feb-2010: - added 'width' and 'base' optional parameters
+-- 05: 16-Feb-2010: - small Ada compliance issue fixed - see
+--                      Excel_Out_Pre_Root_Type
+--     10-Feb-2010: - added 'width' and 'base' optional parameters
 --                      to Put(xl, int), to facilitate transition
 --                      from Ada.Text_IO.* to Excel_Out
 --                  - added function Is_Open(xl : in Excel_Out_File)
---
 -- 03: 15-Feb-2009: - data stream can by any; supplied:
 --                      Excel_Out_File, Excel_Out_String
 --                  - added "Text_IO"-like Put, Put_Line, New_Line,...
@@ -281,7 +282,7 @@ package Excel_Out is
   --------------------------------------------------------------
 
   version   : constant String:= "05";
-  reference : constant String:= "xx-Feb-2010";
+  reference : constant String:= "27-Feb-2010";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -317,7 +318,9 @@ private
   -- type. A variable of that type is initialized with default values and
   -- can help re-initialize a Excel_Out_Stream when re-used several times.
   -- See the Reset procedure in body.
-  --
+  -- The abstract Excel_Out_Stream can have default values, but using a variable
+  -- of this type to reset values is not Ada compliant (LRM:3.9.3(8))
+
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
     format     : Excel_type:= Default_Excel_type;
