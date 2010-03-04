@@ -271,7 +271,8 @@ package body Excel_Out is
   is
   begin
     WriteBiff(xl, 16#0024#,
-      Intel_16(Unsigned_16(column-1)) &
+      Unsigned_8(column-1) & -- first
+      Unsigned_8(column-1) & -- last
       Intel_16(Unsigned_16(width * 256))
     );
   end Write_column_width;
@@ -585,14 +586,14 @@ package body Excel_Out is
     format    :        Excel_type:= Default_Excel_type
   )
   is
-    dummy_xl_with_defaults: Excel_Out_Pre_Root_Type; 
+    dummy_xl_with_defaults: Excel_Out_Pre_Root_Type;
   begin
     -- Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
       raise Excel_Stream_Not_Closed;
     end if;
     dummy_xl_with_defaults.format:= format;
-    Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults; 
+    Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
   end Reset;
 
   procedure Finish(xl : in out Excel_Out_Stream'Class) is

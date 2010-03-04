@@ -15,6 +15,13 @@ procedure BIFF_Dump is
 
   code, length, x: Integer;
 
+  function in8 return Integer is
+    b: Unsigned_8;
+  begin
+    Read(f,b);
+    return Integer(b);
+  end in8;
+
   function in16 return Integer is
     b1,b2: Unsigned_8;
   begin
@@ -38,18 +45,21 @@ procedure BIFF_Dump is
     end;
   end str8;
 
-  row_2   : constant:= 16#0008#;
-  row_3   : constant:= 16#0208#;
-  style   : constant:= 16#0293#;
-  xf_2    : constant:= 16#0043#;
-  xf_3    : constant:= 16#0243#;
-  xf_5    : constant:= 16#00E0#;
-  ole_2   : constant:= 16#CFD0#;
-  window1 : constant:= 16#003D#;
-  hideobj : constant:= 16#008D#;
-  format4 : constant:= 16#041E#;
-  number3 : constant:= 16#0203#;
-  labelsst: constant:= 16#00FD#;
+  row_2      : constant:= 16#0008#;
+  row_3      : constant:= 16#0208#;
+  style      : constant:= 16#0293#;
+  xf_2       : constant:= 16#0043#;
+  xf_3       : constant:= 16#0243#;
+  xf_5       : constant:= 16#00E0#;
+  ole_2      : constant:= 16#CFD0#;
+  window1    : constant:= 16#003D#;
+  hideobj    : constant:= 16#008D#;
+  format4    : constant:= 16#041E#;
+  number3    : constant:= 16#0203#;
+  label      : constant:= 16#0004#;
+  labelsst   : constant:= 16#00FD#;
+  colwidth   : constant:= 16#0024#;
+  defcolwidth: constant:= 16#0055#;
 
   b: Unsigned_8;
   xfs: Natural:= 0;
@@ -64,6 +74,7 @@ begin
     Open(f, In_File, Argument(1));
   end if;
   Create(xl, "$Dump$.xls");
+  Write_default_column_width(xl, 18);
   Write_column_width(xl, 1, 11);
   Write_column_width(xl, 3, 3);
   Write_column_width(xl, 4, 20);
@@ -100,8 +111,8 @@ begin
       when 16#000F# => Put(xl, "REFMODE");
       when 16#0022# => Put(xl, "DATEMODE");
       when 16#0042# => Put(xl, "CODEPAGE");
-      when 16#0024# => Put(xl, "COLWIDTH");
-      when 16#0055# => Put(xl, "DEFCOLWIDTH");
+      when colwidth    => Put(xl, "COLWIDTH");
+      when defcolwidth => Put(xl, "DEFCOLWIDTH");
       when 16#0025# => Put(xl, "DEFAULTROWHEIGHT");
       when row_2    => Put(xl, "ROW (BIFF2)");
       when row_3    => Put(xl, "ROW (BIFF3+)");
@@ -119,7 +130,7 @@ begin
       when 16#0002# => Put(xl, "INTEGER");
       when 16#0003# => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
-      when 16#0004# => Put(xl, "LABEL");
+      when label    => Put(xl, "LABEL");
       when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
       when 16#0019# => Put(xl, "WINDOWPROTECT");
       when 16#0040# => Put(xl, "BACKUP");
@@ -129,24 +140,26 @@ begin
       when others =>   Put(xl, "- ??? -");
     end case;
     --
+    -- Expand parameters
+    --
     case code is
       when row_2 | row_3=>
-        Put(xl, "row=" & Integer'Image(in16));
-        Put(xl, "col1=" & Integer'Image(in16));
-        Put(xl, "col2=" & Integer'Image(in16));
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col1=" & Integer'Image(in16+1));
+        Put(xl, "col2=" & Integer'Image(in16+1));
         Put(xl, "height=" & Integer'Image(in16));
         for i in 9..length loop
           Read(f,b);
         end loop;
-      when 1..4 =>
-        Put(xl, "row=" & Integer'Image(in16));
-        Put(xl, "col=" & Integer'Image(in16));
+      when 1..3 =>
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
         for i in 5..length loop
           Read(f,b);
         end loop;
       when labelsst => -- SST = shared string table
-        Put(xl, "row=" & Integer'Image(in16));
-        Put(xl, "col=" & Integer'Image(in16));
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
         for i in 5..length loop
           Read(f,b);
         end loop;
@@ -188,6 +201,19 @@ begin
         Close(f);
         Close(xl);
         return;
+      when colwidth =>
+        Put(xl, "First Column: " & Integer'Image(in8+1));
+        Put(xl, "Last Column : " & Integer'Image(in8+1));
+        Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
+      when defcolwidth =>
+        Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
+      when label =>
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        for i in 1..3 loop -- attributes
+          Read(f,b);
+        end loop;
+        Put(xl, str8);
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");
