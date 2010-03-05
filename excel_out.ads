@@ -109,6 +109,12 @@ package Excel_Out is
   --     It is the width of a '0' in a standard font.
   procedure Write_default_column_width(xl : Excel_Out_Stream; width : Positive);
   procedure Write_column_width(xl : Excel_Out_Stream; column: Positive; width: Natural);
+  procedure Write_column_width(
+    xl            : Excel_Out_Stream;
+    first_column,
+    last_column   : Positive;
+    width         : Natural
+  );
 
   -- * The row height unit is in font points, as appearing when you
   --     resize a row in Excel.
@@ -187,6 +193,7 @@ package Excel_Out is
   right     : constant Cell_border;
   top       : constant Cell_border;
   bottom    : constant Cell_border;
+  box       : constant Cell_border;
 
   procedure Define_format(
     xl           : in out Excel_Out_Stream;
@@ -318,9 +325,9 @@ private
   -- type. A variable of that type is initialized with default values and
   -- can help re-initialize a Excel_Out_Stream when re-used several times.
   -- See the Reset procedure in body.
-  -- The abstract Excel_Out_Stream can have default values, but using a variable
-  -- of this type to reset values is not Ada compliant (LRM:3.9.3(8))
-
+  -- The abstract Excel_Out_Stream could have default values, but using a
+  -- variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
+  --
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
     format     : Excel_type:= Default_Excel_type;
@@ -331,7 +338,9 @@ private
     xfs        : Integer:= -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range:= 0;
     def_font   : Font_type;
-    def_fmt    : Format_type;
+    def_fmt    : Format_type; -- Default format; used for "Normal" style
+    pct_fmt    : Format_type; -- Format used for defining "Percent" style
+    cma_fmt    : Format_type; -- Format used for defining "Comma" style
     is_created : Boolean:= False;
     is_closed  : Boolean:= False;
     curr_row   : Positive:= 1;
@@ -381,6 +390,7 @@ private
   right     : constant Cell_border:= (right_single => True, others => False);
   top       : constant Cell_border:= (top_single => True, others => False);
   bottom    : constant Cell_border:= (bottom_single => True, others => False);
+  box       : constant Cell_border:= (others => True);
 
   ----------------------
   -- Output to a file --

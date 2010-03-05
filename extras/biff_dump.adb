@@ -45,6 +45,17 @@ procedure BIFF_Dump is
     end;
   end str8;
 
+  function str8len16 return String is
+    r: String(1..in16);
+    b: Unsigned_8;
+  begin
+    for i in r'Range loop
+      Read(f,b);
+      r(i):= character'Val(b);
+    end loop;
+    return r;
+  end str8len16;
+
   row_2      : constant:= 16#0008#;
   row_3      : constant:= 16#0208#;
   style      : constant:= 16#0293#;
@@ -54,18 +65,35 @@ procedure BIFF_Dump is
   ole_2      : constant:= 16#CFD0#;
   window1    : constant:= 16#003D#;
   hideobj    : constant:= 16#008D#;
+  font2      : constant:= 16#0031#;
+  font3      : constant:= 16#0231#;
+  format2    : constant:= 16#001E#;
   format4    : constant:= 16#041E#;
   number3    : constant:= 16#0203#;
-  label      : constant:= 16#0004#;
+  rk         : constant:= 16#027E#; -- 5.87 RK p.201
+  label2     : constant:= 16#0004#;
+  label3     : constant:= 16#0204#;
   labelsst   : constant:= 16#00FD#;
   colwidth   : constant:= 16#0024#;
   defcolwidth: constant:= 16#0055#;
 
   b: Unsigned_8;
   xfs: Natural:= 0;
+  fmt: Natural:= 0;
+  fnt: Natural:= 0;
+  is_biff2: Boolean:= False;
 
   xl: Excel_Out_File;
   fmt_ul: Format_type;
+
+  procedure Cell_Attributes is
+  begin
+    Put(xl, "xf=" & Integer'Image(in8 mod 16#40#));
+    Read(f,b);
+    Put(xl, "format=" & Unsigned_8'Image(b mod 16#40#));
+    Put(xl, "font="   & Unsigned_8'Image(b / 16#40#));
+    Read(f,b);
+  end;
 
 begin
   if Argument_Count = 0 then
@@ -100,7 +128,10 @@ begin
     Put(xl, "    ");
     case code is
       --
-      when 16#0009# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
+      when 16#0009# =>
+        Put(xl, "BOF");
+        Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
+        is_biff2:= True; -- some items, like font, are reused in biff 5 but not 3,4
       when 16#0209# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
       when 16#0409# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
       when 16#0809# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
@@ -116,21 +147,32 @@ begin
       when 16#0025# => Put(xl, "DEFAULTROWHEIGHT");
       when row_2    => Put(xl, "ROW (BIFF2)");
       when row_3    => Put(xl, "ROW (BIFF3+)");
-      when 16#001E# => Put(xl, "FORMAT (BIFF2-3)");
-      when format4  => Put(xl, "FORMAT (BIFF4+)"); -- 5.49
+      when format2  =>
+        Put(xl, "FORMAT (BIFF2-3)" & Integer'Image(fmt));
+        fmt:= fmt + 1;
+      when format4  =>
+        Put(xl, "FORMAT (BIFF4+)"  & Integer'Image(fmt)); -- 5.49
+        fmt:= fmt + 1;
       when xf_2 |       -- Extended Format, BIFF2  -- 5.115
            xf_3 |       -- Extended Format, BIFF3
            xf_5     =>  -- Extended Format, BIFF5+
+        Put(xl, "XF" & Integer'Image(xfs));
         xfs:= xfs + 1;
-        Put(xl, "XF Nb" & Integer'Image(xfs));
       when 16#001F# => Put(xl, "BUILTINFMTCOUNT");
-      when 16#0031# => Put(xl, "FONT");
+      when font2 | font3 =>
+        if fnt = 4 then
+          fnt:= 5; -- Excel anomaly (p.171)
+        end if;
+        Put(xl, "FONT" & Integer'Image(fnt));
+        -- 5.45, p.171
+        fnt:= fnt + 1;
       when 16#0045# => Put(xl, "FONTCOLOR");
       when 16#0001# => Put(xl, "BLANK");
       when 16#0002# => Put(xl, "INTEGER");
       when 16#0003# => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
-      when label    => Put(xl, "LABEL");
+      when rk       => Put(xl, "RK (BIFF3+)");
+      when label2   => Put(xl, "LABEL");
       when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
       when 16#0019# => Put(xl, "WINDOWPROTECT");
       when 16#0040# => Put(xl, "BACKUP");
@@ -154,18 +196,54 @@ begin
       when 1..3 =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
-        for i in 5..length loop
+        Cell_Attributes;
+        for i in 8..length loop
           Read(f,b);
         end loop;
+      when number3 | rk =>
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        Put(xl, "xf="  & Integer'Image(in16));
+        for i in 7..length loop
+          Read(f,b);
+        end loop;
+      when label2 => -- 5.63 LABEL p.187
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        Cell_Attributes;
+        Put(xl, str8);
+      when label3 => -- 5.63 LABEL p.187
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        Put(xl, "xf="  & Integer'Image(in16));
+        Put(xl, str8len16);
       when labelsst => -- SST = shared string table
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
         for i in 5..length loop
           Read(f,b);
         end loop;
+      when format2 =>
+        Put(xl, str8);
+      when font2 =>
+        Put(xl, "height="  & Integer'Image(in16));
+        Put(xl, "options=" & Integer'Image(in16));
+        if is_biff2 then
+          Put(xl, str8);
+        else -- BIFF 5-8
+          for i in 5..length loop -- just skip the contents
+            Read(f,b);
+          end loop;
+        end if;
+      when font3 =>
+        Put(xl, "height="  & Integer'Image(in16));
+        Put(xl, "options=" & Integer'Image(in16));
+        Put(xl, "colour="  & Integer'Image(in16));
+        Put(xl, str8);
       when style => -- 5.103 STYLE p. 212
         x:= in16;
-        Put(xl, "  xf="); Put(xl, x mod 16#8000#, 3);
+        Put(xl, "  xf=");
+        Put(xl, x mod 16#2000#, 3);
         if x >= 16#8000# then
           Put(xl, ";  built-in style: ");
           Read(f,b);
@@ -176,22 +254,28 @@ begin
             when 5 => Put(xl, "Percent");
             when others => Put(xl, Unsigned_8'Image(b));
           end case;
-          for i in 4..length loop -- skip other contents
-            Read(f,b);
-          end loop;
+          Read(f,b);
+          Put(xl, "Level" & Unsigned_8'Image(b));
         else
           Put(xl, ";  user: " & str8);
         end if;
-      when xf_2  =>
+      when xf_2  => -- 5.115 XF – Extended Format p.219
         Read(f,b);
-        Put(xl, "Font #" & Unsigned_8'Image(b));
-        for i in 2..length loop -- skip remaining contents
+        Put(xl, "Using font #" & Unsigned_8'Image(b));
+        Read(f,b); -- skip
+        Read(f,b);
+        Put(xl, "(Number) format #" & Unsigned_8'Image(b and 16#3F#));
+        for i in 4..length loop -- skip remaining contents
           Read(f,b);
         end loop;
       when xf_3 =>
         Read(f,b);
-        Put(xl, "Font #" & Unsigned_8'Image(b));
-        for i in 2..length loop -- skip remaining contents
+        Put(xl, "Using font #" & Unsigned_8'Image(b));
+        Read(f,b);
+        Put(xl, "(Number) format #" & Unsigned_8'Image(b));
+        Read(f,b); -- skip Protection
+        Read(f,b); -- skip Used attributes
+        for i in 5..length loop -- skip remaining contents
           Read(f,b);
         end loop;
       when ole_2 =>
@@ -207,13 +291,6 @@ begin
         Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
       when defcolwidth =>
         Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
-      when label =>
-        Put(xl, "row=" & Integer'Image(in16+1));
-        Put(xl, "col=" & Integer'Image(in16+1));
-        for i in 1..3 loop -- attributes
-          Read(f,b);
-        end loop;
-        Put(xl, str8);
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");

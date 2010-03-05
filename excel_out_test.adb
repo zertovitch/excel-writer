@@ -23,8 +23,8 @@ procedure Excel_Out_Test is
 
   procedure Big_demo is
     xl: Excel_Out_File;
-    font_1, font_2, font_3, font_4: Font_Type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5: Format_type;
+    font_1, font_2, font_3, font_4, font_5: Font_Type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6: Format_type;
   begin
     Create(xl, "Big.xls");
     --
@@ -41,12 +41,14 @@ procedure Excel_Out_Test is
     Define_font(xl, "Courier New", 12, font_2, bold & italic, red);
     Define_font(xl, "Times New Roman", 14, font_3, bold);
     Define_font(xl, "Arial Narrow", 16, font_4, bold);
+    Define_font(xl, "Calibri", 16, font_5, bold, yellow);
     --
     Define_format(xl, font_1, percent_0, fmt_1, centred, right);
     Define_format(xl, font_2, decimal_2, fmt_2);
     Define_format(xl, font_3, decimal_0, fmt_3, centred);
     Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
+    Define_format(xl, font_5, general,   fmt_6, border => box);
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel_Out");
@@ -54,21 +56,27 @@ procedure Excel_Out_Test is
     Put(xl, "Version: " & version);
     Jump_to(xl, 1, 13);
     Put(xl, "Ref.: " & reference);
+
     Use_format(xl, fmt_2);
     for column in 1 .. 9 loop
       Write(xl, 2, column, Long_Float(column) + 0.5);
     end loop;
+
     Use_format(xl, fmt_3);
     for row in 4 .. 7 loop
       for column in 1 .. 9 loop
         Write(xl, row, column, row * 1000 + column);
       end loop;
     end loop;
-    Use_format(xl, fmt_4);
 
+    Use_format(xl, fmt_4);
     for column in 1 .. 20 loop
       Write(xl, 9, column, Character'Val(64 + column) & "");
     end loop;
+
+    Use_format(xl, fmt_6);
+    Write(xl, 11, 1, "Calibri font");
+
     for row in 13 .. 300 loop
       Use_format(xl, fmt_1);
       Write(xl, row, 3, Long_Float(row) * 0.01);

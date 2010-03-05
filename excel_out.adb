@@ -143,12 +143,12 @@ package body Excel_Out is
       case n is
         when general    =>  WriteFmtStr("General");
         when decimal_0  =>  WriteFmtStr("0");
-        when decimal_2  =>  WriteFmtStr("0.00");
+        when decimal_2  =>  WriteFmtStr("0.00"); -- 'Comma' built-in style
         when decimal_0_thousands_separator =>
                             WriteFmtStr("#'##0");
-        when decimal_2_thousands_separator =>     -- 'Comma' built-in style
+        when decimal_2_thousands_separator =>
                             WriteFmtStr("#'##0.00");
-        when percent_0  =>  WriteFmtStr("0%");    -- 'Percent' built-in style
+        when percent_0  =>  WriteFmtStr("0%");   -- 'Percent' built-in style
         when percent_2  =>  WriteFmtStr("0.00%");
         when percent_0_plus  =>
           WriteFmtStr("+0%;-0%;0%");
@@ -174,6 +174,10 @@ package body Excel_Out is
   end WriteDimensions;
 
   procedure Write_Worksheet_header(xl : in out Excel_Out_Stream'Class) is
+    Percent_Style   : constant:= 5;
+    Comma_Style     : constant:= 3;
+    Base_Level      : constant:= 255;
+    font_for_styles : Font_type;
   begin
     WriteBOF(xl);
     -- 5.17 CODEPAGE
@@ -189,7 +193,19 @@ package body Excel_Out is
     xl.dimrecpos:= Index(xl);
     WriteDimensions(xl);
     Define_font(xl,"Arial", 10, xl.def_font);
+    Define_font(xl,"Arial", 10, font_for_styles); -- Used by BIFF3+'s styles
+    -- Define default format
     Define_format(xl, xl.def_font, general, xl.def_fmt);
+    -- Define formats for the BIFF3+ "styles":
+    Define_format(xl, font_for_styles, percent_0, xl.pct_fmt);
+    Define_format(xl, font_for_styles, decimal_2, xl.cma_fmt);
+    -- Define styles - 5.103 STYLE p. 212
+    -- NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
+    --     - these "styles" seem to be a zombie feature of Excel 3
+    --     - the whole purpose of including this is because format
+    --       buttons (%)(,) in Excel 95 through 2007 are using these styles
+    WriteBiff(xl, 16#0293#, Intel_16(Unsigned_16(xl.pct_fmt) + 16#8000#) & Percent_Style & Base_Level);
+    WriteBiff(xl, 16#0293#, Intel_16(Unsigned_16(xl.cma_fmt) + 16#8000#) & Comma_Style & Base_Level);
     xl.is_created:= True;
   end Write_Worksheet_header;
 
@@ -263,19 +279,34 @@ package body Excel_Out is
     WriteBiff(xl, 16#0055#, Intel_16(Unsigned_16(width)));
   end Write_default_column_width;
 
-  -- 5.20 COLWIDTH (BIFF2 only)
   procedure Write_column_width (
-        xl : Excel_Out_Stream;
+        xl     : Excel_Out_Stream;
         column : Positive;
         width  : Natural)
   is
   begin
-    WriteBiff(xl, 16#0024#,
-      Unsigned_8(column-1) & -- first
-      Unsigned_8(column-1) & -- last
-      Intel_16(Unsigned_16(width * 256))
-    );
+    Write_column_width(xl, column, column, width);
   end Write_column_width;
+
+  procedure Write_column_width(
+    xl            : Excel_Out_Stream;
+    first_column,
+    last_column   : Positive;
+    width         : Natural
+  )
+  is
+  begin
+    case xl.format is
+      when BIFF2 =>
+        -- 5.20 COLWIDTH (BIFF2 only)
+        WriteBiff(xl, 16#0024#,
+          Unsigned_8(first_column-1) &
+          Unsigned_8(last_column-1) & -- last
+          Intel_16(Unsigned_16(width * 256))
+        );
+    end case;
+  end Write_column_width;
+
 
   -- 5.88 ROW
   -- The OpenOffice documentation tells nice stories about row blocks,
@@ -339,6 +370,7 @@ package body Excel_Out is
     end if;
     case xl.format is
       when BIFF2 =>
+        -- 5.45 FONT, p.171
         WriteBiff(xl, 16#0031#,
           Intel_16(Unsigned_16(height * y_scale)) &
           Intel_16(style_bits) &
