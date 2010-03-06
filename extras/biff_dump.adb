@@ -74,8 +74,13 @@ procedure BIFF_Dump is
   label2     : constant:= 16#0004#;
   label3     : constant:= 16#0204#;
   labelsst   : constant:= 16#00FD#;
+  formula2   : constant:= 16#0006#; -- 5.50 p.176
   colwidth   : constant:= 16#0024#;
   defcolwidth: constant:= 16#0055#;
+  header_x   : constant:= 16#0014#; -- 5.55 p.180
+  footer_x   : constant:= 16#0015#; -- 5.48 p.173
+
+  subtype margin is Integer range 16#26#..16#29#;
 
   b: Unsigned_8;
   w: Unsigned_16;
@@ -104,6 +109,13 @@ begin
     Open(f, In_File, Argument(1));
   end if;
   Create(xl, "$Dump$.xls");
+  -- Some page layout...
+  Header(xl, "&LBiff_dump of...&R" & Name(f));
+  Footer(xl, "&L&D");
+  Margins(xl, 0.7, 0.5, 0.3, 0.2);
+  Print_Row_Column_Headers(xl);
+  Print_Gridlines(xl);
+  --
   Write_default_column_width(xl, 18);
   Write_column_width(xl, 1, 11);
   Write_column_width(xl, 3, 3);
@@ -149,8 +161,17 @@ begin
       when 16#000A# => Put(xl, "EOF"); Put(xl, "End of File");
       --
       when 16#0000# => Put(xl, "DIMENSION");
+      when 16#000C# => Put(xl, "CALCCOUNT");
       when 16#000D# => Put(xl, "CALCMODE");
+      when 16#000E# => Put(xl, "PRECISION");
       when 16#000F# => Put(xl, "REFMODE");
+      when 16#0010# => Put(xl, "DELTA");
+      when 16#0011# => Put(xl, "ITERATION");
+      when 16#002A# => Put(xl, "PRINTHEADERS");
+      when 16#002B# => Put(xl, "PRINTGRIDLINES");
+      when header_x => Put(xl, "HEADER");
+      when footer_x => Put(xl, "FOOTER");
+      when margin   => Put(xl, "MARGIN");
       when 16#0022# => Put(xl, "DATEMODE");
       when 16#0042# => Put(xl, "CODEPAGE");
       when colwidth    => Put(xl, "COLWIDTH");
@@ -182,6 +203,7 @@ begin
       when 16#0002# => Put(xl, "INTEGER");
       when 16#0003# => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
+      when formula2 => Put(xl, "FORMULA"); -- 5.50 p.176
       when rk       => Put(xl, "RK (BIFF3+)");
       when label2   => Put(xl, "LABEL");
       when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
@@ -189,7 +211,11 @@ begin
       when 16#0040# => Put(xl, "BACKUP");
       when style    => Put(xl, "STYLE");   -- 5.103
       when window1  => Put(xl, "WINDOW1"); -- 5.109
+      when 16#003E# => Put(xl, "WINDOW2"); -- 5.110 p.216
+      when 16#001D# => Put(xl, "SELECTION"); -- 5.93 p.205
       when hideobj  => Put(xl, "HIDEOBJ"); -- 5.56
+      when 16#4D#   => Put(xl, "PLS (Current printer blob)");
+      when 16#3C#   => Put(xl, "CONTINUE (Continue last BIFF record)");
       when others =>   Put(xl, "- ??? -");
     end case;
     --
@@ -260,7 +286,15 @@ begin
         Put(xl, "height="  & Float'Image(Float(in16)/20.0));
         Put(xl, "options=" & Integer'Image(in16));
         if biff_version = 2 then
-          Put(xl, str8);
+          declare
+            font_name: constant String:= str8;
+          begin
+            Put(xl, font_name);
+            for i in 6+font_name'Length .. length loop
+              -- Excel 2002 puts garbage, sometimes...
+              Read(f,b);
+            end loop;
+          end;
         else -- BIFF 5-8
           for i in 5..length loop -- just skip the contents
             Read(f,b);
@@ -290,7 +324,7 @@ begin
         else
           Put(xl, ";  user: " & str8);
         end if;
-      when xf_2  => -- 5.115 XF – Extended Format p.219
+      when xf_2  => -- 5.115 XF - Extended Format p.219
         Read(f,b);
         Put(xl, "Using font #" & Unsigned_8'Image(b));
         Read(f,b); -- skip
@@ -322,6 +356,18 @@ begin
         Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
       when defcolwidth =>
         Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
+      when header_x | footer_x =>
+        if length > 0 then
+          declare
+            head_foot: constant String:= str8;
+          begin
+            Put(xl, head_foot);
+            for i in 2+head_foot'Length .. length loop
+              -- garbage
+              Read(f,b);
+            end loop;
+          end;
+        end if;
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");

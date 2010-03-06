@@ -105,6 +105,19 @@ package Excel_Out is
   -- (2) Before any cell content: --
   ----------------------------------
 
+  -- * Page layout for printing
+  procedure Header(xl : Excel_Out_Stream; page_header_string: String);
+  procedure Footer(xl : Excel_Out_Stream; page_footer_string: String);
+  --
+  procedure Left_Margin(xl : Excel_Out_Stream; inches: Long_Float);
+  procedure Right_Margin(xl : Excel_Out_Stream; inches: Long_Float);
+  procedure Top_Margin(xl : Excel_Out_Stream; inches: Long_Float);
+  procedure Bottom_Margin(xl : Excel_Out_Stream; inches: Long_Float);
+  procedure Margins(xl : Excel_Out_Stream; left, right, top, bottom: Long_Float);
+  --
+  procedure Print_Row_Column_Headers(xl : Excel_Out_Stream);
+  procedure Print_Gridlines(xl : Excel_Out_Stream);
+
   -- * The column width unit is as it appears in Excel when you resize a column.
   --     It is the width of a '0' in a standard font.
   procedure Write_default_column_width(xl : Excel_Out_Stream; width : Positive);

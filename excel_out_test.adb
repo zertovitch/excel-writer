@@ -27,6 +27,12 @@ procedure Excel_Out_Test is
     fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6: Format_type;
   begin
     Create(xl, "Big.xls");
+    -- Some page layout...
+    Header(xl, "Big demo");
+    Footer(xl, "&D");
+    Margins(xl, 1.2, 1.1, 0.9, 0.8);
+    Print_Row_Column_Headers(xl);
+    Print_Gridlines(xl);
     --
     Write_default_column_width(xl, 7);
     Write_column_width(xl, 1, 15); -- set to width of 15 times '0'

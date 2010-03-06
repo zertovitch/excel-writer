@@ -260,6 +260,54 @@ package body Excel_Out is
     format:= Format_type(xl.xfs);
   end Define_Format;
 
+  procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
+  begin
+    WriteBiff(xl, 16#0014#, To_buf(page_header_string)); -- 5.55 p.180
+  end Header;
+
+  procedure Footer(xl : Excel_Out_Stream; page_footer_string: String) is
+  begin
+    WriteBiff(xl, 16#0015#, To_buf(page_footer_string)); -- 5.48 p.173
+  end Footer;
+
+  procedure Left_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
+  begin
+    WriteBiff(xl, 16#0026#, IEEE_Double_Intel(inches));
+  end Left_Margin;
+
+  procedure Right_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
+  begin
+    WriteBiff(xl, 16#0027#, IEEE_Double_Intel(inches));
+  end Right_Margin;
+
+  procedure Top_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
+  begin
+    WriteBiff(xl, 16#0028#, IEEE_Double_Intel(inches));
+  end Top_Margin;
+
+  procedure Bottom_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
+  begin
+    WriteBiff(xl, 16#0029#, IEEE_Double_Intel(inches));
+  end Bottom_Margin;
+
+  procedure Margins(xl : Excel_Out_Stream; left, right, top, bottom: Long_Float) is
+  begin
+    Left_Margin(xl, left);
+    Right_Margin(xl, right);
+    Top_Margin(xl, top);
+    Bottom_Margin(xl, bottom);
+  end Margins;
+
+  procedure Print_Row_Column_Headers(xl : Excel_Out_Stream) is
+  begin
+    WriteBiff(xl, 16#002A#, Intel_16(1)); -- 5.81 p.199
+  end  Print_Row_Column_Headers;
+
+  procedure Print_Gridlines(xl : Excel_Out_Stream) is
+  begin
+    WriteBiff(xl, 16#002B#, Intel_16(1)); -- 5.80 p.199
+  end Print_Gridlines;
+
   y_scale: constant:= 20; -- scaling to obtain character point (pt) units
 
   -- 5.32 DEFAULTROWHEIGHT
