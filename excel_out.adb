@@ -325,9 +325,10 @@ package body Excel_Out is
         WriteBiff(xl, 16#0008#,
           Intel_16(Unsigned_16(row-1)) &
           Intel_16(0)   & -- col. min.
-          Intel_16(256) & -- col. max. - we just take the full range...
+          Intel_16(256) & -- col. max. + 1; we just take the full range...
           Intel_16(Unsigned_16(height * y_scale)) &
-          (1..5=> 0)
+          (1..3=> 0) &
+          Intel_16(0) -- offset to data
         );
     end case;
   end Write_row_height;

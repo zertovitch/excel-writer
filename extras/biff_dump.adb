@@ -56,8 +56,8 @@ procedure BIFF_Dump is
     return r;
   end str8len16;
 
-  row_2      : constant:= 16#0008#;
-  row_3      : constant:= 16#0208#;
+  row_2      : constant:= 16#0008#; -- 5.88 p.202
+  row_3      : constant:= 16#0208#; -- 5.88 p.202
   style      : constant:= 16#0293#;
   xf_2       : constant:= 16#0043#;
   xf_3       : constant:= 16#0243#;
@@ -78,10 +78,12 @@ procedure BIFF_Dump is
   defcolwidth: constant:= 16#0055#;
 
   b: Unsigned_8;
+  w: Unsigned_16;
   xfs: Natural:= 0;
   fmt: Natural:= 0;
   fnt: Natural:= 0;
-  is_biff2: Boolean:= False;
+  biff_version: Natural:= 0;
+  defaults: Boolean;
 
   xl: Excel_Out_File;
   fmt_ul: Format_type;
@@ -131,10 +133,19 @@ begin
       when 16#0009# =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
-        is_biff2:= True; -- some items, like font, are reused in biff 5 but not 3,4
-      when 16#0209# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
-      when 16#0409# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
-      when 16#0809# => Put(xl, "BOF"); Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
+        biff_Version:= 2; -- some items, like font, are reused in biff 5 but not 3,4
+      when 16#0209# =>
+        Put(xl, "BOF");
+        Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
+        biff_Version:= 3;
+      when 16#0409# =>
+        Put(xl, "BOF");
+        Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
+        biff_Version:= 4;
+      when 16#0809# =>
+        Put(xl, "BOF");
+        Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
+        biff_Version:= 5;
       when 16#000A# => Put(xl, "EOF"); Put(xl, "End of File");
       --
       when 16#0000# => Put(xl, "DIMENSION");
@@ -145,8 +156,8 @@ begin
       when colwidth    => Put(xl, "COLWIDTH");
       when defcolwidth => Put(xl, "DEFCOLWIDTH");
       when 16#0025# => Put(xl, "DEFAULTROWHEIGHT");
-      when row_2    => Put(xl, "ROW (BIFF2)");
-      when row_3    => Put(xl, "ROW (BIFF3+)");
+      when row_2 | row_3 =>
+        Put(xl, "ROW");
       when format2  =>
         Put(xl, "FORMAT (BIFF2-3)" & Integer'Image(fmt));
         fmt:= fmt + 1;
@@ -185,14 +196,34 @@ begin
     -- Expand parameters
     --
     case code is
-      when row_2 | row_3=>
+      when row_2 | row_3=> -- 5.88 p.202
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col1=" & Integer'Image(in16+1));
-        Put(xl, "col2=" & Integer'Image(in16+1));
-        Put(xl, "height=" & Integer'Image(in16));
-        for i in 9..length loop
+        Put(xl, "col2+1=" & Integer'Image(in16+1));
+        w:= Unsigned_16(in16);
+        if (w and 16#8000#) /= 0 then
+          Put(xl, "default height");
+        else
+          Put(xl, "height=" & Float'Image(Float(w and 16#7FFF#)/20.0));
+        end if;
+        if biff_version = 2 then
+          w:= Unsigned_16(in16); -- unused
           Read(f,b);
-        end loop;
+          defaults:= b = 0;
+          if defaults then
+            Put(xl, "no default attributes/formats");
+          else
+            Put(xl, "default attributes");
+          end if;
+          Put(xl, "offset to contents" & Integer'Image(in16));
+          for i in 14..length loop
+            Read(f,b);
+          end loop;
+        else
+          for i in 9..length loop
+            Read(f,b);
+          end loop;
+        end if;
       when 1..3 =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
@@ -226,9 +257,9 @@ begin
       when format2 =>
         Put(xl, str8);
       when font2 =>
-        Put(xl, "height="  & Integer'Image(in16));
+        Put(xl, "height="  & Float'Image(Float(in16)/20.0));
         Put(xl, "options=" & Integer'Image(in16));
-        if is_biff2 then
+        if biff_version = 2 then
           Put(xl, str8);
         else -- BIFF 5-8
           for i in 5..length loop -- just skip the contents
@@ -236,7 +267,7 @@ begin
           end loop;
         end if;
       when font3 =>
-        Put(xl, "height="  & Integer'Image(in16));
+        Put(xl, "height=" & Float'Image(Float(in16)/20.0));
         Put(xl, "options=" & Integer'Image(in16));
         Put(xl, "colour="  & Integer'Image(in16));
         Put(xl, str8);
