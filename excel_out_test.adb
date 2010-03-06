@@ -23,7 +23,7 @@ procedure Excel_Out_Test is
 
   procedure Big_demo is
     xl: Excel_Out_File;
-    font_1, font_2, font_3, font_4, font_5: Font_Type;
+    font_1, font_2, font_3, font_4, font_5: Font_type;
     fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6: Format_type;
   begin
     Create(xl, "Big.xls");

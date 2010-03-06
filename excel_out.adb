@@ -12,8 +12,7 @@
 --  - ...
 
 with Ada.Unchecked_Deallocation;
-with Ada.Streams.Stream_IO;             use Ada.Streams.Stream_IO, Ada.Streams;
-with Ada.Strings.Fixed;                 use Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
 
 with Interfaces;                        use Interfaces;
 
@@ -23,13 +22,15 @@ with IEEE_754.Long_Floats;
 
 package body Excel_Out is
 
+  use Ada.Streams.Stream_IO, Ada.Streams;
+
   -- Very low level part which deals with transfering data endian-proof,
   -- and floats in the ieee format.
 
-  type Byte_Buffer is array (Integer range <>) of Unsigned_8;
+  type Byte_buffer is array (Integer range <>) of Unsigned_8;
 
-  function To_buf(s: String) return Byte_Buffer is
-    b: Byte_Buffer(s'Range);
+  function To_buf(s: String) return Byte_buffer is
+    b: Byte_buffer(s'Range);
   begin
     if s'Length > 255 then -- length doesn't fit in a byte
       raise Constraint_Error;
@@ -44,10 +45,10 @@ package body Excel_Out is
   generic
     type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
     size: Positive;
-  function Intel_x86_buffer( n: Number ) return Byte_Buffer;
+  function Intel_x86_buffer( n: Number ) return Byte_buffer;
 
-  function Intel_x86_buffer( n: Number ) return Byte_Buffer is
-    b: Byte_Buffer(1..size);
+  function Intel_x86_buffer( n: Number ) return Byte_buffer is
+    b: Byte_buffer(1..size);
     m: Number:= n;
   begin
     for i in b'Range loop
@@ -93,9 +94,9 @@ package body Excel_Out is
   )
   is
   begin
-    Byte_Buffer'Write(xl.xl_stream, Intel_16(biff_id));
-    Byte_Buffer'Write(xl.xl_stream, Intel_16(Unsigned_16(data'Length)));
-    Byte_Buffer'Write(xl.xl_stream, data);
+    Byte_buffer'Write(xl.xl_stream, Intel_16(biff_id));
+    Byte_buffer'Write(xl.xl_stream, Intel_16(Unsigned_16(data'Length)));
+    Byte_buffer'Write(xl.xl_stream, data);
   end WriteBiff;
 
   -- 5.8  BOF: Beginning of File
@@ -204,8 +205,14 @@ package body Excel_Out is
     --     - these "styles" seem to be a zombie feature of Excel 3
     --     - the whole purpose of including this is because format
     --       buttons (%)(,) in Excel 95 through 2007 are using these styles
-    WriteBiff(xl, 16#0293#, Intel_16(Unsigned_16(xl.pct_fmt) + 16#8000#) & Percent_Style & Base_Level);
-    WriteBiff(xl, 16#0293#, Intel_16(Unsigned_16(xl.cma_fmt) + 16#8000#) & Comma_Style & Base_Level);
+    WriteBiff(xl,
+      16#0293#,
+      Intel_16(Unsigned_16(xl.pct_fmt) + 16#8000#) & Percent_Style & Base_Level
+    );
+    WriteBiff(xl,
+      16#0293#,
+      Intel_16(Unsigned_16(xl.cma_fmt) + 16#8000#) & Comma_Style & Base_Level
+    );
     xl.is_created:= True;
   end Write_Worksheet_header;
 
@@ -250,7 +257,7 @@ package body Excel_Out is
         );
     end case;
     xl.xfs:= xl.xfs + 1;
-    format:= Format_Type(xl.xfs);
+    format:= Format_type(xl.xfs);
   end Define_Format;
 
   y_scale: constant:= 20; -- scaling to obtain character point (pt) units
@@ -382,13 +389,13 @@ package body Excel_Out is
           WriteBiff(xl, 16#0045#, Intel_16(colcode(color)));
         end if;
     end case;
-    font:= Font_Type(xl.fonts);
+    font:= Font_type(xl.fonts);
   end Define_font;
 
   procedure StoreMaxRC(xl: in out Excel_Out_Stream; r, c: Integer) is
   begin
     if not xl.is_created then
-      raise Excel_Stream_Not_Created;
+      raise Excel_stream_not_created;
     end if;
     if r > xl.maxrow then
       xl.maxrow := r;
@@ -498,7 +505,7 @@ package body Excel_Out is
   is
   begin
     Write(xl, r,c, To_String(str));
-  end;
+  end Write;
 
   -- Ada.Text_IO - like. No need to specify row & column each time
   procedure Put(xl: in out Excel_Out_Stream; num : Long_Float) is
@@ -517,11 +524,12 @@ package body Excel_Out is
       Write(xl, xl.curr_row, xl.curr_col, num);
     else
       declare
+        use Ada.Strings.Fixed;
         s: String(1..50 + 0*width);
         -- 0*width is just to skip a warning of width being unused
         package IIO is new Ada.Text_IO.Integer_IO(Integer);
       begin
-        IIO.Put(s, num, base => base);
+        IIO.Put(s, num, Base => base);
         Put(xl, Trim(s, Ada.Strings.Left));
       end;
     end if;
@@ -569,7 +577,7 @@ package body Excel_Out is
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural) is
   begin
     Jump_to(xl, xl.curr_row + rows, xl.curr_col + columns);
-  end;
+  end Jump;
 
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive) is
   begin
@@ -588,7 +596,7 @@ package body Excel_Out is
     end if;
     xl.curr_row:= row;
     xl.curr_col:= column;
-  end;
+  end Jump_to;
 
   procedure Use_format(
     xl           : in out Excel_Out_Stream;
@@ -607,12 +615,12 @@ package body Excel_Out is
   function Default_font(xl: Excel_Out_Stream) return Font_type is
   begin
     return xl.def_font;
-  end;
+  end Default_font;
 
   function Default_format(xl: Excel_Out_Stream) return Format_type is
   begin
     return xl.def_fmt;
-  end;
+  end Default_format;
 
   procedure Reset(
     xl        : in out Excel_Out_Stream'Class;
@@ -623,7 +631,7 @@ package body Excel_Out is
   begin
     -- Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
-      raise Excel_Stream_Not_Closed;
+      raise Excel_stream_not_closed;
     end if;
     dummy_xl_with_defaults.format:= format;
     Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
@@ -670,14 +678,14 @@ package body Excel_Out is
   is
   begin
     Ada.Streams.Stream_IO.Set_Index(xl.xl_file.all, To);
-  end;
+  end Set_Index;
 
   -- Return the index of the file
   function Index (xl: Excel_Out_File) return Ada.Streams.Stream_IO.Count
   is
   begin
     return Ada.Streams.Stream_IO.Index(xl.xl_file.all);
-  end;
+  end Index;
 
   function Is_Open(xl : in Excel_Out_File) return Boolean is
   begin
@@ -756,8 +764,8 @@ package body Excel_Out is
   begin
     Reset(xl, format);
     xl.xl_memory:= new Unbounded_Stream;
-    xl.xl_memory.unb:= Null_Unbounded_String;
-    xl.xl_memory.loc:= 1;
+    xl.xl_memory.Unb:= Null_Unbounded_String;
+    xl.xl_memory.Loc:= 1;
     xl.xl_stream:= XL_Raw_Stream_Class(xl.xl_memory);
     Write_Worksheet_header(xl);
   end Create;
@@ -770,24 +778,24 @@ package body Excel_Out is
   function Contents(xl: Excel_Out_String) return String is
   begin
     if not xl.is_closed then
-      raise Excel_Stream_Not_Closed;
+      raise Excel_stream_not_closed;
     end if;
-    return To_String(xl.xl_memory.unb);
+    return To_String(xl.xl_memory.Unb);
   end Contents;
 
   -- Set the index on the Excel string stream
   procedure Set_Index (xl: in out Excel_Out_String;
-                       to: Ada.Streams.Stream_IO.Positive_Count)
+                       To: Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
-    Set_Index(xl.xl_memory, Integer(to));
-  end;
+    Set_Index(xl.xl_memory, Integer(To));
+  end Set_Index;
 
   -- Return the index of the Excel string stream
   function Index (xl: Excel_Out_String) return Ada.Streams.Stream_IO.Count
   is
   begin
     return Ada.Streams.Stream_IO.Count(Index(xl.xl_memory));
-  end;
+  end Index;
 
 end Excel_Out;
