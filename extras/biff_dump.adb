@@ -233,7 +233,7 @@ begin
           Put(xl, "height=" & Float'Image(Float(w and 16#7FFF#)/20.0));
         end if;
         if biff_version = 2 then
-          w:= Unsigned_16(in16); -- unused
+          Put(xl, Integer'Image(in16) & " unused ?");
           Read(f,b);
           defaults:= b = 0;
           if defaults then
