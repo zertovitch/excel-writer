@@ -79,6 +79,7 @@ procedure BIFF_Dump is
   defcolwidth: constant:= 16#0055#;
   header_x   : constant:= 16#0014#; -- 5.55 p.180
   footer_x   : constant:= 16#0015#; -- 5.48 p.173
+  page_setup_x : constant:= 16#00A1#; -- 5.73 p.192
 
   subtype margin is Integer range 16#26#..16#29#;
 
@@ -112,9 +113,14 @@ begin
   -- Some page layout...
   Header(xl, "&LBiff_dump of...&R" & Name(f));
   Footer(xl, "&L&D");
-  Margins(xl, 0.7, 0.5, 0.3, 0.2);
-  Print_Row_Column_Headers(xl);
+  Margins(xl, 0.7, 0.5, 1.0, 0.8);
   Print_Gridlines(xl);
+  Page_Setup(
+    xl,
+    orientation => landscape,
+    scale_or_fit => fit,
+    fit_height_with_n_pages => 0
+  );
   --
   Write_default_column_width(xl, 18);
   Write_column_width(xl, 1, 11);
@@ -169,6 +175,7 @@ begin
       when 16#0011# => Put(xl, "ITERATION");
       when 16#002A# => Put(xl, "PRINTHEADERS");
       when 16#002B# => Put(xl, "PRINTGRIDLINES");
+      when page_setup_x => Put(xl, "PAGESETUP");
       when header_x => Put(xl, "HEADER");
       when footer_x => Put(xl, "FOOTER");
       when margin   => Put(xl, "MARGIN");
@@ -368,12 +375,26 @@ begin
             end loop;
           end;
         end if;
+      when page_setup_x =>
+        Put(xl, "paper=" & Integer'Image(in16));
+        Put(xl, "scaling="  & Integer'Image(in16));
+        Put(xl, "start page="  & Integer'Image(in16));
+        Put(xl, "fit width="  & Integer'Image(in16));
+        Put(xl, "fit height="  & Integer'Image(in16));
+        Put(xl, "options="  & Integer'Image(in16));
+        for i in 13..length loop -- remaining contents (BIFF5+)
+          Read(f,b);
+        end loop;
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");
         --  end if;
         for i in 1..length loop -- just skip the contents
-          Read(f,b);
+          if i <= 10 then
+            Put(xl, Integer(in8));
+          else
+            Read(f,b);
+          end if;
         end loop;
     end case;
     New_Line(xl);

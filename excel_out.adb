@@ -308,6 +308,35 @@ package body Excel_Out is
     WriteBiff(xl, 16#002B#, Intel_16(1)); -- 5.80 p.199
   end Print_Gridlines;
 
+  procedure Page_Setup(
+    xl                     : Excel_Out_Stream;
+    scaling_percents       : Positive:= 100;
+    fit_width_with_n_pages : Natural:= 1; -- 0: as many as possible
+    fit_height_with_n_pages: Natural:= 1; -- 0: as many as possible
+    orientation            : Orientation_choice:= portrait;
+    scale_or_fit           : Scale_or_fit_choice:= scale
+  )
+  is
+  begin
+    -- NB: this is BIFF4!
+    WriteBiff(xl,
+      16#00A1#,    -- 5.73 p.192
+      Intel_16(0) & -- paper type undefined
+      Intel_16(Unsigned_16(scaling_percents)) &
+      Intel_16(1) & -- start page number
+      Intel_16(Unsigned_16(fit_width_with_n_pages)) &
+      Intel_16(Unsigned_16(fit_height_with_n_pages)) &
+      Intel_16(2*Orientation_choice'Pos(orientation))
+    );
+    -- NB: this is BIFF3+
+    -- NB: this field contains other informations, should be delayed
+    --       in case other preferences are to be set
+    WriteBiff(xl,
+      16#0081#,    -- 5.97 p.207
+      Intel_16(256*Scale_or_fit_choice'Pos(scale_or_fit))
+    );
+  end Page_Setup;
+
   y_scale: constant:= 20; -- scaling to obtain character point (pt) units
 
   -- 5.32 DEFAULTROWHEIGHT

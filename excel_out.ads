@@ -117,6 +117,17 @@ package Excel_Out is
   --
   procedure Print_Row_Column_Headers(xl : Excel_Out_Stream);
   procedure Print_Gridlines(xl : Excel_Out_Stream);
+  --
+  type Orientation_choice is (landscape, portrait);
+  type Scale_or_fit_choice is (scale, fit);
+  procedure Page_Setup(
+    xl                     : Excel_Out_Stream;
+    scaling_percents       : Positive:= 100;
+    fit_width_with_n_pages : Natural:= 1; -- 0: as many as possible
+    fit_height_with_n_pages: Natural:= 1; -- 0: as many as possible
+    orientation            : Orientation_choice:= portrait;
+    scale_or_fit           : Scale_or_fit_choice:= scale
+  );
 
   -- * The column width unit is as it appears in Excel when you resize a column.
   --     It is the width of a '0' in a standard font.
