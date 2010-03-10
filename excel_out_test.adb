@@ -25,9 +25,8 @@ procedure Excel_Out_Test is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5: Font_type;
     fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7: Format_type;
+    custom_1: Number_format_type;
   begin
-    Define_custom_number_format(xl, custom_1, "0.000000"); -- 6 decimals
-    --
     Create(xl, "Big.xls");
     -- Some page layout...
     Header(xl, "Big demo");
@@ -51,6 +50,8 @@ procedure Excel_Out_Test is
     Define_font(xl, "Times New Roman", 14, font_3, bold);
     Define_font(xl, "Arial Narrow", 16, font_4, bold);
     Define_font(xl, "Calibri", 16, font_5, bold, yellow);
+    --
+    Define_custom_number_format(xl, custom_1, "0.000000"); -- 6 decimals
     --
     Define_format(xl, font_1, percent_0, fmt_1, centred, right);
     Define_format(xl, font_2, decimal_2, fmt_2);

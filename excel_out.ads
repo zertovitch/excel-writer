@@ -192,34 +192,31 @@ package Excel_Out is
   function Default_format(xl: Excel_Out_Stream) return Format_type;
   -- What you get when creating a new sheet in Excel: Default_font,...
 
-  type Number_format_type is
-    ( general,
-      decimal_0, decimal_2,
-      decimal_0_thousands_separator,  -- 1'234'000
-      decimal_2_thousands_separator,  -- 1'234'000.00
-      percent_0, percent_2,           --  3%, 0%, -4%
-      percent_0_plus, percent_2_plus, -- +3%, 0%, -4%
-      scientific,
-      custom_1, custom_2, custom_3,
-      custom_4, custom_5, custom_6,
-      custom_7, custom_8, custom_9
-    );
+  type Number_format_type is private;
+
+  -- Built-in formats
+  general   : constant Number_format_type;
+  decimal_0 : constant Number_format_type;
+  decimal_2 : constant Number_format_type;
+  decimal_0_thousands_separator: constant Number_format_type;  -- 1'234'000
+  decimal_2_thousands_separator: constant Number_format_type;  -- 1'234'000.00
+  percent_0     : constant Number_format_type;   --  3%, 0%, -4%
+  percent_2     : constant Number_format_type;
+  percent_0_plus: constant Number_format_type; -- +3%, 0%, -4%
+  percent_2_plus: constant Number_format_type;
+  scientific : constant Number_format_type;
   -- NB: A number format working on Excel with certain regional settings
   -- may not work on Excel (even the same) with other regional settings!
   -- Hence the limited choice of built-in formats above.
 
-  subtype Custom_number_format_type is
-    Number_format_type range custom_1 .. custom_9;
-
   procedure Define_custom_number_format(
     xl           : in out Excel_Out_Stream;
-    format       : Custom_number_format_type;
-    format_string: String
+    format       :    out Number_format_type;
+    format_string: in     String
   );
-  -- NB: Custom number formats must be defined BEFORE calling Create
 
   type Horizontal_alignment is (
-    general, to_left, centred, to_right, filled,
+    general_alignment, to_left, centred, to_right, filled,
     justified, centred_across_selection, -- (BIFF4-BIFF8)
     distributed -- (BIFF8, Excel 10.0 and later only)
   );
@@ -242,7 +239,7 @@ package Excel_Out is
     number_format: in     Number_format_type;
     format       :    out Format_type;
     -- optional:
-    horiz_align  : in     Horizontal_alignment:= general;
+    horiz_align  : in     Horizontal_alignment:= general_alignment;
     border       : in     Cell_border:= no_border;
     shaded       : in     Boolean:= False
   );
@@ -362,7 +359,21 @@ private
   max_font  : constant:= 62;
   max_format: constant:= 62;
 
-  type Custom_num_fmts is array(Custom_number_format_type) of Unbounded_String;
+  type Number_format_type is new Natural;
+
+  -- Built-in number formats
+  general       : constant Number_format_type:= 0;
+  decimal_0     : constant Number_format_type:= 1;
+  decimal_2     : constant Number_format_type:= 2;
+  decimal_0_thousands_separator: constant Number_format_type:= 3;  -- 1'234'000
+  decimal_2_thousands_separator: constant Number_format_type:= 4;  -- 1'234'000.00
+  percent_0     : constant Number_format_type:= 5; --  3%, 0%, -4%
+  percent_2     : constant Number_format_type:= 6;
+  percent_0_plus: constant Number_format_type:= 7; -- +3%, 0%, -4%
+  percent_2_plus: constant Number_format_type:= 8;
+  scientific    : constant Number_format_type:= 9;
+
+  last_built_in : constant Number_format_type:= scientific;
 
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and
@@ -380,6 +391,7 @@ private
     fonts      : Integer:= -1; -- [-1..max_font]
     xfs        : Integer:= -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range:= 0;
+    number_fmt : Number_format_type:= last_built_in;
     def_font   : Font_type;
     def_fmt    : Format_type; -- Default format; used for "Normal" style
     pct_fmt    : Format_type; -- Format used for defining "Percent" style
@@ -388,7 +400,6 @@ private
     is_closed  : Boolean:= False;
     curr_row   : Positive:= 1;
     curr_col   : Positive:= 1;
-    num_fmts   : Custom_num_fmts;
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;

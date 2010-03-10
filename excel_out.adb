@@ -120,46 +120,40 @@ package body Excel_Out is
     WriteBiff(xl, 16#000A#, (1..0 => 0));
   end WriteEOF;
 
+  -- 5.49 FORMAT (number format)
+  procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
+  begin
+    case xl.format is
+      when BIFF2 =>
+        WriteBiff(xl, 16#001E#, To_buf(s));
+    end case;
+  end WriteFmtStr;
+
+  -- Write built-in number formats
   procedure WriteFmtRecords (xl : Excel_Out_Stream'Class) is
-
-    -- 5.49 FORMAT (number format)
-    procedure WriteFmtStr (s : String) is
-    begin
-      case xl.format is
-        when BIFF2 =>
-          WriteBiff(xl, 16#001E#, To_buf(s));
-      end case;
-    end WriteFmtStr;
-
-    fmt_count: constant:= 3;
-
   begin
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#001F#, Intel_16(fmt_count));
+        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in)));
     end case;
     -- loop & case avoid omitting any choice
-    for n in Number_format_type loop
+    for n in Number_format_type'First .. last_built_in loop
       case n is
-        when general    =>  WriteFmtStr("General");
-        when decimal_0  =>  WriteFmtStr("0");
-        when decimal_2  =>  WriteFmtStr("0.00"); -- 'Comma' built-in style
+        when general    =>  WriteFmtStr(xl, "General");
+        when decimal_0  =>  WriteFmtStr(xl, "0");
+        when decimal_2  =>  WriteFmtStr(xl, "0.00"); -- 'Comma' built-in style
         when decimal_0_thousands_separator =>
-                            WriteFmtStr("#'##0");
+                            WriteFmtStr(xl, "#'##0");
         when decimal_2_thousands_separator =>
-                            WriteFmtStr("#'##0.00");
-        when percent_0  =>  WriteFmtStr("0%");   -- 'Percent' built-in style
-        when percent_2  =>  WriteFmtStr("0.00%");
+                            WriteFmtStr(xl, "#'##0.00");
+        when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
+        when percent_2  =>  WriteFmtStr(xl, "0.00%");
         when percent_0_plus  =>
-          WriteFmtStr("+0%;-0%;0%");
+          WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
-          WriteFmtStr("+0.00%;-0.00%;0.00%");
-        when scientific =>  WriteFmtStr("0.00E+00");
-        when Custom_number_format_type =>
-          if To_String(xl.num_fmts(n)) /= "" then
-            WriteFmtStr(To_String(xl.num_fmts(n)));
-          end if;
+          WriteFmtStr(xl, "+0.00%;-0.00%;0.00%");
+        when scientific =>  WriteFmtStr(xl, "0.00E+00");
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
@@ -180,12 +174,14 @@ package body Excel_Out is
 
   procedure Define_custom_number_format(
     xl           : in out Excel_Out_Stream;
-    format       : Custom_number_format_type;
-    format_string: String
+    format       :    out Number_format_type;
+    format_string: in     String
   )
   is
   begin
-    xl.num_fmts(format):= To_Unbounded_String(format_string);
+    xl.number_fmt:= xl.number_fmt + 1;
+    format:= xl.number_fmt;
+    WriteFmtStr(xl, format_string);
   end Define_custom_number_format;
 
   procedure Write_Worksheet_header(xl : in out Excel_Out_Stream'Class) is
@@ -239,7 +235,7 @@ package body Excel_Out is
     number_format: in     Number_format_type;
     format       :    out Format_type;
     -- optional:
-    horiz_align  : in     Horizontal_alignment:= general;
+    horiz_align  : in     Horizontal_alignment:= general_alignment;
     border       : in     Cell_border:= no_border;
     shaded       : in     Boolean:= False
   )
@@ -719,7 +715,6 @@ package body Excel_Out is
   )
   is
     dummy_xl_with_defaults: Excel_Out_Pre_Root_Type;
-    save_num_fmts: constant Custom_num_fmts:= xl.num_fmts;
   begin
     -- Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
@@ -727,7 +722,6 @@ package body Excel_Out is
     end if;
     -- We will reset evything with defaults, except this:
     dummy_xl_with_defaults.format:= format;
-    dummy_xl_with_defaults.num_fmts:= save_num_fmts;
     -- Now we reset xl:
     Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
   end Reset;
