@@ -150,6 +150,46 @@ package Excel_Out is
   procedure Write_default_row_height(xl: Excel_Out_Stream; height: Positive);
   procedure Write_row_height(xl : Excel_Out_Stream; row: Positive; height : Natural);
 
+  ----------------------
+  -- Formatting cells --
+  ----------------------
+  -- A cell format is, as you can see in the format dialog
+  -- in Excel, a combination of:
+  --   - a number format
+  --   - a set of alignements
+  --   - a font
+  --   - and other optional things to come...
+  -- Formats are user-defined except one which is predefined: Default_format
+
+  type Format_type is private;
+
+  function Default_format(xl: Excel_Out_Stream) return Format_type;
+  -- What you get when creating a new sheet in Excel: Default_font,...
+
+  -- * Number format
+  type Number_format_type is private;
+
+  -- Built-in number formats
+  general       : constant Number_format_type;
+  decimal_0     : constant Number_format_type;
+  decimal_2     : constant Number_format_type;
+  decimal_0_thousands_separator: constant Number_format_type;  -- 1'234'000
+  decimal_2_thousands_separator: constant Number_format_type;  -- 1'234'000.00
+  percent_0     : constant Number_format_type;   --  3%, 0%, -4%
+  percent_2     : constant Number_format_type;
+  percent_0_plus: constant Number_format_type; -- +3%, 0%, -4%
+  percent_2_plus: constant Number_format_type;
+  scientific : constant Number_format_type;
+  -- NB: A number format working on Excel with certain regional settings
+  -- may not work on Excel (even the same) with other regional settings!
+  -- Hence the limited choice of built-in formats above.
+
+  procedure Define_number_format(
+    xl           : in out Excel_Out_Stream;
+    format       :    out Number_format_type;
+    format_string: in     String
+  );
+
   -- * Fonts are user-defined, one is predefined: Default_font
   type Font_type is private;
 
@@ -161,7 +201,7 @@ package Excel_Out is
 
   type Font_style is private;
 
-  -- for combining styles (e.g.: bold & underlined):
+  -- For combining font styles (e.g.: bold & underlined):
   function "&"(a,b: Font_style) return Font_style;
 
   regular     : constant Font_style;
@@ -184,37 +224,6 @@ package Excel_Out is
     color        :        Color_type:= automatic
   );
 
-  -- * Format: a [cell] format is a combination of a font, a number format
-  -- (and other optional things to come...)
-  -- Formats are user-defined, one is predefined: Default_format
-  type Format_type is private;
-
-  function Default_format(xl: Excel_Out_Stream) return Format_type;
-  -- What you get when creating a new sheet in Excel: Default_font,...
-
-  type Number_format_type is private;
-
-  -- Built-in formats
-  general   : constant Number_format_type;
-  decimal_0 : constant Number_format_type;
-  decimal_2 : constant Number_format_type;
-  decimal_0_thousands_separator: constant Number_format_type;  -- 1'234'000
-  decimal_2_thousands_separator: constant Number_format_type;  -- 1'234'000.00
-  percent_0     : constant Number_format_type;   --  3%, 0%, -4%
-  percent_2     : constant Number_format_type;
-  percent_0_plus: constant Number_format_type; -- +3%, 0%, -4%
-  percent_2_plus: constant Number_format_type;
-  scientific : constant Number_format_type;
-  -- NB: A number format working on Excel with certain regional settings
-  -- may not work on Excel (even the same) with other regional settings!
-  -- Hence the limited choice of built-in formats above.
-
-  procedure Define_custom_number_format(
-    xl           : in out Excel_Out_Stream;
-    format       :    out Number_format_type;
-    format_string: in     String
-  );
-
   type Horizontal_alignment is (
     general_alignment, to_left, centred, to_right, filled,
     justified, centred_across_selection, -- (BIFF4-BIFF8)
@@ -235,8 +244,8 @@ package Excel_Out is
 
   procedure Define_format(
     xl           : in out Excel_Out_Stream;
-    font         : in     Font_type;   -- given by Define_font
-    number_format: in     Number_format_type;
+    font         : in     Font_type;          -- Default_font(xl), or given by Define_font
+    number_format: in     Number_format_type; -- built-in, or given by Define_number_format
     format       :    out Format_type;
     -- optional:
     horiz_align  : in     Horizontal_alignment:= general_alignment;

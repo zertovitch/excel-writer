@@ -172,7 +172,7 @@ package body Excel_Out is
     end case;
   end WriteDimensions;
 
-  procedure Define_custom_number_format(
+  procedure Define_number_format(
     xl           : in out Excel_Out_Stream;
     format       :    out Number_format_type;
     format_string: in     String
@@ -182,7 +182,7 @@ package body Excel_Out is
     xl.number_fmt:= xl.number_fmt + 1;
     format:= xl.number_fmt;
     WriteFmtStr(xl, format_string);
-  end Define_custom_number_format;
+  end Define_number_format;
 
   procedure Write_Worksheet_header(xl : in out Excel_Out_Stream'Class) is
     Percent_Style   : constant:= 5;
@@ -231,8 +231,8 @@ package body Excel_Out is
   -- 5.115 XF - Extended Format
   procedure Define_format(
     xl           : in out Excel_Out_Stream;
-    font         : in     Font_type;   -- given by Define_font
-    number_format: in     Number_format_type;
+    font         : in     Font_type;          -- Default_font(xl), or given by Define_font
+    number_format: in     Number_format_type; -- built-in, or given by Define_number_format
     format       :    out Format_type;
     -- optional:
     horiz_align  : in     Horizontal_alignment:= general_alignment;
