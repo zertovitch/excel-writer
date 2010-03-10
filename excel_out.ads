@@ -60,6 +60,11 @@
 -- Main changes:
 -- ============
 --
+-- 06: 16-Mar-2010: - added page layout
+--                  - added custom number formats
+--                  - added styles (% ,)
+--                  - fixed Write_column_width
+--
 -- 05: 16-Feb-2010: - small Ada compliance issue fixed - see
 --                      Excel_Out_Pre_Root_Type
 --     10-Feb-2010: - added 'width' and 'base' optional parameters
@@ -94,7 +99,7 @@ package Excel_Out is
     BIFF2     -- Excel 2.x: the oldest & easiest format
               --            - and necessarily the most compatible
     -- BIFF3,    -- Excel 3.0
-    -- BIFF4,    -- Excel 4.0
+    -- BIFF4,    -- Excel 4.0 <-- last format as standalone file
     -- BIFF5,    -- Excel 5.0 to 7.0
     -- BIFF8     -- Excel 8.0 to 11.0
   );
@@ -194,12 +199,24 @@ package Excel_Out is
       decimal_2_thousands_separator,  -- 1'234'000.00
       percent_0, percent_2,           --  3%, 0%, -4%
       percent_0_plus, percent_2_plus, -- +3%, 0%, -4%
-      scientific
+      scientific,
+      custom_1, custom_2, custom_3,
+      custom_4, custom_5, custom_6,
+      custom_7, custom_8, custom_9
     );
-  -- Number formats are all predefined: must be listed as built-in, grouped;
-  -- A number format working on Excel with certain regional settings may not
-  -- work on Excel (even the same) with other regional settings!
-  -- Hence the limited choice above.
+  -- NB: A number format working on Excel with certain regional settings
+  -- may not work on Excel (even the same) with other regional settings!
+  -- Hence the limited choice of built-in formats above.
+
+  subtype Custom_number_format_type is
+    Number_format_type range custom_1 .. custom_9;
+
+  procedure Define_custom_number_format(
+    xl           : in out Excel_Out_Stream;
+    format       : Custom_number_format_type;
+    format_string: String
+  );
+  -- NB: Custom number formats must be defined BEFORE calling Create
 
   type Horizontal_alignment is (
     general, to_left, centred, to_right, filled,
@@ -312,8 +329,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "05";
-  reference : constant String:= "27-Feb-2010";
+  version   : constant String:= "06";
+  reference : constant String:= "13-Mar-2010";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -345,6 +362,8 @@ private
   max_font  : constant:= 62;
   max_format: constant:= 62;
 
+  type Custom_num_fmts is array(Custom_number_format_type) of Unbounded_String;
+
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and
   -- can help re-initialize a Excel_Out_Stream when re-used several times.
@@ -369,6 +388,7 @@ private
     is_closed  : Boolean:= False;
     curr_row   : Positive:= 1;
     curr_col   : Positive:= 1;
+    num_fmts   : Custom_num_fmts;
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;

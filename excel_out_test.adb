@@ -24,8 +24,10 @@ procedure Excel_Out_Test is
   procedure Big_demo is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6: Format_type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7: Format_type;
   begin
+    Define_custom_number_format(xl, custom_1, "0.000000"); -- 6 decimals
+    --
     Create(xl, "Big.xls");
     -- Some page layout...
     Header(xl, "Big demo");
@@ -36,6 +38,7 @@ procedure Excel_Out_Test is
     --
     Write_default_column_width(xl, 7);
     Write_column_width(xl, 1, 15); -- set to width of 15 times '0'
+    Write_column_width(xl, 5, 11);
     Write_column_width(xl, 14, 0); -- hide this column
     --
     Write_default_row_height(xl, 20);
@@ -55,9 +58,10 @@ procedure Excel_Out_Test is
     Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     Define_format(xl, font_5, general,   fmt_6, border => box);
+    Define_format(xl, font_1, custom_1,  fmt_7, centred);
     --
     Use_format(xl, fmt_4);
-    Put(xl, "This is a big demo for Excel_Out");
+    Put(xl, "This is a big demo for Excel Writer / Excel_Out");
     Jump(xl, 0, 7);
     Put(xl, "Version: " & version);
     Jump_to(xl, 1, 13);
@@ -88,6 +92,8 @@ procedure Excel_Out_Test is
       Write(xl, row, 3, Long_Float(row) * 0.01);
       Use_format(xl, fmt_5);
       Put(xl, Long_Float(row-100) * 0.001);
+      Use_format(xl, fmt_7);
+      Put(xl, Long_Float(row-13) + 0.123456);
     end loop;
     Close(xl);
   end Big_demo;

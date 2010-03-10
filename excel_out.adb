@@ -156,6 +156,10 @@ package body Excel_Out is
         when percent_2_plus  =>
           WriteFmtStr("+0.00%;-0.00%;0.00%");
         when scientific =>  WriteFmtStr("0.00E+00");
+        when Custom_number_format_type =>
+          if To_String(xl.num_fmts(n)) /= "" then
+            WriteFmtStr(To_String(xl.num_fmts(n)));
+          end if;
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
@@ -173,6 +177,16 @@ package body Excel_Out is
         );
     end case;
   end WriteDimensions;
+
+  procedure Define_custom_number_format(
+    xl           : in out Excel_Out_Stream;
+    format       : Custom_number_format_type;
+    format_string: String
+  )
+  is
+  begin
+    xl.num_fmts(format):= To_Unbounded_String(format_string);
+  end Define_custom_number_format;
 
   procedure Write_Worksheet_header(xl : in out Excel_Out_Stream'Class) is
     Percent_Style   : constant:= 5;
@@ -705,12 +719,16 @@ package body Excel_Out is
   )
   is
     dummy_xl_with_defaults: Excel_Out_Pre_Root_Type;
+    save_num_fmts: constant Custom_num_fmts:= xl.num_fmts;
   begin
     -- Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
       raise Excel_stream_not_closed;
     end if;
+    -- We will reset evything with defaults, except this:
     dummy_xl_with_defaults.format:= format;
+    dummy_xl_with_defaults.num_fmts:= save_num_fmts;
+    -- Now we reset xl:
     Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
   end Reset;
 
