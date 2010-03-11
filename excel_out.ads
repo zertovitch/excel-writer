@@ -62,7 +62,7 @@
 --
 -- 06: 16-Mar-2010: - added page layout
 --                  - added custom number formats
---                  - added styles (% ,)
+--                  - added styles (% or ,)
 --                  - fixed Write_column_width
 --
 -- 05: 16-Feb-2010: - small Ada compliance issue fixed - see
@@ -158,7 +158,7 @@ package Excel_Out is
   --   - a number format
   --   - a set of alignements
   --   - a font
-  --   - and other optional things to come...
+  --   - and other optional things to come here...
   -- Formats are user-defined except one which is predefined: Default_format
 
   type Format_type is private;
@@ -246,7 +246,7 @@ package Excel_Out is
     xl           : in out Excel_Out_Stream;
     font         : in     Font_type;          -- Default_font(xl), or given by Define_font
     number_format: in     Number_format_type; -- built-in, or given by Define_number_format
-    format       :    out Format_type;
+    cell_format  :    out Format_type;
     -- optional:
     horiz_align  : in     Horizontal_alignment:= general_alignment;
     border       : in     Cell_border:= no_border;
@@ -257,15 +257,19 @@ package Excel_Out is
   -- (3) Cell contents: --
   ------------------------
 
-  -- NB: you need to write row by row (ascending index), column by
-  --     column (ascending index), otherwise Excel issues a protest
+  -- NB: you need to write with ascending row index and with ascending
+  --     column index within a row; otherwise Excel issues a protest
 
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; num : Long_Float);
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; num : Integer);
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; str : String);
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; str : Unbounded_String);
 
-  -- Ada.Text_IO - like. No need to specify row & column each time
+  -- "Ada.Text_IO" - like output.
+  -- No need to specify row & column each time.
+  -- Write 'Put(x, content)' where x is an Excel_Out_Stream just
+  -- as if x was a File_Type, and vice-versa.
+  --
   procedure Put(xl: in out Excel_Out_Stream; num : Long_Float);
   procedure Put(xl    : in out Excel_Out_Stream;
                 num   : in Integer;
@@ -304,27 +308,27 @@ package Excel_Out is
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
   -----------------------------------------------------------------
-  -- * Output to file:
+  -- * Output to a file:
 
   type Excel_Out_File is new Excel_Out_Stream with private;
 
   procedure Create(
-    xl        : in out Excel_Out_File;
-    file_name :        String;
-    format    :        Excel_type:= Default_Excel_type
+    xl           : in out Excel_Out_File;
+    file_name    :        String;
+    excel_format :        Excel_type:= Default_Excel_type
   );
 
   procedure Close(xl : in out Excel_Out_File);
 
   function Is_Open(xl : in Excel_Out_File) return Boolean;
 
-  -- * Output to string:
+  -- * Output to a string (to be compressed, packaged, transmitted, ... ):
 
   type Excel_Out_String is new Excel_Out_Stream with private;
 
   procedure Create(
-    xl        : in out Excel_Out_String;
-    format    :        Excel_type:= Default_Excel_type
+    xl           : in out Excel_Out_String;
+    excel_format :        Excel_type:= Default_Excel_type
   );
 
   procedure Close(xl : in out Excel_Out_String);

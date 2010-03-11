@@ -233,7 +233,7 @@ package body Excel_Out is
     xl           : in out Excel_Out_Stream;
     font         : in     Font_type;          -- Default_font(xl), or given by Define_font
     number_format: in     Number_format_type; -- built-in, or given by Define_number_format
-    format       :    out Format_type;
+    cell_format  :    out Format_type;
     -- optional:
     horiz_align  : in     Horizontal_alignment:= general_alignment;
     border       : in     Cell_border:= no_border;
@@ -267,7 +267,7 @@ package body Excel_Out is
         );
     end case;
     xl.xfs:= xl.xfs + 1;
-    format:= Format_type(xl.xfs);
+    cell_format:= Format_type(xl.xfs);
   end Define_Format;
 
   procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
@@ -710,8 +710,8 @@ package body Excel_Out is
   end Default_format;
 
   procedure Reset(
-    xl        : in out Excel_Out_Stream'Class;
-    format    :        Excel_type:= Default_Excel_type
+    xl           : in out Excel_Out_Stream'Class;
+    excel_format :        Excel_type:= Default_Excel_type
   )
   is
     dummy_xl_with_defaults: Excel_Out_Pre_Root_Type;
@@ -721,7 +721,7 @@ package body Excel_Out is
       raise Excel_stream_not_closed;
     end if;
     -- We will reset evything with defaults, except this:
-    dummy_xl_with_defaults.format:= format;
+    dummy_xl_with_defaults.format:= excel_format;
     -- Now we reset xl:
     Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
   end Reset;
@@ -739,13 +739,13 @@ package body Excel_Out is
   ----------------------
 
   procedure Create(
-    xl        : in out Excel_Out_File;
-    file_name :        String;
-    format    :        Excel_type:= Default_Excel_type
+    xl           : in out Excel_Out_File;
+    file_name    :        String;
+    excel_format :        Excel_type:= Default_Excel_type
   )
   is
   begin
-    Reset(xl, format);
+    Reset(xl, excel_format);
     xl.xl_file:= new Ada.Streams.Stream_IO.File_Type;
     Create(xl.xl_file.all, Out_File, file_name);
     xl.xl_stream:= XL_Raw_Stream_Class(Stream(xl.xl_file.all));
@@ -846,12 +846,12 @@ package body Excel_Out is
   --- ***
 
   procedure Create(
-    xl        : in out Excel_Out_String;
-    format    :        Excel_type:= Default_Excel_type
+    xl           : in out Excel_Out_String;
+    excel_format :        Excel_type:= Default_Excel_type
   )
   is
   begin
-    Reset(xl, format);
+    Reset(xl, excel_format);
     xl.xl_memory:= new Unbounded_Stream;
     xl.xl_memory.Unb:= Null_Unbounded_String;
     xl.xl_memory.Loc:= 1;
