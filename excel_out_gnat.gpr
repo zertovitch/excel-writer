@@ -1,4 +1,7 @@
-project Excel_Out_Gnat is -- project file for GNAT & GNAT Programming Studio
+-- Project file for GNAT/GCC or the GNAT Programming Studio
+-- Build me with "gnatmake -P excel_out_gnat.gpr"
+--
+project Excel_Out_Gnat is 
 
    for Main use ("excel_out_test.adb", "biff_dump.adb");
    for Source_Dirs use (".", "extras");

@@ -1,0 +1,92 @@
+Intro to Excel Writer 
+=====================
+Excel Writer consists in a package, Excel_Out, which
+produces Excel files (or other data streams) as simply
+as this small procedure:
+
+  with Excel_Out; use Excel_Out;
+   
+  procedure Small_demo is 
+    xl: Excel_Out_File;
+  begin 
+    xl.Create("Small.xls");
+    xl.Put_Line("Hello world !");
+    xl.Close;
+  end;
+
+Contents
+========
+  - excel_out.ads        : package specification
+  - excel_out.adb        : package body
+  - excel_out_test.adb   : test/demo procedure
+  - excel_out_gnat.gpr   : project file for the GNAT compiler
+  - excel_writer.txt     : this file
+  - ieee_754*            : package used by excel_out.adb
+  - extras/biff_dump.adb : procedure for viewing the BIFF format
+  - extras/csv.ads       : csv parser, specification
+  - extras/csv.adb       : csv parser, body
+  
+How to build and test Excel Writer
+==================================
+Here is how to build with GNAT/GCC (for other compilers, it
+should be simple as well):
+    - type "gnatmake -P excel_out_gnat.gpr" in the command line
+or
+    - type "gnatmake excel_out_test" in the command line
+or
+    - open the excel_out_gnat.gpr file with the GNAT Programming Studio (GPS),
+      press F4
+or
+    - open excel_out_test.adb with AdaGIDE, press F3
+or
+    - your way...
+
+As a result there is a excel_out_test[.exe] executable.
+  
+Type hierarchy
+==============
+  |- Excel_Out_Stream  : root type, abstract)
+  \
+   |- Excel_Out_File   : type for writing to files (defined in Excel_Out)
+   |- Excel_Out_String : type for writing to strings (defined in Excel_Out)
+
+How to create properly Excel files or streams
+=============================================
+Most, if not all possibilities are in the Big_demo procedure
+nested in Excel_Out_Test. So it is a good place to pick code...
+
+To summarize, you need to define the spreadsheet contents in
+a certain order:
+
+1. Create
+
+2. Optional settings, before any data output:
+   | Define page layout (see Header, Footer, Page_Setup, ...)
+   | Write_default_column_width
+   | Write_column_width for specific columns
+   | Write_default_row_height
+   | Write_row_height for specific rows
+   | Define_font, then Define_format
+
+3. | Write(xl, row, column, data): row by row, column by column
+   | Put(xl, data)               : same, but column is auto-incremented
+   | New_Line(xl),...            : other "Text_IO"-like
+   | Use_format, infuences the format of data written next
+
+4. Close
+
+5. (Excel_Out_String only) function Contents returns the full .xls
+
+As you observed, you can write cell contents by setting for each cell
+the target row and column, with Write, or by using Put,
+Put_Line, New_Line, just like Ada.Text_IO. Both ways can be mixed
+ad libitum.
+
+Warning & legal
+===============
+
+There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
+
+Enjoy!
+
+Gautier de Montmollin
