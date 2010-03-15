@@ -25,6 +25,10 @@ Contents
   - extras/biff_dump.adb : procedure for viewing the BIFF format
   - extras/csv.ads       : csv parser, specification
   - extras/csv.adb       : csv parser, body
+
+Warning & legal
+===============
+There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
   
 How to build and test Excel Writer
 ==================================
@@ -45,10 +49,12 @@ As a result there is a excel_out_test[.exe] executable.
   
 Type hierarchy
 ==============
-  |- Excel_Out_Stream  : root type, abstract)
+  |- Excel_Out_Stream  : root type, abstract
   \
    |- Excel_Out_File   : type for writing to files (defined in Excel_Out)
    |- Excel_Out_String : type for writing to strings (defined in Excel_Out)
+   |
+   |- (your own stream!)
 
 How to create properly Excel files or streams
 =============================================
@@ -81,11 +87,6 @@ As you observed, you can write cell contents by setting for each cell
 the target row and column, with Write, or by using Put,
 Put_Line, New_Line, just like Ada.Text_IO. Both ways can be mixed
 ad libitum.
-
-Warning & legal
-===============
-
-There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
 
 Enjoy!
 
