@@ -1,5 +1,5 @@
--- Project file for GNAT/GCC or the GNAT Programming Studio
--- Build me with "gnatmake -P excel_out_gnat.gpr"
+-- Project file for GNAT/GCC or the GNAT Programming Studio (GPS)
+-- Build me with "gnatmake -P excel_out_gnat.gpr", or open me with GPS
 --
 project Excel_Out_Gnat is 
 
@@ -7,6 +7,9 @@ project Excel_Out_Gnat is
    for Source_Dirs use (".", "extras");
    for Object_Dir use "obj";
    for Exec_Dir use ".";
+   package Ide is
+      for Default_Switches ("adacontrol") use ("-f", "verif.aru");
+   end Ide;
    
 end Excel_Out_Gnat;
 
