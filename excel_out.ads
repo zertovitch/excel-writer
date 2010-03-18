@@ -50,7 +50,7 @@
 --  3. | Write(xl, row, column, data): row by row, column by column
 --     | Put(xl, data)               : same, but column is auto-incremented
 --     | New_Line(xl),...            : other "Text_IO"-like (full list below)
---     | Use_format, infuences the format of data written next
+--     | Use_format, influences the format of data written next
 --
 --  4. Close
 --

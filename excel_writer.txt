@@ -1,6 +1,6 @@
 Intro to Excel Writer 
 =====================
-Excel Writer consists in a package, Excel_Out, which
+Excel Writer consists of a package, Excel_Out, which
 produces Excel files (or other data streams) as simply
 as this small procedure:
 
@@ -77,7 +77,7 @@ a certain order:
 3. | Write(xl, row, column, data): row by row, column by column
    | Put(xl, data)               : same, but column is auto-incremented
    | New_Line(xl),...            : other "Text_IO"-like
-   | Use_format, infuences the format of data written next
+   | Use_format, influences the format of data written next
 
 4. Close
 
