@@ -148,13 +148,14 @@ package body Excel_Out is
         when decimal_2_thousands_separator =>
                             WriteFmtStr(xl, "#'##0.00");
         when currency_0      =>
-          WriteFmtStr(xl, """$ ""\ #'##0;""$ ""\ \-#'##0");
+          WriteFmtStr(xl, "$ #'##0;$ -#'##0");
         when currency_red_0  =>
-          WriteFmtStr(xl, """$ ""\ #'##0;[Red]""$ ""\ \-#'##0");
+          WriteFmtStr(xl, "$ #'##0;$ -#'##0");
+          -- [Red] doesn't go with non-English versions of Excel !!
         when currency_2      =>
-          WriteFmtStr(xl, """$ ""\ #'##0.00;""$ ""\ \-#'##0.00");
+          WriteFmtStr(xl, "$ #'##0.00;$ -#'##0.00");
         when currency_red_2  =>
-          WriteFmtStr(xl, """$ ""\ #'##0.00;[Red]""$ ""\ \-#'##0.00");
+          WriteFmtStr(xl, "$ #'##0.00;$ -#'##0.00");
         when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
         when percent_2  =>  WriteFmtStr(xl, "0.00%");
         when scientific =>  WriteFmtStr(xl, "0.00E+00");
