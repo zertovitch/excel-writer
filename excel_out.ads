@@ -4,6 +4,8 @@
 --
 -- Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
 --
+-- Version / date / download info: see the version, reference, web strings
+--   defined at the end of the public part of this package.
 
 -- Legal licensing note:
 
@@ -339,8 +341,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "06";
-  reference : constant String:= "13-Mar-2010";
+  version   : constant String:= "07";
+  reference : constant String:= "4-Mar-2011";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -366,13 +368,25 @@ private
   type XL_Raw_Stream_Class is access all Ada.Streams.Root_Stream_Type'Class;
 
   type Font_type is new Natural;
+  type Number_format_type is new Natural;
   type Format_type is new Natural;
 
-  type XF_Range is range 0..62; -- after 62 we'd need to use an IXFE (5.62)
+  subtype XF_Range is Integer range 0..62; -- after 62 we'd need to use an IXFE (5.62)
   max_font  : constant:= 62;
   max_format: constant:= 62;
 
-  type Number_format_type is new Natural;
+  -- Theoretically, we would not need to memorize the XF informations
+  -- and just give the XF identifier given with Format_type, but some
+  -- versions of Excel with some locales mix up the font and numerical format
+  -- when giving 0 for the cell attributes (see Cell_attributes, 2.5.13)
+  --   Added Mar-2011.
+
+  type XF_Info is record
+    font: Font_type;
+    numb: Number_format_type;
+  end record;
+
+  type XF_Definition is array(XF_Range) of XF_Info;
 
   -- Built-in number formats
   general       : constant Number_format_type:= 0;
@@ -380,13 +394,17 @@ private
   decimal_2     : constant Number_format_type:= 2;
   decimal_0_thousands_separator: constant Number_format_type:= 3;  -- 1'234'000
   decimal_2_thousands_separator: constant Number_format_type:= 4;  -- 1'234'000.00
-  percent_0     : constant Number_format_type:= 5; --  3%, 0%, -4%
-  percent_2     : constant Number_format_type:= 6;
-  percent_0_plus: constant Number_format_type:= 7; -- +3%, 0%, -4%
-  percent_2_plus: constant Number_format_type:= 8;
-  scientific    : constant Number_format_type:= 9;
+  currency_0    : constant Number_format_type:= 5;
+  currency_red_0: constant Number_format_type:= 6;
+  currency_2    : constant Number_format_type:= 7;
+  currency_red_2: constant Number_format_type:= 8;
+  percent_0     : constant Number_format_type:= 9; --  3%, 0%, -4%
+  percent_2     : constant Number_format_type:= 10;
+  scientific    : constant Number_format_type:= 11;
+  percent_0_plus: constant Number_format_type:= 12; -- +3%, 0%, -4%
+  percent_2_plus: constant Number_format_type:= 13;
 
-  last_built_in : constant Number_format_type:= scientific;
+  last_built_in : constant Number_format_type:= percent_2_plus;
 
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and
@@ -404,11 +422,13 @@ private
     fonts      : Integer:= -1; -- [-1..max_font]
     xfs        : Integer:= -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range:= 0;
+    xf_def     : XF_Definition;
     number_fmt : Number_format_type:= last_built_in;
     def_font   : Font_type;
     def_fmt    : Format_type; -- Default format; used for "Normal" style
-    pct_fmt    : Format_type; -- Format used for defining "Percent" style
     cma_fmt    : Format_type; -- Format used for defining "Comma" style
+    ccy_fmt    : Format_type; -- Format used for defining "Currency" style
+    pct_fmt    : Format_type; -- Format used for defining "Percent" style
     is_created : Boolean:= False;
     is_closed  : Boolean:= False;
     curr_row   : Positive:= 1;

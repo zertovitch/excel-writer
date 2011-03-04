@@ -98,8 +98,8 @@ procedure BIFF_Dump is
   begin
     Put(xl, "xf=" & Integer'Image(in8 mod 16#40#));
     Read(f,b);
-    Put(xl, "format=" & Unsigned_8'Image(b mod 16#40#));
-    Put(xl, "font="   & Unsigned_8'Image(b / 16#40#));
+    Put(xl, "num format=" & Unsigned_8'Image(b mod 16#40#));
+    Put(xl, "font="       & Unsigned_8'Image(b / 16#40#));
     Read(f,b);
   end;
 

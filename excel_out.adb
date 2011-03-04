@@ -147,13 +147,21 @@ package body Excel_Out is
                             WriteFmtStr(xl, "#'##0");
         when decimal_2_thousands_separator =>
                             WriteFmtStr(xl, "#'##0.00");
+        when currency_0      =>
+          WriteFmtStr(xl, """$ ""\ #'##0;""$ ""\ \-#'##0");
+        when currency_red_0  =>
+          WriteFmtStr(xl, """$ ""\ #'##0;[Red]""$ ""\ \-#'##0");
+        when currency_2      =>
+          WriteFmtStr(xl, """$ ""\ #'##0.00;""$ ""\ \-#'##0.00");
+        when currency_red_2  =>
+          WriteFmtStr(xl, """$ ""\ #'##0.00;[Red]""$ ""\ \-#'##0.00");
         when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
         when percent_2  =>  WriteFmtStr(xl, "0.00%");
+        when scientific =>  WriteFmtStr(xl, "0.00E+00");
         when percent_0_plus  =>
           WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
           WriteFmtStr(xl, "+0.00%;-0.00%;0.00%");
-        when scientific =>  WriteFmtStr(xl, "0.00E+00");
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
@@ -185,9 +193,19 @@ package body Excel_Out is
   end Define_number_format;
 
   procedure Write_Worksheet_header(xl : in out Excel_Out_Stream'Class) is
-    Percent_Style   : constant:= 5;
+
+    procedure Define_style(fmt: Format_type; style_id: Unsigned_8) is
+      Base_Level: constant:= 255;
+    begin
+      WriteBiff(xl,
+        16#0293#,
+        Intel_16(Unsigned_16(fmt) + 16#8000#) & style_id & Base_Level
+      );
+    end Define_style;
+    --
     Comma_Style     : constant:= 3;
-    Base_Level      : constant:= 255;
+    Currency_Style  : constant:= 4;
+    Percent_Style   : constant:= 5;
     font_for_styles : Font_type;
   begin
     WriteBOF(xl);
@@ -208,21 +226,17 @@ package body Excel_Out is
     -- Define default format
     Define_format(xl, xl.def_font, general, xl.def_fmt);
     -- Define formats for the BIFF3+ "styles":
-    Define_format(xl, font_for_styles, percent_0, xl.pct_fmt);
     Define_format(xl, font_for_styles, decimal_2, xl.cma_fmt);
+    Define_format(xl, font_for_styles, currency_0, xl.ccy_fmt);
+    Define_format(xl, font_for_styles, percent_0, xl.pct_fmt);
     -- Define styles - 5.103 STYLE p. 212
     -- NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
     --     - these "styles" seem to be a zombie feature of Excel 3
     --     - the whole purpose of including this is because format
     --       buttons (%)(,) in Excel 95 through 2007 are using these styles
-    WriteBiff(xl,
-      16#0293#,
-      Intel_16(Unsigned_16(xl.pct_fmt) + 16#8000#) & Percent_Style & Base_Level
-    );
-    WriteBiff(xl,
-      16#0293#,
-      Intel_16(Unsigned_16(xl.cma_fmt) + 16#8000#) & Comma_Style & Base_Level
-    );
+    Define_style(xl.cma_fmt, Comma_Style);
+    Define_style(xl.ccy_fmt, Currency_Style);
+    Define_style(xl.pct_fmt, Percent_Style);
     xl.is_created:= True;
   end Write_Worksheet_header;
 
@@ -268,6 +282,7 @@ package body Excel_Out is
     end case;
     xl.xfs:= xl.xfs + 1;
     cell_format:= Format_type(xl.xfs);
+    xl.xf_def(xl.xfs):= (font => font, numb => number_format);
   end Define_Format;
 
   procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
@@ -497,7 +512,8 @@ package body Excel_Out is
   begin
     return
       (Unsigned_8(xl.xf_in_use),
-       0,
+       Unsigned_8(xl.xf_def(xl.xf_in_use).numb) + 16#C0# *
+       Unsigned_8(xl.xf_def(xl.xf_in_use).font),
        0
       );
   end Cell_attributes;
