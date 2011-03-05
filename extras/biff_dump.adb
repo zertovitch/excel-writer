@@ -61,6 +61,7 @@ procedure BIFF_Dump is
   style      : constant:= 16#0293#;
   xf_2       : constant:= 16#0043#;
   xf_3       : constant:= 16#0243#;
+  xf_4       : constant:= 16#0443#;
   xf_5       : constant:= 16#00E0#;
   ole_2      : constant:= 16#CFD0#;
   window1    : constant:= 16#003D#;
@@ -74,7 +75,8 @@ procedure BIFF_Dump is
   label2     : constant:= 16#0004#;
   label3     : constant:= 16#0204#;
   labelsst   : constant:= 16#00FD#;
-  formula2   : constant:= 16#0006#; -- 5.50 p.176
+  formula2   : constant:= 16#0006#; -- Formula BIFF 2, 5.50 p.176
+  formula4   : constant:= 16#0406#; -- Formula BIFF 4
   colwidth   : constant:= 16#0024#;
   defcolwidth: constant:= 16#0055#;
   header_x   : constant:= 16#0014#; -- 5.55 p.180
@@ -194,6 +196,7 @@ begin
         fmt:= fmt + 1;
       when xf_2 |       -- Extended Format, BIFF2  -- 5.115
            xf_3 |       -- Extended Format, BIFF3
+           xf_4 |       -- Extended Format, BIFF4
            xf_5     =>  -- Extended Format, BIFF5+
         Put(xl, "XF" & Integer'Image(xfs));
         xfs:= xfs + 1;
@@ -206,11 +209,13 @@ begin
         -- 5.45, p.171
         fnt:= fnt + 1;
       when 16#0045# => Put(xl, "FONTCOLOR");
-      when 16#0001# => Put(xl, "BLANK");
+      when 16#0001# => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
+      when 16#0201# => Put(xl, "BLANK (BIFF3+)");
       when 16#0002# => Put(xl, "INTEGER");
       when 16#0003# => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
-      when formula2 => Put(xl, "FORMULA"); -- 5.50 p.176
+      when formula2 => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
+      when formula4 => Put(xl, "FORMULA (BIFF4)");
       when rk       => Put(xl, "RK (BIFF3+)");
       when label2   => Put(xl, "LABEL");
       when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table

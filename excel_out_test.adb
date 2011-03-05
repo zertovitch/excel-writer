@@ -63,10 +63,13 @@ procedure Excel_Out_Test is
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
-    Jump(xl, 0, 7);
+    Merge(xl, 6);
+    Jump(xl, 0, 1);
     Put(xl, "Version: " & version);
+    Merge(xl, 1);
     Jump_to(xl, 1, 13);
     Put(xl, "Ref.: " & reference);
+    Merge(xl, 3);
 
     Use_format(xl, fmt_2);
     for column in 1 .. 9 loop

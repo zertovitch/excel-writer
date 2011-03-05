@@ -649,6 +649,34 @@ package body Excel_Out is
     Put(xl, To_String(str));
   end Put;
 
+  procedure Merge(xl: in out Excel_Out_Stream; cells : Positive) is
+
+    procedure Blank (
+          xl : in out Excel_Out_Stream;
+          r,
+          c      : Positive)
+    is
+    begin
+      Jump_to(xl, r,c); -- Store and check current position
+      StoreMaxRC(xl, r-1, c-1);
+      case xl.format is
+        when BIFF2 =>
+          -- 5.7 BLANK
+          WriteBiff(xl, 16#0001#,
+            Intel_16(Unsigned_16(r-1)) &
+            Intel_16(Unsigned_16(c-1)) &
+            Cell_attributes(xl)
+          );
+      end case;
+      Jump_to(xl, r,c+1); -- Store and check new position
+    end Blank;
+  begin
+    for i in 1..cells loop
+      Blank(xl, xl.curr_row, xl.curr_col);
+    end loop;
+  end Merge;
+
+
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
     Put(xl, num);
