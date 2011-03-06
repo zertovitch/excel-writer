@@ -281,9 +281,6 @@ package Excel_Out is
   procedure Put(xl: in out Excel_Out_Stream; str : String);
   procedure Put(xl: in out Excel_Out_Stream; str : Unbounded_String);
   --
-  -- Merge a certain amount of cells with the last one
-  procedure Merge(xl: in out Excel_Out_Stream; cells : Positive);
-  --
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float);
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Integer);
   procedure Put_Line(xl: in out Excel_Out_Stream; str : String);
@@ -293,6 +290,10 @@ package Excel_Out is
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural);
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive);
+  --
+  -- Merge a certain amount of cells with the last one,
+  -- right to that cell, on the same row.
+  procedure Merge(xl: in out Excel_Out_Stream; cells: Positive);
 
 
   -- Cells written after Use_format will be using the given format,
@@ -345,7 +346,7 @@ package Excel_Out is
   --------------------------------------------------------------
 
   version   : constant String:= "07";
-  reference : constant String:= "5-Mar-2011";
+  reference : constant String:= "6-Mar-2011";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 

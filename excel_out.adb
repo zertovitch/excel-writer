@@ -660,6 +660,8 @@ package body Excel_Out is
       Jump_to(xl, r,c); -- Store and check current position
       StoreMaxRC(xl, r-1, c-1);
       case xl.format is
+        -- NB: Only with BIFF4, and only Openoffice
+        -- considers the celles really merged.
         when BIFF2 =>
           -- 5.7 BLANK
           WriteBiff(xl, 16#0001#,
