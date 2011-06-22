@@ -589,19 +589,18 @@ package body Excel_Out is
   begin
     Jump_to(xl, r,c); -- Store and check current position
     StoreMaxRC(xl, r-1, c-1);
-    if str'Length = 0 then
-      return;
+    if str'Length > 0 then
+      case xl.format is
+        when BIFF2 =>
+          -- 5.63 LABEL
+          WriteBiff(xl, 16#0004#,
+            Intel_16(Unsigned_16(r-1)) &
+            Intel_16(Unsigned_16(c-1)) &
+            Cell_attributes(xl) &
+            To_buf(str)
+          );
+      end case;
     end if;
-    case xl.format is
-      when BIFF2 =>
-        -- 5.63 LABEL
-        WriteBiff(xl, 16#0004#,
-          Intel_16(Unsigned_16(r-1)) &
-          Intel_16(Unsigned_16(c-1)) &
-          Cell_attributes(xl) &
-          To_buf(str)
-        );
-    end case;
     Jump_to(xl, r,c+1); -- Store and check new position
   end Write;
 
