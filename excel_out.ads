@@ -62,6 +62,12 @@
 -- Main changes:
 -- ============
 --
+-- 08:  xxxxx-2011: - fixed Put("") not jumping
+--                  - New_Line(lines) now possible
+--
+-- 07:  6-Mar-2011: - Added cell merging
+--                  - Fixes in internationalization and numeric formats
+--
 -- 06: 16-Mar-2010: - added page layout
 --                  - added custom number formats
 --                  - added styles (% or ,)
@@ -286,7 +292,7 @@ package Excel_Out is
   procedure Put_Line(xl: in out Excel_Out_Stream; str : String);
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String);
   --
-  procedure New_Line(xl: in out Excel_Out_Stream);
+  procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1);
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural);
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive);
@@ -345,8 +351,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "07";
-  reference : constant String:= "6-Mar-2011";
+  version   : constant String:= "08 preview";
+  reference : constant String:= "> 23-Jun-2011";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 

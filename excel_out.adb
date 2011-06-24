@@ -701,9 +701,9 @@ package body Excel_Out is
     Put_Line(xl, To_String(str));
   end Put_Line;
 
-  procedure New_Line(xl: in out Excel_Out_Stream) is
+  procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1) is
   begin
-    Jump_to(xl, xl.curr_row + 1, 1);
+    Jump_to(xl, xl.curr_row + Spacing, 1);
   end New_Line;
 
   -- Relative / absolute jumps
