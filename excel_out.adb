@@ -706,6 +706,20 @@ package body Excel_Out is
     Jump_to(xl, xl.curr_row + Spacing, 1);
   end New_Line;
 
+  function Col(xl: in Excel_Out_Stream) return Positive is
+  begin
+    return xl.curr_col;
+  end Col;
+
+  function Column(xl: in Excel_Out_Stream) return Positive renames Col;
+
+  function Line(xl: in Excel_Out_Stream) return Positive is
+  begin
+    return xl.curr_row;
+  end Line;
+
+  function Row(xl: in Excel_Out_Stream) return Positive renames Line;
+
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural) is
   begin

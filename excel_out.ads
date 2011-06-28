@@ -293,6 +293,12 @@ package Excel_Out is
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String);
   --
   procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1);
+  --
+  function Col(xl: in Excel_Out_Stream) return Positive;    -- Text_IO naming
+  function Column(xl: in Excel_Out_Stream) return Positive; -- Excel naming
+  function Line(xl: in Excel_Out_Stream) return Positive;   -- Text_IO naming
+  function Row(xl: in Excel_Out_Stream) return Positive;    -- Excel naming
+
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural);
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive);
@@ -352,7 +358,7 @@ package Excel_Out is
   --------------------------------------------------------------
 
   version   : constant String:= "08 preview";
-  reference : constant String:= "> 23-Jun-2011";
+  reference : constant String:= "> 27-Jun-2011";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
