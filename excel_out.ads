@@ -62,8 +62,8 @@
 -- Main changes:
 -- ============
 --
--- 08:  xxxxx-2011: - fixed Put("") not jumping
---                  - New_Line(lines) now possible
+-- 08: xx-xxx-2011: - fixed Put("") not jumping
+--                  - Text_IO's New_Line(lines), Line, Col now available
 --
 -- 07:  6-Mar-2011: - Added cell merging
 --                  - Fixes in internationalization and numeric formats
