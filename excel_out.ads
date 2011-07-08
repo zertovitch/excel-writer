@@ -62,7 +62,7 @@
 -- Main changes:
 -- ============
 --
--- 08: xx-xxx-2011: - fixed Put("") not jumping
+-- 08:  7-Jul-2011: - fixed Put("") not jumping
 --                  - Text_IO's New_Line(lines), Line, Col now available
 --
 -- 07:  6-Mar-2011: - Added cell merging
@@ -357,8 +357,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "08 preview";
-  reference : constant String:= "> 27-Jun-2011";
+  version   : constant String:= "08";
+  reference : constant String:= "7-Jul-2011";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
