@@ -4,6 +4,7 @@
 
 with Excel_Out;                         use Excel_Out;
 
+with Ada.Calendar;
 with Ada.Streams.Stream_IO;
 
 procedure Excel_Out_Test is
@@ -110,6 +111,11 @@ procedure Excel_Out_Test is
     Put_Line(xl, "It can be stuffed directly into a zip stream,");
     Put_Line(xl, "or sent from a server!");
     Put_Line(xl, "- see ZipTest @ unzip-ada or zip-ada");
+    for row in 1 .. 200 loop
+      for column in 1 .. 200 loop
+        Write(xl, row + 5, column, row * column);
+      end loop;
+    end loop;
     Close(xl);
     return Contents(xl);
   end My_nice_sheet;
@@ -123,8 +129,33 @@ procedure Excel_Out_Test is
     Close(f);
   end String_demo;
 
+  procedure Speed_test is
+    xl: Excel_Out_File;
+    use Ada.Calendar;
+    t0, t1: Time;
+    iter: constant:= 1000;
+  begin
+    Create(xl, "Speed_test.xls");
+    t0:= Clock;
+    for i in 1..iter loop
+      declare
+        dummy: String:= My_nice_sheet;
+      begin
+        null;
+      end;
+    end loop;
+    t1:= Clock;
+    Put_Line(xl,
+      "Time (seconds) for creating" &
+      Integer'Image(iter) & " sheets"
+    );
+    Put_Line(xl, Long_Float(t1-t0));
+    Close(xl);
+  end Speed_test;
+
 begin
   Small_demo;
   Big_demo;
   String_demo;
+  -- Speed_test;
 end Excel_Out_Test;
