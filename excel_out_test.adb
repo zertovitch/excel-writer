@@ -1,11 +1,11 @@
--- This test procedure is in Ada 95 syntax;
--- with Ada 2005 you can write "xl.Write(...)" etc. everywhere.
+-- This test procedure for Excel_Outis in the Ada 95 syntax,
+-- for compatibility with a larger number of development systems.
+-- With Ada 2005 and later, you can also write "xl.Write(...)" etc. everywhere.
 --
 
 with Excel_Out;                         use Excel_Out;
 
-with Ada.Calendar;
-with Ada.Streams.Stream_IO;
+with Ada.Calendar, Ada.Streams.Stream_IO;
 
 procedure Excel_Out_Test is
 
@@ -103,7 +103,7 @@ procedure Excel_Out_Test is
     Close(xl);
   end Big_demo;
 
-  function My_nice_sheet return String is
+  function My_nice_sheet(size: Positive) return String is
     xl: Excel_Out_String;
   begin
     Create(xl);
@@ -111,8 +111,8 @@ procedure Excel_Out_Test is
     Put_Line(xl, "It can be stuffed directly into a zip stream,");
     Put_Line(xl, "or sent from a server!");
     Put_Line(xl, "- see ZipTest @ unzip-ada or zip-ada");
-    for row in 1 .. 200 loop
-      for column in 1 .. 200 loop
+    for row in 1 .. size loop
+      for column in 1 .. size loop
         Write(xl, row + 5, column, row * column);
       end loop;
     end loop;
@@ -125,7 +125,7 @@ procedure Excel_Out_Test is
     f: File_Type;
   begin
     Create(f, Out_File, "From_string.xls");
-    String'Write(Stream(f), My_nice_sheet);
+    String'Write(Stream(f), My_nice_sheet(200));
     Close(f);
   end String_demo;
 
@@ -134,22 +134,30 @@ procedure Excel_Out_Test is
     use Ada.Calendar;
     t0, t1: Time;
     iter: constant:= 1000;
+    size: constant:= 100;
+    secs: Long_Float;
   begin
     Create(xl, "Speed_test.xls");
     t0:= Clock;
     for i in 1..iter loop
       declare
-        dummy: String:= My_nice_sheet;
+        dummy: String:= My_nice_sheet(size);
       begin
         null;
       end;
     end loop;
     t1:= Clock;
+    secs:= Long_Float(t1-t0);
     Put_Line(xl,
       "Time (seconds) for creating" &
-      Integer'Image(iter) & " sheets"
+      Integer'Image(iter) & " sheets with" &
+      Integer'Image(size) & " x" &
+      Integer'Image(size) & " =" &
+      Integer'Image(size**2) & " cells"
     );
-    Put_Line(xl, Long_Float(t1-t0));
+    Put_Line(xl, secs);
+    Put_Line(xl, "Sheets per second");
+    Put_Line(xl, Long_Float(iter) / secs);
     Close(xl);
   end Speed_test;
 
@@ -157,5 +165,5 @@ begin
   Small_demo;
   Big_demo;
   String_demo;
-  -- Speed_test;
+  Speed_test;
 end Excel_Out_Test;
