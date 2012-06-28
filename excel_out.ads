@@ -357,8 +357,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "08";
-  reference : constant String:= "7-Jul-2011";
+  version   : constant String:= "09";
+  reference : constant String:= "30-Jun-2012";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
