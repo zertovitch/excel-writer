@@ -16,6 +16,10 @@ as this small procedure:
 
 Contents
 ========
+
+  Excel Writer
+  ============
+
   - excel_out.ads        : package specification
   - excel_out.adb        : package body
   - excel_out_test.adb   : test/demo procedure
@@ -29,7 +33,7 @@ Contents
   - extras/biff_dump.adb                   : procedure for viewing the BIFF format
   - extras/csv.ads                         : csv parser (specification)
   - extras/csv.adb                         : (body)
-  - extras/spreadsheet_references.ads      : converts (i,j) to or from Ai or RiCj format (specification)
+  - extras/spreadsheet_references.ads      : converts (i,j) to or from the "A1" or "R1C1" format (specification)
   - extras/spreadsheet_references.adb      : (body)
   - extras/test_spreadsheet_references.adb : test procedure for Spreadsheet_references
 

@@ -39,7 +39,7 @@ procedure BIFF_Dump is
     begin
       for i in r'Range loop
         Read(f,b);
-        r(i):= character'Val(b);
+        r(i):= Character'Val(b);
       end loop;
       return r;
     end;
@@ -51,7 +51,7 @@ procedure BIFF_Dump is
   begin
     for i in r'Range loop
       Read(f,b);
-      r(i):= character'Val(b);
+      r(i):= Character'Val(b);
     end loop;
     return r;
   end str8len16;
@@ -396,7 +396,7 @@ begin
         --  end if;
         for i in 1..length loop -- just skip the contents
           if i <= 10 then
-            Put(xl, Integer(in8));
+            Put(xl, in8);
           else
             Read(f,b);
           end if;

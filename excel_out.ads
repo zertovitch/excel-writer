@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009..2011 Gautier de Montmollin
+--  Copyright (c) 2009..2012 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -465,9 +465,6 @@ private
 
   type Font_style is array(Font_style_single) of Boolean;
 
-  function "&"(a,b: Font_style) return Font_style
-    renames "or"; -- predefined for sets (=array of Boolean)
-
   regular     : constant Font_style:= (others => False);
   italic      : constant Font_style:= (italic_single => True, others => False);
   bold        : constant Font_style:= (bold_single => True, others => False);
@@ -485,9 +482,6 @@ private
      bottom_single);
 
   type Cell_border is array(Cell_border_single) of Boolean;
-
-  function "&"(a,b: Cell_border) return Cell_border
-    renames "or"; -- predefined for sets (=array of Boolean)
 
   no_border : constant Cell_border:= (others => False);
   left      : constant Cell_border:= (left_single => True, others => False);

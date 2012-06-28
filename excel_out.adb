@@ -538,7 +538,9 @@ package body Excel_Out is
        num <= 65535.0 and then
        Almost_zero(num - Long_Float'Floor(num))
     then
-      Write(xl,r,c,Integer(Long_Float'Floor(num)));
+      -- Write a 16-bit Integer (a BIFF2-only specialty),
+      -- with a smaller storage :-)
+      Write(xl,r,c, Integer(Long_Float'Floor(num)));
     else
       StoreMaxRC(xl, r-1, c-1);
       Jump_to(xl, r,c); -- Store and check current position
@@ -564,7 +566,9 @@ package body Excel_Out is
   begin
     if xl.format = BIFF2 and then
        num in 0..2**16-1
-    then -- We use a small storage for integers
+    then
+      -- We use a small storage for integers.
+      -- This is a BIFF2-only specialty.
       Jump_to(xl, r,c); -- Store and check current position
       StoreMaxRC(xl, r-1, c-1);
       -- 5.60 INTEGER
@@ -575,7 +579,8 @@ package body Excel_Out is
         Intel_16(Unsigned_16(num))
       );
       Jump_to(xl, r,c+1); -- Store and check new position
-    else -- We need to us a floating-point
+    else
+      -- We need to us a floating-point in all other cases
       Write(xl, r, c, Long_Float(num));
     end if;
   end Write;
@@ -946,5 +951,15 @@ package body Excel_Out is
   begin
     return Ada.Streams.Stream_IO.Count(Index(xl.xl_memory));
   end Index;
+
+  function "&"(a,b: Font_style) return Font_style is
+  begin
+    return a or b; -- "or" is predefined for sets (=array of Boolean)
+  end "&";
+
+  function "&"(a,b: Cell_border) return Cell_border is
+  begin
+    return a or b; -- "or" is predefined for sets (=array of Boolean)
+  end "&";
 
 end Excel_Out;
