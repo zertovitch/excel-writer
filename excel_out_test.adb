@@ -134,7 +134,7 @@ procedure Excel_Out_Test is
     use Ada.Calendar;
     t0, t1: Time;
     iter: constant:= 1000;
-    size: constant:= 100;
+    size: constant:= 150;
     secs: Long_Float;
   begin
     Create(xl, "Speed_test.xls");

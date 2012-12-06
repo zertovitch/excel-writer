@@ -80,6 +80,36 @@ package body Excel_Out is
     return d;
   end IEEE_Double_Intel;
 
+  -- Workaround for the severe xxx'Read xxx'Write performance
+  -- problems in the GNAT and ObjectAda compilers (as in 2009)
+  -- This is possible if and only if Byte = Stream_Element and
+  -- arrays types are both packed and aligned the same way.
+  --
+  subtype Size_test_a is Byte_Buffer(1..19);
+  subtype Size_test_b is Ada.Streams.Stream_Element_Array(1..19);
+  workaround_possible: constant Boolean:=
+    Size_test_a'Size = Size_test_b'Size and
+    Size_test_a'Alignment = Size_test_b'Alignment;
+
+  procedure Block_Write(
+    stream : in out Ada.Streams.Root_Stream_Type'Class;
+    buffer : in     Byte_Buffer
+  )
+  is
+    pragma Inline(Block_Write);
+    SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
+    for SE_Buffer'Address use buffer'Address;
+    pragma Import (Ada, SE_Buffer);
+  begin
+    if workaround_possible then
+      Ada.Streams.Write(stream, SE_Buffer);
+    else
+      Byte_Buffer'Write(stream'Access, buffer);
+      -- ^ This was 30x to 70x slower on GNAT 2009
+      --   Test in the Zip-Ada project.
+    end if;
+  end Block_Write;
+
   ----------------
   -- Excel BIFF --
   ----------------
@@ -94,9 +124,9 @@ package body Excel_Out is
   )
   is
   begin
-    Byte_buffer'Write(xl.xl_stream, Intel_16(biff_id));
-    Byte_buffer'Write(xl.xl_stream, Intel_16(Unsigned_16(data'Length)));
-    Byte_buffer'Write(xl.xl_stream, data);
+    Byte_Buffer'Write(xl.xl_stream, Intel_16(biff_id));
+    Byte_Buffer'Write(xl.xl_stream, Intel_16(Unsigned_16(data'Length)));
+    Block_Write(xl.xl_stream.all, data);
   end WriteBiff;
 
   -- 5.8  BOF: Beginning of File
