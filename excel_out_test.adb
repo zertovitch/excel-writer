@@ -113,7 +113,7 @@ procedure Excel_Out_Test is
     Put_Line(xl, "- see ZipTest @ unzip-ada or zip-ada");
     for row in 1 .. size loop
       for column in 1 .. size loop
-        Write(xl, row + 5, column, row * column);
+        Write(xl, row + 5, column, 0.01 + Long_Float(row * column));
       end loop;
     end loop;
     Close(xl);

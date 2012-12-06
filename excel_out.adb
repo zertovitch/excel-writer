@@ -46,6 +46,7 @@ package body Excel_Out is
     type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
     size: Positive;
   function Intel_x86_buffer( n: Number ) return Byte_buffer;
+  pragma Inline(Intel_x86_buffer);
 
   function Intel_x86_buffer( n: Number ) return Byte_buffer is
     b: Byte_buffer(1..size);
@@ -58,7 +59,14 @@ package body Excel_Out is
     return b;
   end Intel_x86_buffer;
 
-  function Intel_16 is new Intel_x86_buffer( Unsigned_16, 2 );
+  function Intel_16_inst is new Intel_x86_buffer( Unsigned_16, 2 );
+  pragma Unreferenced (Intel_16_inst);
+
+  function Intel_16( n: Unsigned_16 ) return Byte_buffer is
+    pragma Inline(Intel_16);
+  begin
+    return (Unsigned_8(n and 255), Unsigned_8(Shift_Right(n, 8)));
+  end Intel_16;
 
   -- Gives a byte sequence of an IEEE 64-bit number as if taken
   -- from an Intel machine (with the same endianess).
@@ -66,9 +74,9 @@ package body Excel_Out is
   -- http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
 
-  function IEEE_Double_Intel(x: Long_Float) return Byte_buffer is
-    subtype LF_bytes is Byte_buffer(1..8);
-    d : LF_bytes;
+  function IEEE_Double_Intel_Portable(x: Long_Float) return Byte_buffer is
+    pragma Inline(IEEE_Double_Intel_Portable);
+    d : Byte_buffer(1..8);
     --
     use IEEE_754.Long_Floats;
     f64: constant Float_64:= To_IEEE(x);
@@ -78,7 +86,19 @@ package body Excel_Out is
     end loop;
     -- Fully tested in Test_IEEE.adb
     return d;
-  end IEEE_Double_Intel;
+  end IEEE_Double_Intel_Portable;
+
+  function IEEE_Double_Intel_Native(x: Long_Float) return Byte_buffer is
+    pragma Inline(IEEE_Double_Intel_Native);
+    d : Byte_buffer(1..8);
+    for d'Address use x'Address;
+    pragma Import (Ada, d);
+  begin
+    return d;
+  end IEEE_Double_Intel_Native;
+
+  function IEEE_Double_Intel(x: Long_Float) return Byte_buffer
+  renames IEEE_Double_Intel_Portable;
 
   -- Workaround for the severe xxx'Read xxx'Write performance
   -- problems in the GNAT and ObjectAda compilers (as in 2009)
@@ -114,8 +134,8 @@ package body Excel_Out is
   -- Excel BIFF --
   ----------------
 
-  -- The original Modula-2 code counted on a certain record packing & endianess.
-  -- We do it without this assumption.
+  -- The original Modula-2 code counted on certain assumptions about
+  -- record packing & endianess. We write data without these assumptions.
 
   procedure WriteBiff(
     xl     : Excel_Out_Stream'Class;
@@ -123,9 +143,10 @@ package body Excel_Out is
     data   : Byte_buffer
   )
   is
+    pragma Inline(WriteBiff);
   begin
-    Byte_Buffer'Write(xl.xl_stream, Intel_16(biff_id));
-    Byte_Buffer'Write(xl.xl_stream, Intel_16(Unsigned_16(data'Length)));
+    Block_Write(xl.xl_stream.all, Intel_16(biff_id));
+    Block_Write(xl.xl_stream.all, Intel_16(Unsigned_16(data'Length)));
     Block_Write(xl.xl_stream.all, data);
   end WriteBiff;
 
