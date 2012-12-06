@@ -141,9 +141,11 @@ procedure Excel_Out_Test is
     t0:= Clock;
     for i in 1..iter loop
       declare
-        dummy: String:= My_nice_sheet(size);
+        dummy: constant String:= My_nice_sheet(size);
       begin
-        null;
+        if dummy = "" then
+          null;
+        end if;
       end;
     end loop;
     t1:= Clock;

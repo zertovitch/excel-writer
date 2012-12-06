@@ -357,8 +357,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "09";
-  reference : constant String:= "30-Jun-2012";
+  version   : constant String:= "10 preview #1";
+  reference : constant String:= "06-Dec-2012";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -552,5 +552,8 @@ private
 
   -- Return the index of the Excel string stream
   function Index (xl: Excel_Out_String) return Ada.Streams.Stream_IO.Count;
+
+  -- Some performance tuning
+  pragma Inline(Jump_to);
 
 end Excel_Out;

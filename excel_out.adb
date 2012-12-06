@@ -84,7 +84,7 @@ package body Excel_Out is
   -- Excel BIFF --
   ----------------
 
-  -- The original code counts on a certain record packing & endianess.
+  -- The original Modula-2 code counted on a certain record packing & endianess.
   -- We do it without this assumption.
 
   procedure WriteBiff(
@@ -524,7 +524,58 @@ package body Excel_Out is
     return abs x <= Long_Float'Model_Small;
   end Almost_zero;
 
-  -- 5.71 NUMBER
+  -- Internal
+  --
+  procedure Write_as_double (
+        xl     : in out Excel_Out_Stream;
+        r,
+        c      : Positive;
+        num    : Long_Float
+  )
+  is
+    pragma Inline(Write_as_double);
+  begin
+    Jump_to(xl, r,c); -- Store and check current position
+    StoreMaxRC(xl, r-1, c-1);
+    case xl.format is
+      when BIFF2 =>
+        -- 5.71 NUMBER
+        WriteBiff(xl, 16#0003#,
+          Intel_16(Unsigned_16(r-1)) &
+          Intel_16(Unsigned_16(c-1)) &
+          Cell_attributes(xl) &
+          IEEE_Double_Intel(num)
+        );
+    end case;
+    Jump_to(xl, r,c+1); -- Store and check new position
+  end Write_as_double;
+
+  -- Internal. This is BIFF2 only.
+  -- BIFF Format and integer unchecked here.
+  --
+  procedure Write_as_16_bit_unsigned (
+        xl : in out Excel_Out_Stream;
+        r,
+        c      : Positive;
+        num    : Unsigned_16)
+  is
+    pragma Inline(Write_as_16_bit_unsigned);
+  begin
+    Jump_to(xl, r,c); -- Store and check current position
+    StoreMaxRC(xl, r-1, c-1);
+    -- 5.60 INTEGER
+    WriteBiff(xl, 16#0002#,
+      Intel_16(Unsigned_16(r-1)) &
+      Intel_16(Unsigned_16(c-1)) &
+      Cell_attributes(xl) &
+      Intel_16(num)
+    );
+    Jump_to(xl, r,c+1); -- Store and check new position
+  end Write_as_16_bit_unsigned;
+
+  --
+  -- Profile with floating-point number
+  --
   procedure Write (
         xl     : in out Excel_Out_Stream;
         r,
@@ -533,30 +584,24 @@ package body Excel_Out is
   )
   is
   begin
-    if xl.format = BIFF2 and then
-       num >= 0.0 and then
-       num <= 65535.0 and then
-       Almost_zero(num - Long_Float'Floor(num))
-    then
-      -- Write a 16-bit Integer (a BIFF2-only specialty),
-      -- with a smaller storage :-)
-      Write(xl,r,c, Integer(Long_Float'Floor(num)));
-    else
-      StoreMaxRC(xl, r-1, c-1);
-      Jump_to(xl, r,c); -- Store and check current position
-      case xl.format is
-        when BIFF2 =>
-          WriteBiff(xl, 16#0003#,
-            Intel_16(Unsigned_16(r-1)) &
-            Intel_16(Unsigned_16(c-1)) &
-            Cell_attributes(xl) &
-            IEEE_Double_Intel(num)
-          );
-      end case;
-      Jump_to(xl, r,c+1); -- Store and check new position
-    end if;
+    case xl.format is
+      when BIFF2 =>
+        if num >= 0.0 and then
+           num <= 65535.0 and then
+           Almost_zero(num - Long_Float'Floor(num))
+        then
+          -- Write a 16-bit Integer (a BIFF2-only specialty),
+          -- with a smaller storage :-)
+          Write_as_16_bit_unsigned(xl, r, c, Unsigned_16(Long_Float'Floor(num)));
+        else
+          Write_as_double(xl, r, c, num);
+        end if;
+    end case;
   end Write;
 
+  --
+  -- Profile with integer number
+  --
   procedure Write (
         xl : in out Excel_Out_Stream;
         r,
@@ -564,25 +609,17 @@ package body Excel_Out is
         num    : Integer)
   is
   begin
-    if xl.format = BIFF2 and then
-       num in 0..2**16-1
-    then
-      -- We use a small storage for integers.
-      -- This is a BIFF2-only specialty.
-      Jump_to(xl, r,c); -- Store and check current position
-      StoreMaxRC(xl, r-1, c-1);
-      -- 5.60 INTEGER
-      WriteBiff(xl, 16#0002#,
-        Intel_16(Unsigned_16(r-1)) &
-        Intel_16(Unsigned_16(c-1)) &
-        Cell_attributes(xl) &
-        Intel_16(Unsigned_16(num))
-      );
-      Jump_to(xl, r,c+1); -- Store and check new position
-    else
-      -- We need to us a floating-point in all other cases
-      Write(xl, r, c, Long_Float(num));
-    end if;
+    case xl.format is
+      when BIFF2 =>
+        if num in 0..2**16-1 then
+          -- We use a small storage for integers.
+          -- This is a BIFF2-only specialty.
+          Write_as_16_bit_unsigned(xl, r, c, Unsigned_16(num));
+        else
+          -- We need to us a floating-point in all other cases
+          Write_as_double(xl, r, c, Long_Float(num));
+        end if;
+    end case;
   end Write;
 
   procedure Write (
@@ -664,8 +701,8 @@ package body Excel_Out is
       Jump_to(xl, r,c); -- Store and check current position
       StoreMaxRC(xl, r-1, c-1);
       case xl.format is
-        -- NB: Only with BIFF4, and only Openoffice
-        -- considers the celles really merged.
+        -- NB: Only with BIFF4, and only OpenOffice
+        -- considers the cells really merged.
         when BIFF2 =>
           -- 5.7 BLANK
           WriteBiff(xl, 16#0001#,
