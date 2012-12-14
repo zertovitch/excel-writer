@@ -24,8 +24,8 @@ procedure Excel_Out_Test is
 
   procedure Big_demo is
     xl: Excel_Out_File;
-    font_1, font_2, font_3, font_4, font_5: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7: Format_type;
+    font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8: Format_type;
     custom_num: Number_format_type;
   begin
     Create(xl, "Big.xls");
@@ -42,7 +42,6 @@ procedure Excel_Out_Test is
     Write_column_width(xl, 14, 0); -- hide this column
     --
     Write_default_row_height(xl, 20);
-    Write_row_height(xl, 9, 30);
     Write_row_height(xl, 13, 0);   -- hide this row
     Write_row_height(xl, 100, 30);
     --
@@ -50,7 +49,8 @@ procedure Excel_Out_Test is
     Define_font(xl, "Courier New", 12, font_2, bold & italic, red);
     Define_font(xl, "Times New Roman", 14, font_3, bold);
     Define_font(xl, "Arial Narrow", 16, font_4, bold);
-    Define_font(xl, "Calibri", 16, font_5, bold, yellow);
+    Define_font(xl, "Calibri", 16, font_5, bold, red);
+    Define_font(xl, "Calibri", 9, font_6);
     --
     Define_number_format(xl, custom_num, "0.000000"); -- 6 decimals
     --
@@ -61,6 +61,7 @@ procedure Excel_Out_Test is
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     Define_format(xl, font_5, general,   fmt_6, border => box);
     Define_format(xl, font_1, custom_num,  fmt_7, centred);
+    Define_format(xl, font_6, general, fmt_8);
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
@@ -76,6 +77,8 @@ procedure Excel_Out_Test is
     for column in 1 .. 9 loop
       Write(xl, 2, column, Long_Float(column) + 0.5);
     end loop;
+    Use_format(xl, fmt_8);
+    Put(xl, "  <- = column + 0.5");
 
     Use_format(xl, fmt_3);
     for row in 4 .. 7 loop
@@ -83,6 +86,8 @@ procedure Excel_Out_Test is
         Write(xl, row, column, row * 1000 + column);
       end loop;
     end loop;
+    Use_format(xl, fmt_8);
+    Put(xl, "  <- = row * 1000 + column");
 
     Use_format(xl, fmt_4);
     for column in 1 .. 20 loop
@@ -91,6 +96,13 @@ procedure Excel_Out_Test is
 
     Use_format(xl, fmt_6);
     Write(xl, 11, 1, "Calibri font");
+    Use_format(xl, fmt_8);
+    Write(xl, 11, 4, "First number:");
+    Write(xl, 11, 6, Long_Float'First);
+    Write(xl, 11, 8, "Last number:");
+    Write(xl, 11, 10, Long_Float'Last);
+    Write(xl, 11, 12, "Smallest number:");
+    Write(xl, 11, 15, (1.0+Long_Float'Model_Epsilon) * Long_Float'Model_Small);
 
     for row in 13 .. 300 loop
       Use_format(xl, fmt_1);

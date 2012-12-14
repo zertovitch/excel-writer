@@ -97,8 +97,19 @@ package body Excel_Out is
     return d;
   end IEEE_Double_Intel_Native;
 
-  function IEEE_Double_Intel(x: Long_Float) return Byte_buffer
-  renames IEEE_Double_Intel_Portable;
+  x: constant Long_Float:= -12345.0e-67;
+  Can_use_native_IEEE: constant Boolean:=
+    IEEE_Double_Intel_Portable(x) = IEEE_Double_Intel_Native(x);
+
+  function IEEE_Double_Intel(x: Long_Float) return Byte_buffer is
+    pragma Inline(IEEE_Double_Intel);
+  begin
+    if Can_use_native_IEEE then
+      return IEEE_Double_Intel_Native(x);
+    else
+      return IEEE_Double_Intel_Portable(x);
+    end if;
+  end IEEE_Double_Intel;
 
   -- Workaround for the severe xxx'Read xxx'Write performance
   -- problems in the GNAT and ObjectAda compilers (as in 2009)

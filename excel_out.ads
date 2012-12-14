@@ -357,8 +357,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "10 preview #1";
-  reference : constant String:= "06-Dec-2012";
+  version   : constant String:= "10";
+  reference : constant String:= "15-Dec-2012";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -555,5 +555,6 @@ private
 
   -- Some performance tuning
   pragma Inline(Jump_to);
+  pragma Inline(New_Line);
 
 end Excel_Out;
