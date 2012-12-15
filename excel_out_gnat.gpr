@@ -1,6 +1,6 @@
 -- This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
 -- for the Excel Writer ( http://excel-writer.sf.net/ )
--- Build me with "gnatmake -P excel_out_gnat.gpr", or open me with GPS
+-- Build me with "gnatmake -P excel_out_gnat", or open me with GPS
 --
 project Excel_Out_Gnat is 
 
@@ -23,7 +23,6 @@ project Excel_Out_Gnat is
       when "Fast" =>
          for Object_Dir use "obj_fast";
    end case;
-
    
    package Compiler is
       case Build_Mode is
@@ -33,7 +32,11 @@ project Excel_Out_Gnat is
             for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
    end Compiler;
-   
+
+   package Builder is
+      for Default_Switches ("ada") use ("-j2");
+   end Builder;
+      
    package Ide is
       for Default_Switches ("adacontrol") use ("-f", "verif.aru");
    end Ide;
