@@ -1,9 +1,10 @@
 Intro to Excel Writer 
 =====================
-Excel Writer consists of a package, Excel_Out, which
-produces Excel files - as physical files, or as other
-data streams. The creation of an Excel file is as simple
-as this small procedure:
+The Excel Writer consists of a package, Excel_Out,
+which produces Excel files - as physical files, or as
+other types of data streams.
+The creation of an Excel file is as simple as this
+small procedure:
 
   with Excel_Out; use Excel_Out;
    
@@ -29,11 +30,11 @@ Contents
   - excel_writer.txt     : this file
   - ieee_754*            : packages used by excel_out.adb
 
-  Some goodies
-  ============
+  Some goodies - around Excel, CSV's, spreadsheets in general
+  ===========================================================
 
-  - extras/biff_dump.adb                   : procedure for viewing the BIFF format
-  - extras/csv.ads                         : csv parser (specification)
+  - extras/biff_dump.adb                   : procedure for viewing the Excel BIFF format
+  - extras/csv.ads                         : CSV parser (specification)
   - extras/csv.adb                         : (body)
   - extras/spreadsheet_references.ads      : converts (i,j) to or from the "A1" or "R1C1" format (specification)
   - extras/spreadsheet_references.adb      : (body)
@@ -45,8 +46,9 @@ There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
 
 Portability
 ===========
-This software can be compiled for any target machine and with any Ada 95 or later compiler.
-The compiler Interfaces package must provide an Unsigned_64 type.
+This software can be compiled for any target machine, and with any Ada 95 or later compiler.
+The compiler's Interfaces package must provide an Unsigned_64 type (this is for the portable
+IEEE double-precision export).
 
 How to build and test Excel Writer
 ==================================

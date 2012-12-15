@@ -1,4 +1,4 @@
--- Derived from ExcelOut @ http://www.modula2.org/projects/excelout.php
+-- Derived from ExcelOut @ http://www.modula2.org/projects/
 -- by Frank Schoonjans - thanks!
 --
 -- Translated with Mod2Pas and P2Ada
@@ -8,10 +8,10 @@
 -- To do:
 -- =====
 --  - freeze pane (5.75 PANE)
---  - BIFF > 2 support
+--  - BIFF > 2 and XML-based formats support
 --  - ...
 
-with Ada.Unchecked_Deallocation;
+with Ada.Unchecked_Deallocation, Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;
 
 with Interfaces;                        use Interfaces;
@@ -88,14 +88,9 @@ package body Excel_Out is
     return d;
   end IEEE_Double_Intel_Portable;
 
-  function IEEE_Double_Intel_Native(x: Long_Float) return Byte_buffer is
-    pragma Inline(IEEE_Double_Intel_Native);
-    d : Byte_buffer(1..8);
-    for d'Address use x'Address;
-    pragma Import (Ada, d);
-  begin
-    return d;
-  end IEEE_Double_Intel_Native;
+  subtype Byte_buffer_8 is Byte_buffer(0..7);
+  function IEEE_Double_Intel_Native is new
+    Ada.Unchecked_Conversion(Long_Float, Byte_buffer_8);
 
   x: constant Long_Float:= -12345.0e-67;
   Can_use_native_IEEE: constant Boolean:=
