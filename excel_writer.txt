@@ -1,7 +1,8 @@
 Intro to Excel Writer 
 =====================
 Excel Writer consists of a package, Excel_Out, which
-produces Excel files (or other data streams) as simply
+produces Excel files - as physical files, or as other
+data streams. The creation of an Excel file is as simple
 as this small procedure:
 
   with Excel_Out; use Excel_Out;
@@ -14,6 +15,7 @@ as this small procedure:
     xl.Close;
   end;
 
+
 Contents
 ========
 
@@ -25,7 +27,7 @@ Contents
   - excel_out_test.adb   : test/demo procedure
   - excel_out_gnat.gpr   : project file for the GNAT compiler
   - excel_writer.txt     : this file
-  - ieee_754*            : package used by excel_out.adb
+  - ieee_754*            : packages used by excel_out.adb
 
   Some goodies
   ============
@@ -40,13 +42,18 @@ Contents
 Warning & legal
 ===============
 There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
-  
+
+Portability
+===========
+This software can be compiled for any target machine and with any Ada 95 or later compiler.
+The compiler Interfaces package must provide an Unsigned_64 type.
+
 How to build and test Excel Writer
 ==================================
 Here is how to build with GNAT/GCC (for other compilers, it
 should be simple as well):
 
-    - type "gnatmake -P excel_out_gnat.gpr" in the command line
+    - type "gnatmake -P excel_out_gnat" in the command line
 or
     - type "gnatmake excel_out_test" in the command line
 or
