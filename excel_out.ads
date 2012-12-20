@@ -433,8 +433,8 @@ private
     xl_stream  : XL_Raw_Stream_Class;
     format     : Excel_type:= Default_Excel_type;
     dimrecpos  : Ada.Streams.Stream_IO.Positive_Count;
-    maxcolumn  : Integer:= 0;  -- 0-based
-    maxrow     : Integer:= 0;  -- 0-based
+    maxcolumn  : Positive:= 1;
+    maxrow     : Positive:= 1;
     fonts      : Integer:= -1; -- [-1..max_font]
     xfs        : Integer:= -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range:= 0;

@@ -232,9 +232,18 @@ package body Excel_Out is
     case xl.format is
       when BIFF2 =>
         WriteBiff(xl, 16#0000#,
-          Intel_16(0) & Intel_16(Unsigned_16(xl.maxrow + 1)) &
-          Intel_16(0) & Intel_16(Unsigned_16(xl.maxcolumn + 1))
+          Intel_16(0) & 
+          Intel_16(Unsigned_16(xl.maxrow)) & 
+          Intel_16(0) & 
+          Intel_16(Unsigned_16(xl.maxcolumn))
         );
+        -- 0 2 Index to first used row
+        -- 2 2 Index to last used row, increased by 1
+        -- 4 2 Index to first used column
+        -- 6 2 Index to last used column, increased by 1
+        --
+        -- Since our row / column counts are 1-based, no need
+        -- to increase by 1.
     end case;
   end WriteDimensions;
 
@@ -552,18 +561,20 @@ package body Excel_Out is
     font:= Font_type(xl.fonts);
   end Define_font;
 
-  procedure StoreMaxRC(xl: in out Excel_Out_Stream; r, c: Integer) is
+  procedure Jump_to_and_store_max(xl: in out Excel_Out_Stream; r, c: Integer) is
+    pragma Inline(Jump_to_and_store_max);
   begin
     if not xl.is_created then
       raise Excel_stream_not_created;
     end if;
+    Jump_to(xl, r, c); -- Store and check current position
     if r > xl.maxrow then
       xl.maxrow := r;
     end if;
     if c > xl.maxcolumn then
       xl.maxcolumn := c;
     end if;
-  end StoreMaxRC;
+  end Jump_to_and_store_max;
 
   -- 2.5.13 Cell Attributes (BIFF2 only)
   function Cell_attributes(xl: Excel_Out_Stream) return Byte_buffer is
@@ -592,8 +603,7 @@ package body Excel_Out is
   is
     pragma Inline(Write_as_double);
   begin
-    Jump_to(xl, r,c); -- Store and check current position
-    StoreMaxRC(xl, r-1, c-1);
+    Jump_to_and_store_max(xl, r, c);
     case xl.format is
       when BIFF2 =>
         -- 5.71 NUMBER
@@ -604,7 +614,7 @@ package body Excel_Out is
           IEEE_Double_Intel(num)
         );
     end case;
-    Jump_to(xl, r,c+1); -- Store and check new position
+    Jump_to(xl, r, c+1); -- Store and check new position
   end Write_as_double;
 
   -- Internal. This is BIFF2 only.
@@ -618,8 +628,7 @@ package body Excel_Out is
   is
     pragma Inline(Write_as_16_bit_unsigned);
   begin
-    Jump_to(xl, r,c); -- Store and check current position
-    StoreMaxRC(xl, r-1, c-1);
+    Jump_to_and_store_max(xl, r, c);
     -- 5.60 INTEGER
     WriteBiff(xl, 16#0002#,
       Intel_16(Unsigned_16(r-1)) &
@@ -627,7 +636,7 @@ package body Excel_Out is
       Cell_attributes(xl) &
       Intel_16(num)
     );
-    Jump_to(xl, r,c+1); -- Store and check new position
+    Jump_to(xl, r, c+1); -- Store and check new position
   end Write_as_16_bit_unsigned;
 
   --
@@ -686,8 +695,7 @@ package body Excel_Out is
         str    : String)
   is
   begin
-    Jump_to(xl, r,c); -- Store and check current position
-    StoreMaxRC(xl, r-1, c-1);
+    Jump_to_and_store_max(xl, r, c);
     if str'Length > 0 then
       case xl.format is
         when BIFF2 =>
@@ -700,7 +708,7 @@ package body Excel_Out is
           );
       end case;
     end if;
-    Jump_to(xl, r,c+1); -- Store and check new position
+    Jump_to(xl, r, c+1); -- Store and check new position
   end Write;
 
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; str : Unbounded_String)
@@ -755,8 +763,7 @@ package body Excel_Out is
           c      : Positive)
     is
     begin
-      Jump_to(xl, r,c); -- Store and check current position
-      StoreMaxRC(xl, r-1, c-1);
+      Jump_to_and_store_max(xl, r, c);
       case xl.format is
         -- NB: Only with BIFF4, and only OpenOffice
         -- considers the cells really merged.
@@ -768,7 +775,7 @@ package body Excel_Out is
             Cell_attributes(xl)
           );
       end case;
-      Jump_to(xl, r,c+1); -- Store and check new position
+      Jump_to(xl, r, c+1); -- Store and check new position
     end Blank;
   begin
     for i in 1..cells loop
