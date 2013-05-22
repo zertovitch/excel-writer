@@ -232,9 +232,9 @@ package body Excel_Out is
     case xl.format is
       when BIFF2 =>
         WriteBiff(xl, 16#0000#,
-          Intel_16(0) & 
-          Intel_16(Unsigned_16(xl.maxrow)) & 
-          Intel_16(0) & 
+          Intel_16(0) &
+          Intel_16(Unsigned_16(xl.maxrow)) &
+          Intel_16(0) &
           Intel_16(Unsigned_16(xl.maxcolumn))
         );
         -- 0 2 Index to first used row
@@ -850,6 +850,16 @@ package body Excel_Out is
     xl.curr_row:= row;
     xl.curr_col:= column;
   end Jump_to;
+
+  procedure Next(xl: in out Excel_Out_Stream; columns: Positive:= 1) is
+  begin
+    Jump(xl, rows => 0, columns => columns);
+  end Next;
+
+  procedure Next_Row(xl: in out Excel_Out_Stream; rows: Positive:= 1) is
+  begin
+    Jump(xl, rows => rows, columns => 0);
+  end Next_row;
 
   procedure Use_format(
     xl           : in out Excel_Out_Stream;

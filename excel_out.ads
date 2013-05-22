@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009..2012 Gautier de Montmollin
+--  Copyright (c) 2009..2013 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -302,6 +302,8 @@ package Excel_Out is
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural);
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive);
+  procedure Next(xl: in out Excel_Out_Stream; columns: Positive:= 1);  -- Jump 1 or more cell right
+  procedure Next_Row(xl: in out Excel_Out_Stream; rows: Positive:= 1); -- Jump 1 or more cell down
   --
   -- Merge a certain amount of cells with the last one,
   -- right to that cell, on the same row.
@@ -357,8 +359,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "10";
-  reference : constant String:= "15-Dec-2012";
+  version   : constant String:= "11, Preview 1";
+  reference : constant String:= "22-May-2013";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
