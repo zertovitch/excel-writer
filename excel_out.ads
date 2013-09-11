@@ -293,6 +293,8 @@ package Excel_Out is
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String);
   --
   procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1);
+
+  -- Get current column and row. The next Put will put contents in that cell.
   --
   function Col(xl: in Excel_Out_Stream) return Positive;    -- Text_IO naming
   function Column(xl: in Excel_Out_Stream) return Positive; -- Excel naming
