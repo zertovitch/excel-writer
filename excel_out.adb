@@ -186,8 +186,12 @@ package body Excel_Out is
     end case;
   end WriteFmtStr;
 
-  -- Write built-in number formats
+  -- Write built-in number formats (internal)
   procedure WriteFmtRecords (xl : Excel_Out_Stream'Class) is
+    sep_1000: constant Character:= ''';
+    sep_deci: constant Character:= '.';
+    -- ^ If there is any evidence of an issue with those built-in separators,
+    -- we may make them configurable.
   begin
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
@@ -199,27 +203,29 @@ package body Excel_Out is
       case n is
         when general    =>  WriteFmtStr(xl, "General");
         when decimal_0  =>  WriteFmtStr(xl, "0");
-        when decimal_2  =>  WriteFmtStr(xl, "0.00"); -- 'Comma' built-in style
+        when decimal_2  =>  WriteFmtStr(xl, "0" & sep_deci & "00"); -- 'Comma' built-in style
         when decimal_0_thousands_separator =>
-                            WriteFmtStr(xl, "#'##0");
+                            WriteFmtStr(xl, "#" & sep_1000 & "##0");
         when decimal_2_thousands_separator =>
-                            WriteFmtStr(xl, "#'##0.00");
+                            WriteFmtStr(xl, "#" & sep_1000 & "##0" & sep_deci & "00");
         when currency_0      =>
-          WriteFmtStr(xl, "$ #'##0;$ -#'##0");
+          WriteFmtStr(xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
         when currency_red_0  =>
-          WriteFmtStr(xl, "$ #'##0;$ -#'##0");
+          WriteFmtStr(xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
           -- [Red] doesn't go with non-English versions of Excel !!
         when currency_2      =>
-          WriteFmtStr(xl, "$ #'##0.00;$ -#'##0.00");
+          WriteFmtStr(xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
+                          "$ -#" & sep_1000 & "##0" & sep_deci & "00");
         when currency_red_2  =>
-          WriteFmtStr(xl, "$ #'##0.00;$ -#'##0.00");
+          WriteFmtStr(xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
+                          "$ -#" & sep_1000 & "##0" & sep_deci & "00");
         when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
-        when percent_2  =>  WriteFmtStr(xl, "0.00%");
-        when scientific =>  WriteFmtStr(xl, "0.00E+00");
+        when percent_2  =>  WriteFmtStr(xl, "0" & sep_deci & "00%");
+        when scientific =>  WriteFmtStr(xl, "0" & sep_deci & "00E+00");
         when percent_0_plus  =>
           WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
-          WriteFmtStr(xl, "+0.00%;-0.00%;0.00%");
+          WriteFmtStr(xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
