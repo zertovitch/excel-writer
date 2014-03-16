@@ -2,32 +2,31 @@
 -- for the Excel Writer ( http://excel-writer.sf.net/ )
 -- Build me with "gnatmake -P excel_out_gnat", or open me with GPS
 --
-project Excel_Out_Gnat is 
+project Excel_Out_Gnat is
 
-   type Build_Mode_Type is ("Debug", "Fast");
+   type Build_Mode_Type is
+      ("Debug", "Fast");
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
-
-   for Main use (
-      "excel_out_test.adb", 
-      "biff_dump.adb", 
-      "test_spreadsheet_references.adb",
-      "csv2tex.adb",
-      "csv2html.adb"
-   );
+   for Main use ("excel_out_test.adb", "biff_dump.adb", "test_spreadsheet_references.adb", "csv2tex.adb", "csv2html.adb");
    for Source_Dirs use (".", "extras");
    for Exec_Dir use ".";
 
    case Build_Mode is
+
       when "Debug" =>
          for Object_Dir use "obj_debug";
+
       when "Fast" =>
          for Object_Dir use "obj_fast";
    end case;
-   
+
    package Compiler is
+
       case Build_Mode is
+
          when "Debug" =>
-            for Default_Switches ("ada") use ("-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra", "-gnatyhiknp");
+            for Default_Switches ("ada") use ("-gnatyhiknpfux", "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
+
          when "Fast" =>
             for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
@@ -36,10 +35,10 @@ project Excel_Out_Gnat is
    package Builder is
       for Default_Switches ("ada") use ("-j2");
    end Builder;
-      
+
    package Ide is
       for Default_Switches ("adacontrol") use ("-f", "verif.aru");
    end Ide;
-   
+
 end Excel_Out_Gnat;
 

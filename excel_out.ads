@@ -313,7 +313,6 @@ package Excel_Out is
   -- right to that cell, on the same row.
   procedure Merge(xl: in out Excel_Out_Stream; cells: Positive);
 
-
   -- Cells written after Use_format will be using the given format,
   -- defined by Define_format.
   procedure Use_format(

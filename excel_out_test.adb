@@ -5,7 +5,7 @@
 
 with Excel_Out;                         use Excel_Out;
 
-with Ada.Calendar, Ada.Streams.Stream_IO;
+with Ada.Calendar, Ada.Streams.Stream_IO, Ada.Text_IO;
 
 procedure Excel_Out_Test is
 
@@ -175,9 +175,15 @@ procedure Excel_Out_Test is
     Close(xl);
   end Speed_test;
 
+  use Ada.Text_IO;
+
 begin
+  Put_Line("Small demo ( -> Small.xls)");
   Small_demo;
+  Put_Line("Big demo ( -> Big.xls)");
   Big_demo;
+  Put_Line("String demo ( -> From_string.xls)");
   String_demo;
+  Put_Line("Speed test ( -> Speed_test.xls)");
   Speed_test;
 end Excel_Out_Test;

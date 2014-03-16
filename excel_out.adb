@@ -40,10 +40,10 @@ package body Excel_Out is
     end loop;
     return Unsigned_8(s'Length) & b;
   end To_buf;
-  -- Put numbers with correct endianess as bytes
 
+  -- Put numbers with correct endianess as bytes:
   generic
-    type Number is mod <>; -- range <> in Ada83 version (fake Interfaces)
+    type Number is mod <>;
     size: Positive;
   function Intel_x86_buffer( n: Number ) return Byte_buffer;
   pragma Inline(Intel_x86_buffer);
@@ -73,7 +73,6 @@ package body Excel_Out is
   --
   -- http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
-
   function IEEE_Double_Intel_Portable(x: Long_Float) return Byte_buffer is
     pragma Inline(IEEE_Double_Intel_Portable);
     d : Byte_buffer(1..8);
@@ -306,7 +305,9 @@ package body Excel_Out is
     -- NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
     --     - these "styles" seem to be a zombie feature of Excel 3
     --     - the whole purpose of including this is because format
-    --       buttons (%)(,) in Excel 95 through 2007 are using these styles
+    --       buttons (%)(,) in Excel 95 through 2007 are using these styles;
+    --       If the styles are not defined, the buttons are not working
+    --       when the user is reworking the EW sheet in MS Excel.
     Define_style(xl.cma_fmt, Comma_Style);
     Define_style(xl.ccy_fmt, Currency_Style);
     Define_style(xl.pct_fmt, Percent_Style);
@@ -488,7 +489,6 @@ package body Excel_Out is
         );
     end case;
   end Write_column_width;
-
 
   -- 5.88 ROW
   -- The OpenOffice documentation tells nice stories about row blocks,
@@ -789,7 +789,6 @@ package body Excel_Out is
     end loop;
   end Merge;
 
-
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
     Put(xl, num);
@@ -987,9 +986,9 @@ package body Excel_Out is
     -- if Item is empty, the following loop is skipped; if Stream.Loc
     -- is already indexing out of Stream.Unb, that value is also appropriate
     for i in Item'Range loop
-       Item(i) := Character'Pos (Element(Stream.Unb, Stream.Loc));
-       Stream.Loc := Stream.Loc + 1;
-       Last := i;
+      Item(i) := Character'Pos (Element(Stream.Unb, Stream.Loc));
+      Stream.Loc := Stream.Loc + 1;
+      Last := i;
     end loop;
   exception
     when Ada.Strings.Index_Error =>
