@@ -306,8 +306,8 @@ package body Excel_Out is
     --     - these "styles" seem to be a zombie feature of Excel 3
     --     - the whole purpose of including this is because format
     --       buttons (%)(,) in Excel 95 through 2007 are using these styles;
-    --       If the styles are not defined, the buttons are not working
-    --       when the user is reworking the EW sheet in MS Excel.
+    --       if the styles are not defined, those buttons are not working
+    --       when an Excel Writer sheet is open in MS Excel.
     Define_style(xl.cma_fmt, Comma_Style);
     Define_style(xl.ccy_fmt, Currency_Style);
     Define_style(xl.pct_fmt, Percent_Style);

@@ -189,7 +189,7 @@ package Excel_Out is
   percent_2     : constant Number_format_type;
   percent_0_plus: constant Number_format_type;   -- +3%, 0%, -4%
   percent_2_plus: constant Number_format_type;
-  scientific : constant Number_format_type;
+  scientific    : constant Number_format_type;
   -- NB: A number format working on Excel with certain regional settings
   -- may not work on Excel (even the same) with other regional settings!
   -- Hence the limited choice of built-in formats above.
