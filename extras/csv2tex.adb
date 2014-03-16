@@ -17,7 +17,7 @@ procedure CSV2TeX is
   s: String(1..1000);
   first: Boolean:= True;
 begin
-  while not End_of_File(standard_input) loop
+  while not End_Of_File(Standard_Input) loop
     Get_Line(s,l);
     declare
       line: String renames s(1..l);

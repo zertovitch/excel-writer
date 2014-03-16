@@ -40,8 +40,8 @@ procedure Excel_Out_Test is
     Print_Gridlines(xl);
     --
     Write_default_column_width(xl, 7);
-    Write_column_width(xl, 1, 15); -- set to width of 15 times '0'
-    Write_column_width(xl, 2, 9);
+    Write_column_width(xl, 1, 17); -- set to width of n times '0'
+    Write_column_width(xl, 2, 11);
     Write_column_width(xl, 5, 11);
     Write_column_width(xl, 14, 0); -- hide this column
     --

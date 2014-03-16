@@ -70,6 +70,7 @@ procedure BIFF_Dump is
   font3      : constant:= 16#0231#;
   format2    : constant:= 16#001E#;
   format4    : constant:= 16#041E#;
+  blank2     : constant:= 16#0001#;
   index3     : constant:= 16#020B#; -- 5.59
   integer2   : constant:= 16#0002#; -- 5.60
   number2    : constant:= 16#0003#; -- 5.71
@@ -145,7 +146,7 @@ begin
   Put_Line(xl, "Comments");
   --
   Use_format(xl, Default_format(xl));
-  while not End_of_File(f) loop
+  while not End_Of_File(f) loop
     code  := in16;
     length:= in16;
     Put(xl, code, base => 16);
@@ -156,19 +157,19 @@ begin
       when 16#0009# =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
-        biff_Version:= 2; -- some items, like font, are reused in biff 5 but not 3,4
+        biff_version:= 2; -- some items, like font, are reused in biff 5 but not 3,4
       when 16#0209# =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
-        biff_Version:= 3;
+        biff_version:= 3;
       when 16#0409# =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
-        biff_Version:= 4;
+        biff_version:= 4;
       when 16#0809# =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
-        biff_Version:= 5;
+        biff_version:= 5;
       when 16#000A# => Put(xl, "EOF"); Put(xl, "End of File");
       --
       when 16#0000# => Put(xl, "DIMENSION");
@@ -212,7 +213,7 @@ begin
         -- 5.45, p.171
         fnt:= fnt + 1;
       when 16#0045# => Put(xl, "FONTCOLOR");
-      when 16#0001# => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
+      when blank2   => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
       when 16#0201# => Put(xl, "BLANK (BIFF3+)");
       when index3   => Put(xl, "INDEX (BIFF3+)");
       when integer2 => Put(xl, "INTEGER (BIFF2)");
@@ -266,7 +267,7 @@ begin
             Read(f,b);
           end loop;
         end if;
-      when 1 | number2 =>
+      when blank2 | number2 =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
         Cell_Attributes;

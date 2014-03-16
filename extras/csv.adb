@@ -115,7 +115,7 @@ package body CSV is
       Raw_Line : constant String := Unquote (Item (Slice.Start .. Slice.Stop));
    begin
       if Size = 0 then
-         return Trim (Raw_line, Both);
+         return Trim (Raw_Line, Both);
       elsif Raw_Line'Length < Size then
          return Raw_Line & (Size - Raw_Line'Length) * ' ';
       else
