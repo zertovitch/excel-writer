@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009..2013 Gautier de Montmollin
+--  Copyright (c) 2009..2014 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,7 @@
 -- Main changes:
 -- ============
 --
+-- 12: xx-yyy-2014: - added date built-in formats
 -- 11: 13-Sep-2013: - added Next and Next_Row
 --
 -- 08:  7-Jul-2011: - fixed Put("") not jumping
@@ -89,6 +90,7 @@
 -- 01: 13-Feb-2009: 1st release
 -- 00: 11-Feb-2009: translation from original ExcelOut in Modula-2
 
+with Ada.Calendar;                      use Ada.Calendar;
 with Ada.Streams.Stream_IO;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
 with Ada.Text_IO;
@@ -190,6 +192,9 @@ package Excel_Out is
   percent_0_plus: constant Number_format_type;   -- +3%, 0%, -4%
   percent_2_plus: constant Number_format_type;
   scientific    : constant Number_format_type;
+  date          : constant Number_format_type;   -- ISO 8601 format: 2014-03-16
+  date_h_m      : constant Number_format_type;   -- date, hour, minutes
+  date_h_m_s    : constant Number_format_type;   -- date, hour, minutes, seconds
   -- NB: A number format working on Excel with certain regional settings
   -- may not work on Excel (even the same) with other regional settings!
   -- Hence the limited choice of built-in formats above.
@@ -274,6 +279,7 @@ package Excel_Out is
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; num : Integer);
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; str : String);
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; str : Unbounded_String);
+  procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; date: Time);
 
   -- "Ada.Text_IO" - like output.
   -- No need to specify row & column each time.
@@ -288,11 +294,13 @@ package Excel_Out is
             );
   procedure Put(xl: in out Excel_Out_Stream; str : String);
   procedure Put(xl: in out Excel_Out_Stream; str : Unbounded_String);
+  procedure Put(xl: in out Excel_Out_Stream; date: Time);
   --
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float);
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Integer);
   procedure Put_Line(xl: in out Excel_Out_Stream; str : String);
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String);
+  procedure Put_Line(xl: in out Excel_Out_Stream; date: Time);
   --
   procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1);
 
@@ -362,8 +370,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "11";
-  reference : constant String:= "14-Sep-2013";
+  version   : constant String:= "12 preview 1";
+  reference : constant String:= "xx-yyy-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -419,13 +427,16 @@ private
   currency_red_0: constant Number_format_type:= 6;
   currency_2    : constant Number_format_type:= 7;
   currency_red_2: constant Number_format_type:= 8;
-  percent_0     : constant Number_format_type:= 9; --  3%, 0%, -4%
+  percent_0     : constant Number_format_type:= 9;  --  3%, 0%, -4%
   percent_2     : constant Number_format_type:= 10;
   scientific    : constant Number_format_type:= 11;
   percent_0_plus: constant Number_format_type:= 12; -- +3%, 0%, -4%
   percent_2_plus: constant Number_format_type:= 13;
+  date          : constant Number_format_type:= 14; -- ISO 8601 format: 2014-03-16
+  date_h_m      : constant Number_format_type:= 15; -- date, hour, minutes
+  date_h_m_s    : constant Number_format_type:= 16; -- date, hour, minutes, seconds
 
-  last_built_in : constant Number_format_type:= percent_2_plus;
+  last_built_in : constant Number_format_type:= date_h_m_s;
 
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and

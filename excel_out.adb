@@ -225,6 +225,13 @@ package body Excel_Out is
           WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
           WriteFmtStr(xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
+        when date        => WriteFmtStr(xl, "yyyy\-mm\-dd"); 
+          -- !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
+          --    understands it and translates it into aaaa, but is unable to
+          --    understand *our* yyyy !!
+          -- Same issue as [Red] vs [Rot] above.
+        when date_h_m    => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm");
+        when date_h_m_s  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
@@ -587,7 +594,7 @@ package body Excel_Out is
   begin
     return
       (Unsigned_8(xl.xf_in_use),
-       Unsigned_8(xl.xf_def(xl.xf_in_use).numb) + 16#C0# *
+       Unsigned_8(xl.xf_def(xl.xf_in_use).numb) + 16#40# *
        Unsigned_8(xl.xf_def(xl.xf_in_use).font),
        0
       );
@@ -723,6 +730,17 @@ package body Excel_Out is
     Write(xl, r,c, To_String(str));
   end Write;
 
+  function To_Number(date: Time) return Long_Float is
+  begin
+    return Long_Float(date - Time_of(1904, 01, 01, 0.0)) / 86_400.0;
+  end To_Number;
+
+  procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; date: Time)
+  is
+  begin
+    Write(xl, r,c, To_Number(date));
+  end Write;
+
   -- Ada.Text_IO - like. No need to specify row & column each time
   procedure Put(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
@@ -759,6 +777,11 @@ package body Excel_Out is
   procedure Put(xl: in out Excel_Out_Stream; str : Unbounded_String) is
   begin
     Put(xl, To_String(str));
+  end Put;
+
+  procedure Put(xl: in out Excel_Out_Stream; date: Time) is
+  begin
+    Put(xl, To_Number(date));
   end Put;
 
   procedure Merge(xl: in out Excel_Out_Stream; cells : Positive) is
@@ -810,6 +833,12 @@ package body Excel_Out is
   procedure Put_Line(xl: in out Excel_Out_Stream; str : Unbounded_String) is
   begin
     Put_Line(xl, To_String(str));
+  end Put_Line;
+
+  procedure Put_Line(xl: in out Excel_Out_Stream; date: Time) is
+  begin
+    Put(xl, date);
+    New_Line(xl);
   end Put_Line;
 
   procedure New_Line(xl: in out Excel_Out_Stream; Spacing : Positive := 1) is

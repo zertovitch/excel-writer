@@ -70,7 +70,8 @@ procedure BIFF_Dump is
   font3      : constant:= 16#0231#;
   format2    : constant:= 16#001E#;
   format4    : constant:= 16#041E#;
-  number3    : constant:= 16#0203#;
+  number2    : constant:= 16#0003#; -- 5.71
+  number3    : constant:= 16#0203#; -- 5.71
   rk         : constant:= 16#027E#; -- 5.87 RK p.201
   label2     : constant:= 16#0004#;
   label3     : constant:= 16#0204#;
@@ -212,7 +213,7 @@ begin
       when 16#0001# => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
       when 16#0201# => Put(xl, "BLANK (BIFF3+)");
       when 16#0002# => Put(xl, "INTEGER");
-      when 16#0003# => Put(xl, "NUMBER (BIFF2)");
+      when number2  => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
       when formula2 => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
       when formula4 => Put(xl, "FORMULA (BIFF4)");

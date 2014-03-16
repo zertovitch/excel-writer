@@ -5,7 +5,8 @@
 
 with Excel_Out;                         use Excel_Out;
 
-with Ada.Calendar, Ada.Streams.Stream_IO, Ada.Text_IO;
+with Ada.Calendar;                      use Ada.Calendar;
+with Ada.Streams.Stream_IO, Ada.Text_IO;
 
 procedure Excel_Out_Test is
 
@@ -25,7 +26,7 @@ procedure Excel_Out_Test is
   procedure Big_demo is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8: Format_type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8, fmt_date: Format_type;
     custom_num: Number_format_type;
   begin
     Create(xl, "Big.xls");
@@ -62,6 +63,7 @@ procedure Excel_Out_Test is
     Define_format(xl, font_5, general,   fmt_6, border => box);
     Define_format(xl, font_1, custom_num,  fmt_7, centred);
     Define_format(xl, font_6, general, fmt_8);
+    Define_format(xl, font_6, date_h_m_s, fmt_date);
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
@@ -103,8 +105,12 @@ procedure Excel_Out_Test is
     Write(xl, 11, 10, Long_Float'Last);
     Write(xl, 11, 12, "Smallest number:");
     Write(xl, 11, 15, (1.0+Long_Float'Model_Epsilon) * Long_Float'Model_Small);
+    New_Line(xl);
+    -- Date: 2014-03-16 11:55:15
+    Use_format(xl, fmt_date);
+    Put_Line(xl, Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 15.0));
 
-    for row in 13 .. 300 loop
+    for row in 15 .. 300 loop
       Use_format(xl, fmt_1);
       Write(xl, row, 3, Long_Float(row) * 0.01);
       Use_format(xl, fmt_5);
@@ -143,7 +149,6 @@ procedure Excel_Out_Test is
 
   procedure Speed_test is
     xl: Excel_Out_File;
-    use Ada.Calendar;
     t0, t1: Time;
     iter: constant:= 1000;
     size: constant:= 150;
