@@ -26,8 +26,10 @@ procedure Excel_Out_Test is
   procedure Big_demo is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8, fmt_date: Format_type;
-    custom_num: Number_format_type;
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8,
+    fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
+    custom_num, custom_date_num: Number_format_type;
+    some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
   begin
     Create(xl, "Big.xls");
     -- Some page layout...
@@ -39,12 +41,12 @@ procedure Excel_Out_Test is
     --
     Write_default_column_width(xl, 7);
     Write_column_width(xl, 1, 15); -- set to width of 15 times '0'
+    Write_column_width(xl, 2, 9);
     Write_column_width(xl, 5, 11);
     Write_column_width(xl, 14, 0); -- hide this column
     --
-    Write_default_row_height(xl, 20);
+    Write_default_row_height(xl, 19);
     Write_row_height(xl, 13, 0);   -- hide this row
-    Write_row_height(xl, 100, 30);
     --
     Define_font(xl, "Arial", 10, font_1, regular, blue);
     Define_font(xl, "Courier New", 12, font_2, bold & italic, red);
@@ -54,6 +56,7 @@ procedure Excel_Out_Test is
     Define_font(xl, "Calibri", 9, font_6);
     --
     Define_number_format(xl, custom_num, "0.000000"); -- 6 decimals
+    Define_number_format(xl, custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss"); -- ISO date
     --
     Define_format(xl, font_1, percent_0, fmt_1, centred, right);
     Define_format(xl, font_2, decimal_2, fmt_2);
@@ -63,7 +66,9 @@ procedure Excel_Out_Test is
     Define_format(xl, font_5, general,   fmt_6, border => box);
     Define_format(xl, font_1, custom_num,  fmt_7, centred);
     Define_format(xl, font_6, general, fmt_8);
-    Define_format(xl, font_6, date_h_m_s, fmt_date);
+    Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1);
+    Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2);
+    Define_format(xl, font_6, hh_mm_ss,         fmt_date_3); -- custom_date_num
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
@@ -107,8 +112,13 @@ procedure Excel_Out_Test is
     Write(xl, 11, 15, (1.0+Long_Float'Model_Epsilon) * Long_Float'Model_Small);
     New_Line(xl);
     -- Date: 2014-03-16 11:55:15
-    Use_format(xl, fmt_date);
-    Put_Line(xl, Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 15.0));
+    Use_format(xl, fmt_date_2);
+    Put(xl, some_time);
+    Use_format(xl, fmt_date_1);
+    Put(xl, some_time);
+    Use_format(xl, fmt_date_3);
+    Put(xl, some_time);
+    New_Line(xl);
 
     for row in 15 .. 300 loop
       Use_format(xl, fmt_1);

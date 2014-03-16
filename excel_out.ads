@@ -182,22 +182,20 @@ package Excel_Out is
   type Number_format_type is private;
 
   -- Built-in number formats
-  general       : constant Number_format_type;
-  decimal_0     : constant Number_format_type;
-  decimal_2     : constant Number_format_type;
+  general          : constant Number_format_type;
+  decimal_0        : constant Number_format_type;
+  decimal_2        : constant Number_format_type;
   decimal_0_thousands_separator: constant Number_format_type;  -- 1'234'000
   decimal_2_thousands_separator: constant Number_format_type;  -- 1'234'000.00
-  percent_0     : constant Number_format_type;   --  3%, 0%, -4%
-  percent_2     : constant Number_format_type;
-  percent_0_plus: constant Number_format_type;   -- +3%, 0%, -4%
-  percent_2_plus: constant Number_format_type;
-  scientific    : constant Number_format_type;
-  date          : constant Number_format_type;   -- ISO 8601 format: 2014-03-16
-  date_h_m      : constant Number_format_type;   -- date, hour, minutes
-  date_h_m_s    : constant Number_format_type;   -- date, hour, minutes, seconds
-  -- NB: A number format working on Excel with certain regional settings
-  -- may not work on Excel (even the same) with other regional settings!
-  -- Hence the limited choice of built-in formats above.
+  percent_0        : constant Number_format_type;   --  3%, 0%, -4%
+  percent_2        : constant Number_format_type;
+  percent_0_plus   : constant Number_format_type;   -- +3%, 0%, -4%
+  percent_2_plus   : constant Number_format_type;
+  scientific       : constant Number_format_type;
+  dd_mm_yyyy       : constant Number_format_type;
+  dd_mm_yyyy_hh_mm : constant Number_format_type;
+  hh_mm            : constant Number_format_type;
+  hh_mm_ss         : constant Number_format_type;
 
   procedure Define_number_format(
     xl           : in out Excel_Out_Stream;
@@ -418,25 +416,37 @@ private
   type XF_Definition is array(XF_Range) of XF_Info;
 
   -- Built-in number formats
-  general       : constant Number_format_type:= 0;
-  decimal_0     : constant Number_format_type:= 1;
-  decimal_2     : constant Number_format_type:= 2;
+  general          : constant Number_format_type:= 0;
+  decimal_0        : constant Number_format_type:= 1;
+  decimal_2        : constant Number_format_type:= 2;
   decimal_0_thousands_separator: constant Number_format_type:= 3;  -- 1'234'000
   decimal_2_thousands_separator: constant Number_format_type:= 4;  -- 1'234'000.00
-  currency_0    : constant Number_format_type:= 5;
-  currency_red_0: constant Number_format_type:= 6;
-  currency_2    : constant Number_format_type:= 7;
-  currency_red_2: constant Number_format_type:= 8;
-  percent_0     : constant Number_format_type:= 9;  --  3%, 0%, -4%
-  percent_2     : constant Number_format_type:= 10;
-  scientific    : constant Number_format_type:= 11;
-  percent_0_plus: constant Number_format_type:= 12; -- +3%, 0%, -4%
-  percent_2_plus: constant Number_format_type:= 13;
-  date          : constant Number_format_type:= 14; -- ISO 8601 format: 2014-03-16
-  date_h_m      : constant Number_format_type:= 15; -- date, hour, minutes
-  date_h_m_s    : constant Number_format_type:= 16; -- date, hour, minutes, seconds
+  currency_0       : constant Number_format_type:= 5;
+  currency_red_0   : constant Number_format_type:= 6;
+  currency_2       : constant Number_format_type:= 7;
+  currency_red_2   : constant Number_format_type:= 8;
+  percent_0        : constant Number_format_type:= 9;  --  3%, 0%, -4%
+  percent_2        : constant Number_format_type:= 10;
+  scientific       : constant Number_format_type:= 11;
+  dd_mm_yyyy       : constant Number_format_type:= 12;
+  dd_mmm_yy        : constant Number_format_type:= 13;
+  dd_mmm           : constant Number_format_type:= 14;
+  mmm_yy           : constant Number_format_type:= 15;
+  h_mm_AM_PM       : constant Number_format_type:= 16;
+  h_mm_ss_AM_PM    : constant Number_format_type:= 17;
+  hh_mm            : constant Number_format_type:= 18;
+  hh_mm_ss         : constant Number_format_type:= 19;
+  dd_mm_yyyy_hh_mm : constant Number_format_type:= 20;
+  -- End of Excel built-in formats
+  last_built_in : constant Number_format_type:= dd_mm_yyyy_hh_mm;
 
-  last_built_in : constant Number_format_type:= date_h_m_s;
+  percent_0_plus   : constant Number_format_type:= 21; -- +3%, 0%, -4%
+  percent_2_plus   : constant Number_format_type:= 22;
+  date             : constant Number_format_type:= 23; -- ISO 8601 format: 2014-03-16
+  date_h_m         : constant Number_format_type:= 24; -- date, hour, minutes
+  date_h_m_s       : constant Number_format_type:= 25; -- date, hour, minutes, seconds
+  -- End of our custom formats
+  last_custom   : constant Number_format_type:= date_h_m_s;
 
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and
@@ -455,7 +465,7 @@ private
     xfs        : Integer:= -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range:= 0;
     xf_def     : XF_Definition;
-    number_fmt : Number_format_type:= last_built_in;
+    number_fmt : Number_format_type:= last_custom;
     def_font   : Font_type;
     def_fmt    : Format_type; -- Default format; used for "Normal" style
     cma_fmt    : Format_type; -- Format used for defining "Comma" style

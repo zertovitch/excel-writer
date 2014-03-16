@@ -70,6 +70,8 @@ procedure BIFF_Dump is
   font3      : constant:= 16#0231#;
   format2    : constant:= 16#001E#;
   format4    : constant:= 16#041E#;
+  index3     : constant:= 16#020B#; -- 5.59
+  integer2   : constant:= 16#0002#; -- 5.60
   number2    : constant:= 16#0003#; -- 5.71
   number3    : constant:= 16#0203#; -- 5.71
   rk         : constant:= 16#027E#; -- 5.87 RK p.201
@@ -212,7 +214,8 @@ begin
       when 16#0045# => Put(xl, "FONTCOLOR");
       when 16#0001# => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
       when 16#0201# => Put(xl, "BLANK (BIFF3+)");
-      when 16#0002# => Put(xl, "INTEGER");
+      when index3   => Put(xl, "INDEX (BIFF3+)");
+      when integer2 => Put(xl, "INTEGER (BIFF2)");
       when number2  => Put(xl, "NUMBER (BIFF2)");
       when number3  => Put(xl, "NUMBER (BIFF3+)");
       when formula2 => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
@@ -263,13 +266,18 @@ begin
             Read(f,b);
           end loop;
         end if;
-      when 1..3 =>
+      when 1 | number2 =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
         Cell_Attributes;
         for i in 8..length loop
           Read(f,b);
         end loop;
+      when integer2 =>
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        Cell_Attributes;
+        Put(xl, in16);
       when number3 | rk =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));

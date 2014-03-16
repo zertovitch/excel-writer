@@ -110,7 +110,7 @@ package body Excel_Out is
   -- This is possible if and only if Byte = Stream_Element and
   -- arrays types are both packed and aligned the same way.
   --
-  subtype Size_test_a is Byte_Buffer(1..19);
+  subtype Size_test_a is Byte_buffer(1..19);
   subtype Size_test_b is Ada.Streams.Stream_Element_Array(1..19);
   workaround_possible: constant Boolean:=
     Size_test_a'Size = Size_test_b'Size and
@@ -118,7 +118,7 @@ package body Excel_Out is
 
   procedure Block_Write(
     stream : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer : in     Byte_Buffer
+    buffer : in     Byte_buffer
   )
   is
     pragma Inline(Block_Write);
@@ -129,7 +129,7 @@ package body Excel_Out is
     if workaround_possible then
       Ada.Streams.Write(stream, SE_Buffer);
     else
-      Byte_Buffer'Write(stream'Access, buffer);
+      Byte_buffer'Write(stream'Access, buffer);
       -- ^ This was 30x to 70x slower on GNAT 2009
       --   Test in the Zip-Ada project.
     end if;
@@ -190,15 +190,16 @@ package body Excel_Out is
     sep_1000: constant Character:= ''';
     sep_deci: constant Character:= '.';
     -- ^ If there is any evidence of an issue with those built-in separators,
-    -- we may make them configurable.
+    -- we may make them configurable. NB: MS Excel 2002 uses only
+    -- the index of built-in formats and discards the strings...
   begin
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in)));
+        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in+1)));
     end case;
     -- loop & case avoid omitting any choice
-    for n in Number_format_type'First .. last_built_in loop
+    for n in Number_format_type'First .. last_custom loop
       case n is
         when general    =>  WriteFmtStr(xl, "General");
         when decimal_0  =>  WriteFmtStr(xl, "0");
@@ -221,17 +222,26 @@ package body Excel_Out is
         when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
         when percent_2  =>  WriteFmtStr(xl, "0" & sep_deci & "00%");
         when scientific =>  WriteFmtStr(xl, "0" & sep_deci & "00E+00");
+        when dd_mm_yyyy       =>  WriteFmtStr(xl, "dd/mm/yyyy");
+        when dd_mmm_yy        =>  WriteFmtStr(xl, "dd/mmm/yy");
+        when dd_mmm           =>  WriteFmtStr(xl, "dd/mmm");
+        when mmm_yy           =>  WriteFmtStr(xl, "mmm/yy");
+        when h_mm_AM_PM       =>  WriteFmtStr(xl, "h:mm\ AM/PM");
+        when h_mm_ss_AM_PM    =>  WriteFmtStr(xl, "h:mm:ss\ AM/PM");
+        when hh_mm            =>  WriteFmtStr(xl, "hh:mm");
+        when hh_mm_ss         =>  WriteFmtStr(xl, "hh:mm:ss");
+        when dd_mm_yyyy_hh_mm =>  WriteFmtStr(xl, "dd/mm/yyyy\ hh:mm");
         when percent_0_plus  =>
           WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
           WriteFmtStr(xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
-        when date        => WriteFmtStr(xl, "yyyy\-mm\-dd"); 
+        when date        => WriteFmtStr(xl, "yyyy\-mm\-dd");
+        when date_h_m    => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm");
+        when date_h_m_s  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
           -- !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
           --    understands it and translates it into aaaa, but is unable to
           --    understand *our* yyyy !!
           -- Same issue as [Red] vs [Rot] above.
-        when date_h_m    => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm");
-        when date_h_m_s  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
       end case;
     end loop;
     -- ^ Some formats in the original list caused problems, probably
@@ -291,11 +301,11 @@ package body Excel_Out is
     -- 5.17 CODEPAGE
     WriteBiff(xl, 16#0042#, Intel_16(16#8001#)); -- Windows CP-1252
     -- 5.14 CALCMODE
-    WriteBiff(xl, 16#000D#, Intel_16(1)); --  1 = automatic
+    WriteBiff(xl, 16#000D#, Intel_16(1)); --  1 => automatic
     -- 5.85 REFMODE
-    WriteBiff(xl, 16#000F#, Intel_16(1)); --  1 = A1 mode
+    WriteBiff(xl, 16#000F#, Intel_16(1)); --  1 => A1 mode
     -- 5.28 DATEMODE
-    WriteBiff(xl, 16#0022#, Intel_16(1)); --  1 => 1904 Date system
+    WriteBiff(xl, 16#0022#, Intel_16(0)); --  0 => 1900; 1 => 1904 Date system
     --
     WriteFmtRecords(xl);
     xl.dimrecpos:= Index(xl);
@@ -364,7 +374,7 @@ package body Excel_Out is
     xl.xfs:= xl.xfs + 1;
     cell_format:= Format_type(xl.xfs);
     xl.xf_def(xl.xfs):= (font => font, numb => number_format);
-  end Define_Format;
+  end Define_format;
 
   procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
   begin
@@ -732,7 +742,7 @@ package body Excel_Out is
 
   function To_Number(date: Time) return Long_Float is
   begin
-    return Long_Float(date - Time_of(1904, 01, 01, 0.0)) / 86_400.0;
+    return Long_Float(date - Time_Of(1901, 01, 01, 0.0)) / 86_400.0 + 367.0;
   end To_Number;
 
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; date: Time)
@@ -893,7 +903,7 @@ package body Excel_Out is
   procedure Next_Row(xl: in out Excel_Out_Stream; rows: Positive:= 1) is
   begin
     Jump(xl, rows => rows, columns => 0);
-  end Next_row;
+  end Next_Row;
 
   procedure Use_format(
     xl           : in out Excel_Out_Stream;
@@ -902,7 +912,7 @@ package body Excel_Out is
   is
   begin
     xl.xf_in_use:= XF_Range(format);
-  end Use_Format;
+  end Use_format;
 
   procedure Use_default_format(xl: in out Excel_Out_Stream) is
   begin
@@ -973,7 +983,7 @@ package body Excel_Out is
 
   -- Set the index on the file
   procedure Set_Index (xl: in out Excel_Out_File;
-                       to: Ada.Streams.Stream_IO.Positive_Count)
+                       To: Ada.Streams.Stream_IO.Positive_Count)
   is
   begin
     Ada.Streams.Stream_IO.Set_Index(xl.xl_file.all, To);

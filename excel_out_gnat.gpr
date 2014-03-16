@@ -25,7 +25,7 @@ project Excel_Out_Gnat is
       case Build_Mode is
 
          when "Debug" =>
-            for Default_Switches ("ada") use ("-gnatyhiknpfux", "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
+            for Default_Switches ("ada") use ("-gnatyhiknpfuxrb", "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
 
          when "Fast" =>
             for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
