@@ -1,6 +1,6 @@
 -------------------------------------------------------------------------------------
 --
--- EXCEL_OUT - A low level package to write Microsoft Excel (*) files
+-- EXCEL_OUT - A low level package for writing Microsoft Excel (*) files
 --
 -- Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
 --
@@ -32,8 +32,7 @@
 -- NB: this is the MIT License, as found 12-Sep-2007 on the site
 -- http://www.opensource.org/licenses/mit-license.php
 
--- Derived from ExcelOut @ http://www.modula2.org/projects/excelout.php
--- by Frank Schoonjans - thanks!
+-- Derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
 
 -- (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------

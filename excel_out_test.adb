@@ -32,12 +32,13 @@ procedure Excel_Out_Test is
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
   begin
     Create(xl, "Big.xls");
-    -- Some page layout...
+    -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");
     Margins(xl, 1.2, 1.1, 0.9, 0.8);
     Print_Row_Column_Headers(xl);
     Print_Gridlines(xl);
+    Page_Setup(xl, fit_height_with_n_pages => 0, orientation => landscape, scale_or_fit => fit);
     --
     Write_default_column_width(xl, 7);
     Write_column_width(xl, 1, 17); -- set to width of n times '0'
@@ -126,7 +127,7 @@ procedure Excel_Out_Test is
       Use_format(xl, fmt_5);
       Put(xl, Long_Float(row-100) * 0.001);
       Use_format(xl, fmt_7);
-      Put(xl, Long_Float(row-13) + 0.123456);
+      Put(xl, Long_Float(row - 15) + 0.123456);
     end loop;
     Close(xl);
   end Big_demo;

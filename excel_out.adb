@@ -1,9 +1,7 @@
--- Derived from ExcelOut @ http://www.modula2.org/projects/
--- by Frank Schoonjans - thanks!
+-- Derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
+-- First translated with Mod2Pas and P2Ada, then expanded
 --
--- Translated with Mod2Pas and P2Ada
---
--- References to documentation are to http://sc.openoffice.org/excelfileformat.pdf
+-- References to documentation are to: http://sc.openoffice.org/excelfileformat.pdf
 --
 -- To do:
 -- =====
@@ -25,7 +23,7 @@ package body Excel_Out is
   use Ada.Streams.Stream_IO, Ada.Streams;
 
   -- Very low level part which deals with transfering data endian-proof,
-  -- and floats in the ieee format.
+  -- and floats in the IEEE format.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
 
@@ -434,22 +432,22 @@ package body Excel_Out is
   )
   is
   begin
-    -- NB: this is BIFF4!
+    -- 5.73 PAGESETUP p.192 - this is BIFF4+ (cheat)!
     WriteBiff(xl,
-      16#00A1#,    -- 5.73 p.192
+      16#00A1#,
       Intel_16(0) & -- paper type undefined
       Intel_16(Unsigned_16(scaling_percents)) &
       Intel_16(1) & -- start page number
       Intel_16(Unsigned_16(fit_width_with_n_pages)) &
       Intel_16(Unsigned_16(fit_height_with_n_pages)) &
-      Intel_16(2*Orientation_choice'Pos(orientation))
+      Intel_16(2 * Orientation_choice'Pos(orientation))
     );
-    -- NB: this is BIFF3+
+    -- 5.97 SHEETPR p.207 - this is BIFF3+ (cheat) !
     -- NB: this field contains other informations, should be delayed
     --       in case other preferences are to be set
     WriteBiff(xl,
-      16#0081#,    -- 5.97 p.207
-      Intel_16(256*Scale_or_fit_choice'Pos(scale_or_fit))
+      16#0081#,
+      Intel_16(256 * Scale_or_fit_choice'Pos(scale_or_fit))
     );
   end Page_Setup;
 
@@ -640,8 +638,7 @@ package body Excel_Out is
     Jump_to(xl, r, c+1); -- Store and check new position
   end Write_as_double;
 
-  -- Internal. This is BIFF2 only.
-  -- BIFF Format and integer unchecked here.
+  -- Internal. This is BIFF2 only. BIFF format choice unchecked here.
   --
   procedure Write_as_16_bit_unsigned (
         xl : in out Excel_Out_Stream;
