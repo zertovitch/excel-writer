@@ -1,4 +1,4 @@
--- This test procedure for Excel_Outis in the Ada 95 syntax,
+-- This test procedure for Excel_Out is in the Ada 95 syntax,
 -- for compatibility with a larger number of development systems.
 -- With Ada 2005 and later, you can also write "xl.Write(...)" etc. everywhere.
 --
@@ -23,16 +23,15 @@ procedure Excel_Out_Test is
     Close(xl);
   end Small_demo;
 
-  procedure Big_demo is
+  procedure Big_demo(excel_format_choice: Excel_type) is
     xl: Excel_Out_File;
-    excel_format_choice: constant Excel_type:= BIFF2;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8,
+    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
   begin
-    Create(xl, "Big.xls", excel_format_choice);
+    Create(xl, "Big [" & Excel_type'Image(excel_format_choice) & "].xls", excel_format_choice);
     -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");
@@ -47,14 +46,16 @@ procedure Excel_Out_Test is
     Write_column_width(xl, 5, 11);
     Write_column_width(xl, 14, 0); -- hide this column
     --
-    Write_default_row_height(xl, 19);
+    Write_default_row_height(xl, 20);
+    -- Write_row_height(xl, 1, 23);   -- header row 1
+    -- Write_row_height(xl, 2, 23);   -- header row 2
     Write_row_height(xl, 13, 0);   -- hide this row
     --
-    Define_font(xl, "Arial", 10, font_1, regular, blue);
-    Define_font(xl, "Courier New", 12, font_2, bold & italic, red);
-    Define_font(xl, "Times New Roman", 14, font_3, bold);
-    Define_font(xl, "Arial Narrow", 16, font_4, bold);
-    Define_font(xl, "Calibri", 16, font_5, bold, red);
+    Define_font(xl, "Arial", 9, font_1, regular, blue);
+    Define_font(xl, "Courier New", 11, font_2, bold & italic, red);
+    Define_font(xl, "Times New Roman", 13, font_3, bold);
+    Define_font(xl, "Arial Narrow", 15, font_4, bold);
+    Define_font(xl, "Calibri", 15, font_5, bold, red);
     Define_font(xl, "Calibri", 9, font_6);
     --
     Define_number_format(xl, custom_num, "0.000000"); -- 6 decimals
@@ -66,7 +67,7 @@ procedure Excel_Out_Test is
     Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     Define_format(xl, font_5, general,   fmt_6, border => box);
-    Define_format(xl, font_1, custom_num,  fmt_7, centred);
+    Define_format(xl, font_1, custom_num,  fmt_cust_num, centred);
     Define_format(xl, font_6, general, fmt_8);
     Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
     Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
@@ -129,7 +130,7 @@ procedure Excel_Out_Test is
       Write(xl, row, 3, Long_Float(row) * 0.01);
       Use_format(xl, fmt_5);
       Put(xl, Long_Float(row-100) * 0.001);
-      Use_format(xl, fmt_7);
+      Use_format(xl, fmt_cust_num);
       Put(xl, Long_Float(row - 15) + 0.123456);
     end loop;
     Close(xl);
@@ -199,8 +200,10 @@ procedure Excel_Out_Test is
 begin
   Put_Line("Small demo ( -> Small.xls )");
   Small_demo;
-  Put_Line("Big demo ( -> Big.xls )");
-  Big_demo;
+  Put_Line("Big demo ( -> Big [...].xls )");
+  for f in Excel_type loop
+    Big_demo(f);
+  end loop;
   Put_Line("String demo ( -> From_string.xls )");
   String_demo;
   Put_Line("Speed test ( -> Speed_test.xls )");

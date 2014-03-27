@@ -61,8 +61,9 @@
 -- Main changes:
 -- ============
 --
--- 12: xx-yyy-2014: - added date built-in formats
---                  - added background colours
+-- 12: xx-yyy-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
+--                  - BIFF3 format
+--                  - added background colours (only visible with BIFF3)
 --
 -- 11: 13-Sep-2013: - added Next and Next_Row
 --
@@ -109,9 +110,9 @@ package Excel_Out is
   type Excel_Out_Stream is abstract tagged private;
 
   type Excel_type is (
-    BIFF2     -- Excel 2.x: the oldest & easiest format
+    BIFF2,    -- Excel 2.1: the oldest & easiest format
               --            - and necessarily the most compatible
-    -- BIFF3,    -- Excel 3.0
+    BIFF3     -- Excel 3.0
     -- BIFF4,    -- Excel 4.0 <-- last format as standalone file
     -- BIFF5,    -- Excel 5.0 to 7.0
     -- BIFF8     -- Excel 8.0 to 11.0
@@ -370,7 +371,7 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "12 preview 2";
+  version   : constant String:= "12 preview 3";
   reference : constant String:= "xx-yyy-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
@@ -430,23 +431,25 @@ private
   percent_0        : constant Number_format_type:= 9;  --  3%, 0%, -4%
   percent_2        : constant Number_format_type:= 10;
   scientific       : constant Number_format_type:= 11;
-  dd_mm_yyyy       : constant Number_format_type:= 12;
-  dd_mmm_yy        : constant Number_format_type:= 13;
-  dd_mmm           : constant Number_format_type:= 14;
-  mmm_yy           : constant Number_format_type:= 15;
-  h_mm_AM_PM       : constant Number_format_type:= 16;
-  h_mm_ss_AM_PM    : constant Number_format_type:= 17;
-  hh_mm            : constant Number_format_type:= 18;
-  hh_mm_ss         : constant Number_format_type:= 19;
-  dd_mm_yyyy_hh_mm : constant Number_format_type:= 20;
+  fraction_1       : constant Number_format_type:= 12;
+  fraction_2       : constant Number_format_type:= 13;
+  dd_mm_yyyy       : constant Number_format_type:= 14; -- 12 in BIFF2 (sob!)
+  dd_mmm_yy        : constant Number_format_type:= 15; -- 13 in BIFF2...
+  dd_mmm           : constant Number_format_type:= 16; -- 14 ...
+  mmm_yy           : constant Number_format_type:= 17;
+  h_mm_AM_PM       : constant Number_format_type:= 18;
+  h_mm_ss_AM_PM    : constant Number_format_type:= 19;
+  hh_mm            : constant Number_format_type:= 20;
+  hh_mm_ss         : constant Number_format_type:= 21;
+  dd_mm_yyyy_hh_mm : constant Number_format_type:= 22;
   -- End of Excel built-in formats
   last_built_in : constant Number_format_type:= dd_mm_yyyy_hh_mm;
 
-  percent_0_plus   : constant Number_format_type:= 21; -- +3%, 0%, -4%
-  percent_2_plus   : constant Number_format_type:= 22;
-  date             : constant Number_format_type:= 23; -- ISO 8601 format: 2014-03-16
-  date_h_m         : constant Number_format_type:= 24; -- date, hour, minutes
-  date_h_m_s       : constant Number_format_type:= 25; -- date, hour, minutes, seconds
+  percent_0_plus   : constant Number_format_type:= 23; -- +3%, 0%, -4%
+  percent_2_plus   : constant Number_format_type:= 24;
+  date             : constant Number_format_type:= 25; -- ISO 8601 format: 2014-03-16
+  date_h_m         : constant Number_format_type:= 26; -- date, hour, minutes
+  date_h_m_s       : constant Number_format_type:= 27; -- date, hour, minutes, seconds
   -- End of our custom formats
   last_custom   : constant Number_format_type:= date_h_m_s;
 

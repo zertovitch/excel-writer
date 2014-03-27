@@ -5,10 +5,11 @@
 --
 -- To do:
 -- =====
+--  - more built-in colors for BIFF3
 --  - wrap text / text break (5.115 XF - Extended Format)
 --  - border line styles (5.115 XF - Extended Format)
 --  - freeze pane (5.75 PANE)
---  - BIFF > 2 and XML-based formats support
+--  - BIFF > 3 and XML-based formats support
 --  - ...
 
 with Ada.Unchecked_Deallocation, Ada.Unchecked_Conversion;
@@ -29,18 +30,6 @@ package body Excel_Out is
   -- totally portable on all processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
-
-  function To_buf(s: String) return Byte_buffer is
-    b: Byte_buffer(s'Range);
-  begin
-    if s'Length > 255 then -- length doesn't fit in a byte
-      raise Constraint_Error;
-    end if;
-    for i in b'Range loop
-      b(i):= Character'Pos(s(i));
-    end loop;
-    return Unsigned_8(s'Length) & b;
-  end To_buf;
 
   -- Put numbers with correct endianess as bytes:
   generic
@@ -68,6 +57,30 @@ package body Excel_Out is
   begin
     return (Unsigned_8(n and 255), Unsigned_8(Shift_Right(n, 8)));
   end Intel_16;
+
+  function To_buf_8_bit(s: String) return Byte_buffer is
+    b: Byte_buffer(s'Range);
+  begin
+    if s'Length > 255 then -- length doesn't fit in a byte
+      raise Constraint_Error;
+    end if;
+    for i in b'Range loop
+      b(i):= Character'Pos(s(i));
+    end loop;
+    return Unsigned_8(s'Length) & b;
+  end To_buf_8_bit;
+
+  function To_buf_16_bit(s: String) return Byte_buffer is
+    b: Byte_buffer(s'Range);
+  begin
+    if s'Length > 2**16-1 then -- length doesn't fit in a U16
+      raise Constraint_Error;
+    end if;
+    for i in b'Range loop
+      b(i):= Character'Pos(s(i));
+    end loop;
+    return Intel_16(s'Length) & b;
+  end To_buf_16_bit;
 
   -- Gives a byte sequence of an IEEE 64-bit number as if taken
   -- from an Intel machine (i.e. with the same endianess).
@@ -170,6 +183,8 @@ package body Excel_Out is
     case xl.format is
       when BIFF2 =>
         WriteBiff(xl, 16#0009#, Intel_16(2) & Intel_16(data_type));
+      when BIFF3 =>
+        WriteBiff(xl, 16#0209#, Intel_16(2) & Intel_16(data_type) & (0,0));
     end case;
   end WriteBOF;
 
@@ -183,8 +198,8 @@ package body Excel_Out is
   procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
   begin
     case xl.format is
-      when BIFF2 =>
-        WriteBiff(xl, 16#001E#, To_buf(s));
+      when BIFF2 | BIFF3 =>
+        WriteBiff(xl, 16#001E#, To_buf_8_bit(s));
     end case;
   end WriteFmtStr;
 
@@ -199,7 +214,9 @@ package body Excel_Out is
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in+1)));
+        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in-1)));
+      when BIFF3 =>
+        WriteBiff(xl, 16#0056#, Intel_16(Unsigned_16(last_built_in+1)));
     end case;
     -- loop & case avoid omitting any choice
     for n in Number_format_type'First .. last_custom loop
@@ -208,23 +225,31 @@ package body Excel_Out is
         when decimal_0  =>  WriteFmtStr(xl, "0");
         when decimal_2  =>  WriteFmtStr(xl, "0" & sep_deci & "00"); -- 'Comma' built-in style
         when decimal_0_thousands_separator =>
-                            WriteFmtStr(xl, "#" & sep_1000 & "##0");
+          WriteFmtStr(xl, "#" & sep_1000 & "##0");
         when decimal_2_thousands_separator =>
-                            WriteFmtStr(xl, "#" & sep_1000 & "##0" & sep_deci & "00");
-        when currency_0      =>
+          WriteFmtStr(xl, "#" & sep_1000 & "##0" & sep_deci & "00");
+        when currency_0       =>
           WriteFmtStr(xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
-        when currency_red_0  =>
+        when currency_red_0   =>
           WriteFmtStr(xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
           -- [Red] doesn't go with non-English versions of Excel !!
-        when currency_2      =>
+        when currency_2       =>
           WriteFmtStr(xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
                           "$ -#" & sep_1000 & "##0" & sep_deci & "00");
-        when currency_red_2  =>
+        when currency_red_2   =>
           WriteFmtStr(xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
                           "$ -#" & sep_1000 & "##0" & sep_deci & "00");
-        when percent_0  =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
-        when percent_2  =>  WriteFmtStr(xl, "0" & sep_deci & "00%");
-        when scientific =>  WriteFmtStr(xl, "0" & sep_deci & "00E+00");
+        when percent_0        =>  WriteFmtStr(xl, "0%");   -- 'Percent' built-in style
+        when percent_2        =>  WriteFmtStr(xl, "0" & sep_deci & "00%");
+        when scientific       =>  WriteFmtStr(xl, "0" & sep_deci & "00E+00");
+        when fraction_1       =>
+          if xl.format >= BIFF3 then
+            WriteFmtStr(xl, "#\ ?/?");
+          end if;
+        when fraction_2       =>
+          if xl.format >= BIFF3 then
+            WriteFmtStr(xl, "#\ ??/??");
+          end if;
         when dd_mm_yyyy       =>  WriteFmtStr(xl, "dd/mm/yyyy");
         when dd_mmm_yy        =>  WriteFmtStr(xl, "dd/mmm/yy");
         when dd_mmm           =>  WriteFmtStr(xl, "dd/mmm");
@@ -253,22 +278,23 @@ package body Excel_Out is
 
   -- 5.35 DIMENSION
   procedure WriteDimensions(xl: Excel_Out_Stream'Class) is
+    sheet_bounds: constant Byte_buffer:=
+      Intel_16(0) &
+      Intel_16(Unsigned_16(xl.maxrow)) &
+      Intel_16(0) &
+      Intel_16(Unsigned_16(xl.maxcolumn));
+      -- 0 2 Index to first used row
+      -- 2 2 Index to last used row, increased by 1
+      -- 4 2 Index to first used column
+      -- 6 2 Index to last used column, increased by 1
+      --
+      -- Since our row / column counts are 1-based, no need to increase by 1.
   begin
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#0000#,
-          Intel_16(0) &
-          Intel_16(Unsigned_16(xl.maxrow)) &
-          Intel_16(0) &
-          Intel_16(Unsigned_16(xl.maxcolumn))
-        );
-        -- 0 2 Index to first used row
-        -- 2 2 Index to last used row, increased by 1
-        -- 4 2 Index to first used column
-        -- 6 2 Index to last used column, increased by 1
-        --
-        -- Since our row / column counts are 1-based, no need
-        -- to increase by 1.
+        WriteBiff(xl, 16#0000#, sheet_bounds);
+      when BIFF3 =>
+        WriteBiff(xl, 16#0200#, sheet_bounds & (0,0));
     end case;
   end WriteDimensions;
 
@@ -350,8 +376,7 @@ package body Excel_Out is
     background_color : in     Color_type:= automatic
   )
   is
-    actual_font: Font_type:= font;
-
+    actual_number_format: Number_format_type:= number_format;
     procedure Define_BIFF2_XF is
       border_bits, mask: Unsigned_8;
     begin
@@ -371,7 +396,7 @@ package body Excel_Out is
          -- ^ Index to FONT record
          0,
          -- ^ Not used
-         Number_format_type'Pos(number_format),
+         Number_format_type'Pos(actual_number_format),
          -- ^ Number format and cell flags
          Horizontal_alignment'Pos(horiz_align) +
          border_bits +
@@ -414,9 +439,9 @@ package body Excel_Out is
       WriteBiff(
         xl,
         16#0243#, -- XF code in BIFF3
-        (Unsigned_8(actual_font),
+        (Unsigned_8(font),
          -- ^ 0 - Index to FONT record
-         Number_format_type'Pos(number_format),
+         Number_format_type'Pos(actual_number_format),
          -- ^ 1 - Number format and cell flags
          0,
          -- ^ 2 - XF_TYPE_PROT (not used yet)
@@ -437,26 +462,15 @@ package body Excel_Out is
       );
     end Define_BIFF3_XF;
 
-    use_BIFF2_XF_for_BIFF2: constant Boolean:= True;
-
   begin
     case xl.format is
       when BIFF2 =>
-        if use_BIFF2_XF_for_BIFF2 then
-          -- Casher version. Background color is ignored (unknown with BIFF2).
-          -- LibreOffice (<= 3.5) only recognizes this way.
-          Define_BIFF2_XF;
-        else
-          -- We cheat: we use a BIFF3 XF record, e.g. to have background
-          -- color which is not defined in BIFF2.
-          if actual_font >= 5 then
-            actual_font:= actual_font + 1;
-            -- Redo the BIFF anomaly (5.45 FONT) in this special case.
-            -- Excel 2002, 2003 and 2007 want it that way - don't ask why...
-            -- actual_font has now, temporarily, the numbering: 0, 1, 2, 3, *6*, 7, 8, ...
-          end if;
-          Define_BIFF3_XF;
+        if actual_number_format in dd_mm_yyyy .. last_custom then
+          actual_number_format:= actual_number_format - 2;
         end if;
+        Define_BIFF2_XF;
+      when BIFF3 =>
+        Define_BIFF3_XF;
     end case;
     xl.xfs:= xl.xfs + 1;
     cell_format:= Format_type(xl.xfs);
@@ -465,12 +479,12 @@ package body Excel_Out is
 
   procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
   begin
-    WriteBiff(xl, 16#0014#, To_buf(page_header_string)); -- 5.55 p.180
+    WriteBiff(xl, 16#0014#, To_buf_8_bit(page_header_string)); -- 5.55 p.180
   end Header;
 
   procedure Footer(xl : Excel_Out_Stream; page_footer_string: String) is
   begin
-    WriteBiff(xl, 16#0015#, To_buf(page_footer_string)); -- 5.48 p.173
+    WriteBiff(xl, 16#0015#, To_buf_8_bit(page_footer_string)); -- 5.48 p.173
   end Footer;
 
   procedure Left_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
@@ -521,7 +535,7 @@ package body Excel_Out is
   )
   is
   begin
-    -- 5.73 PAGESETUP p.192 - this is BIFF4+ (cheat)!
+    -- 5.73 PAGESETUP p.192 - this is BIFF4+ (cheat if xl.format below)!
     WriteBiff(xl,
       16#00A1#,
       Intel_16(0) & -- paper type undefined
@@ -531,7 +545,7 @@ package body Excel_Out is
       Intel_16(Unsigned_16(fit_height_with_n_pages)) &
       Intel_16(2 * Orientation_choice'Pos(orientation))
     );
-    -- 5.97 SHEETPR p.207 - this is BIFF3+ (cheat) !
+    -- 5.97 SHEETPR p.207 - this is BIFF3+ (cheat if xl.format below) !
     -- NB: this field contains other informations, should be delayed
     --       in case other preferences are to be set
     WriteBiff(xl,
@@ -548,12 +562,15 @@ package body Excel_Out is
         height : Positive
   )
   is
+    default_twips: constant Byte_buffer:= Intel_16(Unsigned_16(height * y_scale));
+    options_flags: constant Byte_buffer:= (1,0);
+    -- 1 = Row height and default font height do not match
   begin
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#0025#,
-          Intel_16(Unsigned_16(height * y_scale))
-        );
+        WriteBiff(xl, 16#0025#, default_twips);
+      when BIFF3 =>
+        WriteBiff(xl, 16#0225#, options_flags & default_twips);
     end case;
   end Write_default_row_height;
 
@@ -582,15 +599,19 @@ package body Excel_Out is
     width         : Natural
   )
   is
+    col_info_base: constant Byte_buffer:=
+      Unsigned_8(first_column-1) &
+      Unsigned_8(last_column-1) &
+      Intel_16(Unsigned_16(width * 256));
   begin
     case xl.format is
       when BIFF2 =>
         -- 5.20 COLWIDTH (BIFF2 only)
-        WriteBiff(xl, 16#0024#,
-          Unsigned_8(first_column-1) &
-          Unsigned_8(last_column-1) & -- last
-          Intel_16(Unsigned_16(width * 256))
-        );
+        WriteBiff(xl, 16#0024#, col_info_base);
+      when BIFF3 =>
+        -- 5.18 COLINFO (BIFF3+)
+        -- WriteBiff(xl, 16#007D#, col_info_base & Intel_16(0) & Intel_16(0) & (0,0)); -- !! bug here
+        WriteBiff(xl, 16#0024#, col_info_base); -- Revert to BIFF2
     end case;
   end Write_column_width;
 
@@ -605,21 +626,21 @@ package body Excel_Out is
     row: Positive; height : Natural
   )
   is
+    row_info_base: constant Byte_buffer:=
+      Intel_16(Unsigned_16(row-1)) &
+      Intel_16(0)   & -- col. min.
+      Intel_16(256) & -- col. max. + 1; we just take the full range...
+      Intel_16(Unsigned_16(height * y_scale));
   begin
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#0008#,
-          Intel_16(Unsigned_16(row-1)) &
-          Intel_16(0)   & -- col. min.
-          Intel_16(256) & -- col. max. + 1; we just take the full range...
-          Intel_16(Unsigned_16(height * y_scale)) &
-          (1..3=> 0) &
-          Intel_16(0) -- offset to data
-        );
+        WriteBiff(xl, 16#0008#, row_info_base & (1..3 => 0) & Intel_16(0)); -- offset to data
+      when BIFF3 =>
+        WriteBiff(xl, 16#0208#, row_info_base & (0,0,0,0,0,1,0,0));
     end case;
   end Write_row_height;
 
-  -- 5.45 FONT
+  -- 5.45 FONT, p.171
   procedure Define_font(
     xl           : in out Excel_Out_Stream;
     font_name    :        String;
@@ -659,16 +680,22 @@ package body Excel_Out is
     end if;
     case xl.format is
       when BIFF2 =>
-        -- 5.45 FONT, p.171
         WriteBiff(xl, 16#0031#,
           Intel_16(Unsigned_16(height * y_scale)) &
           Intel_16(style_bits) &
-          To_buf(font_name)
+          To_buf_8_bit(font_name)
         );
         if color /= automatic then
           -- 5.47 FONTCOLOR
           WriteBiff(xl, 16#0045#, Intel_16(colcode(color)));
         end if;
+      when BIFF3 =>
+        WriteBiff(xl, 16#0231#,
+          Intel_16(Unsigned_16(height * y_scale)) &
+          Intel_16(style_bits) &
+          Intel_16(colcode(color)) &
+          To_buf_8_bit(font_name)
+        );
     end case;
     font:= Font_type(xl.fonts);
   end Define_font;
@@ -706,6 +733,7 @@ package body Excel_Out is
 
   -- Internal
   --
+  -- 5.71 NUMBER
   procedure Write_as_double (
         xl     : in out Excel_Out_Stream;
         r,
@@ -718,11 +746,17 @@ package body Excel_Out is
     Jump_to_and_store_max(xl, r, c);
     case xl.format is
       when BIFF2 =>
-        -- 5.71 NUMBER
         WriteBiff(xl, 16#0003#,
           Intel_16(Unsigned_16(r-1)) &
           Intel_16(Unsigned_16(c-1)) &
           Cell_attributes(xl) &
+          IEEE_Double_Intel(num)
+        );
+      when BIFF3 =>
+        WriteBiff(xl, 16#0203#,
+          Intel_16(Unsigned_16(r-1)) &
+          Intel_16(Unsigned_16(c-1)) &
+          Intel_16(Unsigned_16(xl.xf_in_use)) &
           IEEE_Double_Intel(num)
         );
     end case;
@@ -773,6 +807,8 @@ package body Excel_Out is
         else
           Write_as_double(xl, r, c, num);
         end if;
+      when BIFF3 =>
+        Write_as_double(xl, r, c, num);
     end case;
   end Write;
 
@@ -796,9 +832,12 @@ package body Excel_Out is
           -- We need to us a floating-point in all other cases
           Write_as_double(xl, r, c, Long_Float(num));
         end if;
+      when BIFF3 =>
+        Write_as_double(xl, r, c, Long_Float(num));
     end case;
   end Write;
 
+  -- 5.63 LABEL
   procedure Write (
         xl : in out Excel_Out_Stream;
         r,
@@ -810,12 +849,18 @@ package body Excel_Out is
     if str'Length > 0 then
       case xl.format is
         when BIFF2 =>
-          -- 5.63 LABEL
           WriteBiff(xl, 16#0004#,
             Intel_16(Unsigned_16(r-1)) &
             Intel_16(Unsigned_16(c-1)) &
             Cell_attributes(xl) &
-            To_buf(str)
+            To_buf_8_bit(str)
+          );
+        when BIFF3 =>
+          WriteBiff(xl, 16#0204#,
+            Intel_16(Unsigned_16(r-1)) &
+            Intel_16(Unsigned_16(c-1)) &
+            Intel_16(Unsigned_16(xl.xf_in_use)) &
+            To_buf_16_bit(str)
           );
       end case;
     end if;
@@ -884,6 +929,7 @@ package body Excel_Out is
 
   procedure Merge(xl: in out Excel_Out_Stream; cells : Positive) is
 
+    -- 5.7 BLANK
     procedure Blank (
           xl : in out Excel_Out_Stream;
           r,
@@ -895,11 +941,16 @@ package body Excel_Out is
         -- NB: Only with BIFF4, and only OpenOffice
         -- considers the cells really merged.
         when BIFF2 =>
-          -- 5.7 BLANK
           WriteBiff(xl, 16#0001#,
             Intel_16(Unsigned_16(r-1)) &
             Intel_16(Unsigned_16(c-1)) &
             Cell_attributes(xl)
+          );
+        when BIFF3 =>
+          WriteBiff(xl, 16#0201#,
+            Intel_16(Unsigned_16(r-1)) &
+            Intel_16(Unsigned_16(c-1)) &
+            Intel_16(Unsigned_16(xl.xf_in_use))
           );
       end case;
       Jump_to(xl, r, c+1); -- Store and check new position
