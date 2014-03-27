@@ -5,6 +5,8 @@
 --
 -- To do:
 -- =====
+--  - wrap text / text break (5.115 XF - Extended Format)
+--  - border line styles (5.115 XF - Extended Format)
 --  - freeze pane (5.75 PANE)
 --  - BIFF > 2 and XML-based formats support
 --  - ...
@@ -22,8 +24,9 @@ package body Excel_Out is
 
   use Ada.Streams.Stream_IO, Ada.Streams;
 
-  -- Very low level part which deals with transfering data endian-proof,
-  -- and floats in the IEEE format.
+  -- Very low level part which deals with transferring data endian-proof,
+  -- and floats in the IEEE format. This is needed for having Excel Writer
+  -- totally portable on all processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
 
@@ -67,7 +70,7 @@ package body Excel_Out is
   end Intel_16;
 
   -- Gives a byte sequence of an IEEE 64-bit number as if taken
-  -- from an Intel machine (with the same endianess).
+  -- from an Intel machine (i.e. with the same endianess).
   --
   -- http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
@@ -85,6 +88,8 @@ package body Excel_Out is
     return d;
   end IEEE_Double_Intel_Portable;
 
+  -- Just spit the bytes of the long float - fast way.
+  -- Of course this will work only on an Intel(-like) machine. We check this later.
   subtype Byte_buffer_8 is Byte_buffer(0..7);
   function IEEE_Double_Intel_Native is new
     Ada.Unchecked_Conversion(Long_Float, Byte_buffer_8);
@@ -97,9 +102,9 @@ package body Excel_Out is
     pragma Inline(IEEE_Double_Intel);
   begin
     if Can_use_native_IEEE then
-      return IEEE_Double_Intel_Native(x);
+      return IEEE_Double_Intel_Native(x);   -- Fast, non-portable
     else
-      return IEEE_Double_Intel_Portable(x);
+      return IEEE_Double_Intel_Portable(x); -- Slower but portable
     end if;
   end IEEE_Double_Intel;
 
@@ -304,6 +309,7 @@ package body Excel_Out is
     WriteBiff(xl, 16#000F#, Intel_16(1)); --  1 => A1 mode
     -- 5.28 DATEMODE
     WriteBiff(xl, 16#0022#, Intel_16(0)); --  0 => 1900; 1 => 1904 Date system
+    -- NB: the 1904 variant is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
     WriteFmtRecords(xl);
     xl.dimrecpos:= Index(xl);
@@ -333,41 +339,124 @@ package body Excel_Out is
 
   -- 5.115 XF - Extended Format
   procedure Define_format(
-    xl           : in out Excel_Out_Stream;
-    font         : in     Font_type;          -- Default_font(xl), or given by Define_font
-    number_format: in     Number_format_type; -- built-in, or given by Define_number_format
-    cell_format  :    out Format_type;
-    -- optional:
-    horiz_align  : in     Horizontal_alignment:= general_alignment;
-    border       : in     Cell_border:= no_border;
-    shaded       : in     Boolean:= False
+    xl               : in out Excel_Out_Stream;
+    font             : in     Font_type;          -- Default_font(xl), or given by Define_font
+    number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
+    cell_format      :    out Format_type;
+    -- Optional parameters --
+    horiz_align      : in     Horizontal_alignment:= general_alignment;
+    border           : in     Cell_border:= no_border;
+    shaded           : in     Boolean:= False;    -- Add a dotted background pattern
+    background_color : in     Color_type:= automatic
   )
   is
-    border_bits, mask: Unsigned_8;
+    actual_font: Font_type:= font;
+
+    procedure Define_BIFF2_XF is
+      border_bits, mask: Unsigned_8;
+    begin
+      border_bits:= 0;
+      mask:= 8;
+      for s in Cell_border_single loop
+        if border(s) then
+          border_bits:= border_bits + mask;
+        end if;
+        mask:= mask * 2;
+      end loop;
+      -- 5.115.2 XF Record Contents
+      WriteBiff(
+        xl,
+        16#0043#, -- XF code in BIFF2
+        (Unsigned_8(font),
+         -- ^ Index to FONT record
+         0,
+         -- ^ Not used
+         Number_format_type'Pos(number_format),
+         -- ^ Number format and cell flags
+         Horizontal_alignment'Pos(horiz_align) +
+         border_bits +
+         Boolean'Pos(shaded) * 128
+         -- ^ Horizontal alignment, border style, and background
+        )
+      );
+    end Define_BIFF2_XF;
+
+    procedure Define_BIFF3_XF is
+      colcode: constant array(Color_type) of Unsigned_16:=
+        (
+         black     => 8 + 0,
+         white     => 8 + 1,
+         red       => 8 + 2,
+         green     => 8 + 3,
+         blue      => 8 + 4,
+         yellow    => 8 + 5,
+         magenta   => 8 + 6,
+         cyan      => 8 + 7,
+         automatic => 8 + 1 -- = choice for white
+        );
+      area_code: Unsigned_16;
+    begin
+      -- 2.5.12 Patterns for Cell and Chart Background Area
+      if shaded then
+        area_code:=
+          Boolean'Pos(shaded) * 17 +           -- Sparse pattern, same rendering as BIFF2 "shade"
+          16#40#  * colcode(black) +           -- pattern colour
+          16#800# * colcode(background_color); -- pattern background
+      elsif background_color = automatic then
+        area_code:= 0;
+      else
+        area_code:=
+          1 +                                    -- Full pattern
+          16#40#  * colcode(background_color) +  -- pattern colour
+          16#800# * colcode(background_color);   -- pattern background
+      end if;
+      -- 5.115.2 XF Record Contents
+      WriteBiff(
+        xl,
+        16#0243#, -- XF code in BIFF3
+        (Unsigned_8(actual_font),
+         -- ^ 0 - Index to FONT record
+         Number_format_type'Pos(number_format),
+         -- ^ 1 - Number format and cell flags
+         0,
+         -- ^ 2 - XF_TYPE_PROT (not used yet)
+         16#FF#
+         -- ^ 3 - XF_USED_ATTRIB
+        ) &
+        Intel_16(Horizontal_alignment'Pos(horiz_align)) &
+        -- ^ 4 - Horizontal alignment, text break, parent style XF
+        Intel_16(area_code) &
+        -- ^ 6 - XF_AREA_34
+        (  Boolean'Pos(border(top_single)),
+           Boolean'Pos(border(left_single)),
+           Boolean'Pos(border(bottom_single)),
+           Boolean'Pos(border(right_single))
+        )
+        -- ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+        --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
+      );
+    end Define_BIFF3_XF;
+
+    use_BIFF2_XF_for_BIFF2: constant Boolean:= True;
+
   begin
     case xl.format is
-      when BIFF2 => -- 5.115.2 XF Record Contents
-        border_bits:= 0;
-        mask:= 8;
-        for s in Cell_border_single loop
-          if border(s) then
-            border_bits:= border_bits + mask;
+      when BIFF2 =>
+        if use_BIFF2_XF_for_BIFF2 then
+          -- Casher version. Background color is ignored (unknown with BIFF2).
+          -- LibreOffice (<= 3.5) only recognizes this way.
+          Define_BIFF2_XF;
+        else
+          -- We cheat: we use a BIFF3 XF record, e.g. to have background
+          -- color which is not defined in BIFF2.
+          if actual_font >= 5 then
+            actual_font:= actual_font + 1;
+            -- Redo the BIFF anomaly (5.45 FONT) in this special case.
+            -- Excel 2002, 2003 and 2007 want it that way - don't ask why...
+            -- actual_font has now, temporarily, the numbering: 0, 1, 2, 3, *6*, 7, 8, ...
           end if;
-          mask:= mask * 2;
-        end loop;
-        WriteBiff(xl, 16#0043#,
-          (Unsigned_8(font),
-           -- ^ Index to FONT record
-           0,
-           -- ^ Not used
-           Number_format_type'Pos(number_format),
-           -- ^ Number format and cell flags
-           Horizontal_alignment'Pos(horiz_align) +
-           border_bits +
-           Boolean'Pos(shaded) * 128
-           -- ^ Horizontal alignment, border style, and background
-          )
-        );
+          Define_BIFF3_XF;
+        end if;
     end case;
     xl.xfs:= xl.xfs + 1;
     cell_format:= Format_type(xl.xfs);
@@ -564,7 +653,9 @@ package body Excel_Out is
     end loop;
     xl.fonts:= xl.fonts + 1;
     if xl.fonts = 4 then
-      xl.fonts:= 5; -- anomaly in all BIFF versions...
+      xl.fonts:= 5;
+      -- Anomaly! The font with index 4 is omitted in all BIFF versions.
+      -- Numbering is 0, 1, 2, 3, *5*, 6,...
     end if;
     case xl.format is
       when BIFF2 =>

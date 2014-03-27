@@ -25,13 +25,14 @@ procedure Excel_Out_Test is
 
   procedure Big_demo is
     xl: Excel_Out_File;
+    excel_format_choice: constant Excel_type:= BIFF2;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
     fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_7, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
   begin
-    Create(xl, "Big.xls");
+    Create(xl, "Big.xls", excel_format_choice);
     -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");
@@ -67,23 +68,25 @@ procedure Excel_Out_Test is
     Define_format(xl, font_5, general,   fmt_6, border => box);
     Define_format(xl, font_1, custom_num,  fmt_7, centred);
     Define_format(xl, font_6, general, fmt_8);
-    Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1);
-    Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2);
-    Define_format(xl, font_6, hh_mm_ss,         fmt_date_3); -- custom_date_num
+    Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
+    Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
+    Define_format(xl, font_6, hh_mm_ss,         fmt_date_3, shaded => True); -- custom_date_num
     --
     Use_format(xl, fmt_4);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
     Merge(xl, 6);
     Next(xl);
-    Put(xl, "Version: " & version);
+    Put(xl, "Excel format: " & Excel_type'Image(excel_format_choice));
     Merge(xl, 1);
-    Jump_to(xl, 1, 13);
-    Put(xl, "Ref.: " & reference);
+    New_Line(xl);
+    Put(xl, "Version: " & version);
     Merge(xl, 3);
+    Next(xl, 4);
+    Put(xl, "Ref.: " & reference);
 
     Use_format(xl, fmt_2);
     for column in 1 .. 9 loop
-      Write(xl, 2, column, Long_Float(column) + 0.5);
+      Write(xl, 3, column, Long_Float(column) + 0.5);
     end loop;
     Use_format(xl, fmt_8);
     Put(xl, "  <- = column + 0.5");
@@ -194,12 +197,12 @@ procedure Excel_Out_Test is
   use Ada.Text_IO;
 
 begin
-  Put_Line("Small demo ( -> Small.xls)");
+  Put_Line("Small demo ( -> Small.xls )");
   Small_demo;
-  Put_Line("Big demo ( -> Big.xls)");
+  Put_Line("Big demo ( -> Big.xls )");
   Big_demo;
-  Put_Line("String demo ( -> From_string.xls)");
+  Put_Line("String demo ( -> From_string.xls )");
   String_demo;
-  Put_Line("Speed test ( -> Speed_test.xls)");
+  Put_Line("Speed test ( -> Speed_test.xls )");
   Speed_test;
 end Excel_Out_Test;

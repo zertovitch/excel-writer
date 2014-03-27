@@ -62,6 +62,8 @@
 -- ============
 --
 -- 12: xx-yyy-2014: - added date built-in formats
+--                  - added background colours
+--
 -- 11: 13-Sep-2013: - added Next and Next_Row
 --
 -- 08:  7-Jul-2011: - fixed Put("") not jumping
@@ -244,7 +246,7 @@ package Excel_Out is
 
   type Cell_border is private;
 
-  -- for combining borders (e.g.: left & top):
+  -- Operator for combining borders (e.g.: left & top):
   function "&"(a,b: Cell_border) return Cell_border;
 
   no_border : constant Cell_border;
@@ -255,14 +257,15 @@ package Excel_Out is
   box       : constant Cell_border;
 
   procedure Define_format(
-    xl           : in out Excel_Out_Stream;
-    font         : in     Font_type;          -- Default_font(xl), or given by Define_font
-    number_format: in     Number_format_type; -- built-in, or given by Define_number_format
-    cell_format  :    out Format_type;
-    -- optional:
-    horiz_align  : in     Horizontal_alignment:= general_alignment;
-    border       : in     Cell_border:= no_border;
-    shaded       : in     Boolean:= False
+    xl               : in out Excel_Out_Stream;
+    font             : in     Font_type;          -- Default_font(xl), or given by Define_font
+    number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
+    cell_format      :    out Format_type;
+    -- Optional parameters --
+    horiz_align      : in     Horizontal_alignment:= general_alignment;
+    border           : in     Cell_border:= no_border;
+    shaded           : in     Boolean:= False;    -- Add a dotted background pattern
+    background_color : in     Color_type:= automatic
   );
 
   ------------------------
@@ -367,7 +370,7 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "12 preview 1";
+  version   : constant String:= "12 preview 2";
   reference : constant String:= "xx-yyy-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^

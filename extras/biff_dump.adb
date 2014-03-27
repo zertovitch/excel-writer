@@ -64,7 +64,10 @@ procedure BIFF_Dump is
   xf_4       : constant:= 16#0443#;
   xf_5       : constant:= 16#00E0#;
   ole_2      : constant:= 16#CFD0#;
+  pane       : constant:= 16#0041#;
   window1    : constant:= 16#003D#;
+  window2_b2 : constant:= 16#003E#;
+  window2_b3 : constant:= 16#023E#;
   hideobj    : constant:= 16#008D#;
   font2      : constant:= 16#0031#;
   font3      : constant:= 16#0231#;
@@ -212,28 +215,30 @@ begin
         Put(xl, "FONT" & Integer'Image(fnt));
         -- 5.45, p.171
         fnt:= fnt + 1;
-      when 16#0045# => Put(xl, "FONTCOLOR");
-      when blank2   => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
-      when 16#0201# => Put(xl, "BLANK (BIFF3+)");
-      when index3   => Put(xl, "INDEX (BIFF3+)");
-      when integer2 => Put(xl, "INTEGER (BIFF2)");
-      when number2  => Put(xl, "NUMBER (BIFF2)");
-      when number3  => Put(xl, "NUMBER (BIFF3+)");
-      when formula2 => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
-      when formula4 => Put(xl, "FORMULA (BIFF4)");
-      when rk       => Put(xl, "RK (BIFF3+)");
-      when label2   => Put(xl, "LABEL");
-      when labelsst => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
-      when 16#0019# => Put(xl, "WINDOWPROTECT");
-      when 16#0040# => Put(xl, "BACKUP");
-      when style    => Put(xl, "STYLE");   -- 5.103
-      when window1  => Put(xl, "WINDOW1"); -- 5.109
-      when 16#003E# => Put(xl, "WINDOW2"); -- 5.110 p.216
-      when 16#001D# => Put(xl, "SELECTION"); -- 5.93 p.205
-      when hideobj  => Put(xl, "HIDEOBJ"); -- 5.56
-      when 16#4D#   => Put(xl, "PLS (Current printer blob)");
-      when 16#3C#   => Put(xl, "CONTINUE (Continue last BIFF record)");
-      when others =>   Put(xl, "- ??? -");
+      when 16#0045#   => Put(xl, "FONTCOLOR");
+      when blank2     => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
+      when 16#0201#   => Put(xl, "BLANK (BIFF3+)");
+      when index3     => Put(xl, "INDEX (BIFF3+)");
+      when integer2   => Put(xl, "INTEGER (BIFF2)");
+      when number2    => Put(xl, "NUMBER (BIFF2)");
+      when number3    => Put(xl, "NUMBER (BIFF3+)");
+      when formula2   => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
+      when formula4   => Put(xl, "FORMULA (BIFF4)");
+      when rk         => Put(xl, "RK (BIFF3+)");
+      when label2     => Put(xl, "LABEL");
+      when labelsst   => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
+      when 16#0019#   => Put(xl, "WINDOWPROTECT");
+      when 16#0040#   => Put(xl, "BACKUP");
+      when style      => Put(xl, "STYLE");            -- 5.103
+      when pane       => Put(xl, "PANE");             -- 5.75 p.197
+      when window1    => Put(xl, "WINDOW1");          -- 5.109
+      when window2_b2 => Put(xl, "WINDOW2 (BIFF2)");  -- 5.110 p.216
+      when window2_b3 => Put(xl, "WINDOW2 (BIFF3+)"); -- 5.110 p.216
+      when 16#001D#   => Put(xl, "SELECTION"); -- 5.93 p.205
+      when hideobj    => Put(xl, "HIDEOBJ"); -- 5.56
+      when 16#4D#     => Put(xl, "PLS (Current printer blob)");
+      when 16#3C#     => Put(xl, "CONTINUE (Continue last BIFF record)");
+      when others     =>   Put(xl, "- ??? -");
     end case;
     --
     -- Expand parameters
