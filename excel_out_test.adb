@@ -166,9 +166,7 @@ procedure Excel_Out_Test is
     Define_format(xl, font_normal, decimal_0_thousands_separator, fmt_amount);
     Define_format(xl, font_normal_grey, percent_2_plus, fmt_percent);
     Use_format(xl, fmt_title);
-Write_row_height(xl, 1, 25);
     Put(xl, "Daily Excel Writer stock prices");
-close(xl); return;
     Merge(xl, 3);
     New_Line(xl);
     Use_format(xl, fmt_subtitle);
@@ -182,7 +180,7 @@ close(xl); return;
       Put(xl, first_day + i * Day_Duration'Last);
       Use_format(xl, fmt_amount);
       last_price:= price;
-      price:= price * (1.0 + 0.1 * (Long_Float(Random(gen)) - 0.4));
+      price:= price * (1.0 + 0.1 * (Long_Float(Random(gen)) - 0.49));
       Put(xl, price);
       Use_format(xl, fmt_percent);
       Put_Line(xl, price / last_price - 1.0);

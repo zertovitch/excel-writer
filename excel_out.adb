@@ -365,7 +365,7 @@ package body Excel_Out is
 
   type Font_or_Background is (for_font, for_background);
   type Color_pair is array(Font_or_Background) of Unsigned_16;
-  auto_color: constant Color_pair:= 
+  auto_color: constant Color_pair:=
     (16#7FFF#, -- system window text colour
      16#0019#  -- system window background colour
     );
