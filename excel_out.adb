@@ -5,7 +5,7 @@
 --
 -- To do:
 -- =====
---  - more built-in colors for BIFF3
+--  - fix Write_row_height bug (bad display on MS Excel)
 --  - wrap text / text break (5.115 XF - Extended Format)
 --  - border line styles (5.115 XF - Extended Format)
 --  - freeze pane (5.75 PANE)
@@ -27,7 +27,7 @@ package body Excel_Out is
 
   -- Very low level part which deals with transferring data endian-proof,
   -- and floats in the IEEE format. This is needed for having Excel Writer
-  -- totally portable on all processor architectures.
+  -- totally portable on all systems and processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
 
@@ -205,11 +205,11 @@ package body Excel_Out is
 
   -- Write built-in number formats (internal)
   procedure WriteFmtRecords (xl : Excel_Out_Stream'Class) is
-    sep_1000: constant Character:= ''';
-    sep_deci: constant Character:= '.';
+    sep_1000: constant Character:= ','; -- US format
+    sep_deci: constant Character:= '.'; -- US format
     -- ^ If there is any evidence of an issue with those built-in separators,
-    -- we may make them configurable. NB: MS Excel 2002 uses only
-    -- the index of built-in formats and discards the strings...
+    -- we may make them configurable. NB: MS Excel 2002 and 2007 use only
+    -- the index of built-in formats and discards the strings for BIFF2, but not for BIFF3...
   begin
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
@@ -337,11 +337,11 @@ package body Excel_Out is
     WriteBiff(xl, 16#0022#, Intel_16(0)); --  0 => 1900; 1 => 1904 Date system
     -- NB: the 1904 variant is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
-    WriteFmtRecords(xl);
-    xl.dimrecpos:= Index(xl);
-    WriteDimensions(xl);
     Define_font(xl,"Arial", 10, xl.def_font);
     Define_font(xl,"Arial", 10, font_for_styles); -- Used by BIFF3+'s styles
+    WriteFmtRecords(xl);
+    -- 5.111 WINDOWPROTECT
+    WriteBiff(xl, 16#0019#, Intel_16(0));
     -- Define default format
     Define_format(xl, xl.def_font, general, xl.def_fmt);
     -- Define formats for the BIFF3+ "styles":
@@ -358,8 +358,51 @@ package body Excel_Out is
     Define_style(xl.cma_fmt, Comma_Style);
     Define_style(xl.ccy_fmt, Currency_Style);
     Define_style(xl.pct_fmt, Percent_Style);
+    xl.dimrecpos:= Index(xl);
+    WriteDimensions(xl);
     xl.is_created:= True;
   end Write_Worksheet_header;
+
+  type Font_or_Background is (for_font, for_background);
+  type Color_pair is array(Font_or_Background) of Unsigned_16;
+  auto_color: constant Color_pair:= 
+    (16#7FFF#, -- system window text colour
+     16#0019#  -- system window background colour
+    );
+
+  color_code: constant array(Excel_type, Color_type) of Color_pair :=
+    ( BIFF2 =>
+       (
+         black      => (0, 0),
+         white      => (1, 1),
+         red        => (2, 2),
+         green      => (3, 3),
+         blue       => (4, 4),
+         yellow     => (5, 5),
+         magenta    => (6, 6),
+         cyan       => (7, 7),
+         others     => auto_color
+        ),
+      BIFF3 =>
+        (black      => (8, 8),
+         white      => (9, 9),
+         red        => (10, 10),
+         green      => (11, 11),
+         blue       => (12, 12),
+         yellow     => (13, 13),
+         magenta    => (14, 14),
+         cyan       => (15, 15),
+         dark_red   => (16, 16),
+         dark_green => (17, 17),
+         dark_blue  => (18, 18),
+         olive      => (19, 19),
+         purple     => (20, 20),
+         teal       => (21, 21),
+         silver     => (22, 22),
+         grey       => (23, 23),
+         automatic  => auto_color
+        )
+     );
 
   -- *** Exported procedures **********************************************
 
@@ -407,33 +450,21 @@ package body Excel_Out is
     end Define_BIFF2_XF;
 
     procedure Define_BIFF3_XF is
-      colcode: constant array(Color_type) of Unsigned_16:=
-        (
-         black     => 8 + 0,
-         white     => 8 + 1,
-         red       => 8 + 2,
-         green     => 8 + 3,
-         blue      => 8 + 4,
-         yellow    => 8 + 5,
-         magenta   => 8 + 6,
-         cyan      => 8 + 7,
-         automatic => 8 + 1 -- = choice for white
-        );
       area_code: Unsigned_16;
     begin
       -- 2.5.12 Patterns for Cell and Chart Background Area
       if shaded then
         area_code:=
-          Boolean'Pos(shaded) * 17 +           -- Sparse pattern, same rendering as BIFF2 "shade"
-          16#40#  * colcode(black) +           -- pattern colour
-          16#800# * colcode(background_color); -- pattern background
+          Boolean'Pos(shaded) * 17 +                        -- Sparse pattern, like BIFF2 "shade"
+          16#40#  * color_code(BIFF3, black)(for_background) +           -- pattern colour
+          16#800# * color_code(BIFF3, background_color)(for_background); -- pattern background
       elsif background_color = automatic then
         area_code:= 0;
       else
         area_code:=
-          1 +                                    -- Full pattern
-          16#40#  * colcode(background_color) +  -- pattern colour
-          16#800# * colcode(background_color);   -- pattern background
+          1 +                                                          -- Full pattern
+          16#40#  * color_code(BIFF3, background_color)(for_background) +  -- pattern colour
+          16#800# * color_code(BIFF3, background_color)(for_background);   -- pattern background
       end if;
       -- 5.115.2 XF Record Contents
       WriteBiff(
@@ -599,19 +630,24 @@ package body Excel_Out is
     width         : Natural
   )
   is
-    col_info_base: constant Byte_buffer:=
-      Unsigned_8(first_column-1) &
-      Unsigned_8(last_column-1) &
-      Intel_16(Unsigned_16(width * 256));
   begin
     case xl.format is
       when BIFF2 =>
         -- 5.20 COLWIDTH (BIFF2 only)
-        WriteBiff(xl, 16#0024#, col_info_base);
+        WriteBiff(xl, 16#0024#,
+          Unsigned_8(first_column-1) &
+          Unsigned_8(last_column-1) &
+          Intel_16(Unsigned_16(width * 256)));
       when BIFF3 =>
         -- 5.18 COLINFO (BIFF3+)
-        -- WriteBiff(xl, 16#007D#, col_info_base & Intel_16(0) & Intel_16(0) & (0,0)); -- !! bug here
-        WriteBiff(xl, 16#0024#, col_info_base); -- Revert to BIFF2
+        WriteBiff(xl, 16#007D#,
+          Intel_16(Unsigned_16(first_column-1)) &
+          Intel_16(Unsigned_16(last_column-1)) &
+          Intel_16(Unsigned_16(width * 256)) &
+          Intel_16(0) & -- Index to XF record (5.115) for default column formatting
+          Intel_16(0) & -- Option flags
+          (0,0)         -- Not used
+        );
     end case;
   end Write_column_width;
 
@@ -620,6 +656,7 @@ package body Excel_Out is
   -- but single ROW commands can also be put before in the data stream,
   -- where the column widths are set. Excel saves with blocks of ROW
   -- commands, most of them useless.
+  -- !! Bug: on Excel height /= 0 displays a blank row with no row number...
 
   procedure Write_row_height(
     xl : Excel_Out_Stream;
@@ -627,9 +664,9 @@ package body Excel_Out is
   )
   is
     row_info_base: constant Byte_buffer:=
-      Intel_16(Unsigned_16(row-1)) &
+      Intel_16(Unsigned_16(row - 1)) &
       Intel_16(0)   & -- col. min.
-      Intel_16(256) & -- col. max. + 1; we just take the full range...
+      Intel_16(255) & -- col. max.
       Intel_16(Unsigned_16(height * y_scale));
   begin
     case xl.format is
@@ -651,18 +688,6 @@ package body Excel_Out is
   )
   is
     style_bits, mask: Unsigned_16;
-    colcode: constant array(Color_type) of Unsigned_16:=
-      (
-         black     => 0,
-         white     => 1,
-         red       => 2,
-         green     => 3,
-         blue      => 4,
-         yellow    => 5,
-         magenta   => 6,
-         cyan      => 7,
-         automatic => 16#7FFF# -- system window text colour
-      );
   begin
     style_bits:= 0;
     mask:= 1;
@@ -687,13 +712,13 @@ package body Excel_Out is
         );
         if color /= automatic then
           -- 5.47 FONTCOLOR
-          WriteBiff(xl, 16#0045#, Intel_16(colcode(color)));
+          WriteBiff(xl, 16#0045#, Intel_16(color_code(BIFF2, color)(for_font)));
         end if;
       when BIFF3 =>
         WriteBiff(xl, 16#0231#,
           Intel_16(Unsigned_16(height * y_scale)) &
           Intel_16(style_bits) &
-          Intel_16(colcode(color)) &
+          Intel_16(color_code(BIFF3, color)(for_font)) &
           To_buf_8_bit(font_name)
         );
     end case;
@@ -1088,7 +1113,7 @@ package body Excel_Out is
   procedure Finish(xl : in out Excel_Out_Stream'Class) is
   begin
     WriteEOF(xl);
-    Set_Index(xl, xl.dimrecpos);
+    Set_Index(xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data
     WriteDimensions(xl);
     xl.is_closed:= True;
   end Finish;

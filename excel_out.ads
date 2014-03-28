@@ -64,6 +64,7 @@
 -- 12: xx-yyy-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
 --                  - BIFF3 format
 --                  - added background colours (only visible with BIFF3)
+--                  - added 8 more built-in colours (only visible with BIFF3)
 --
 -- 11: 13-Sep-2013: - added Next and Next_Row
 --
@@ -118,7 +119,7 @@ package Excel_Out is
     -- BIFF8     -- Excel 8.0 to 11.0
   );
 
-  Default_Excel_type: constant Excel_type:= BIFF2;
+  Default_Excel_type: constant Excel_type:= BIFF3;
 
   ----------------------------------
   -- (2) Before any cell content: --
@@ -163,6 +164,7 @@ package Excel_Out is
   --     resize a row in Excel.
   procedure Write_default_row_height(xl: Excel_Out_Stream; height: Positive);
   procedure Write_row_height(xl : Excel_Out_Stream; row: Positive; height : Natural);
+  -- !! bug: bad display on MS Excel if height > 0 !!
 
   ----------------------
   -- Formatting cells --
@@ -212,7 +214,9 @@ package Excel_Out is
   -- Arial 10, regular, "automatic" color
 
   type Color_type is
-    (automatic, black, white, red, green, blue, yellow, magenta, cyan);
+    (automatic,
+     black, white, red, green, blue, yellow, magenta, cyan,
+     dark_red, dark_green, dark_blue, olive, purple, teal, silver, grey);
 
   type Font_style is private;
 

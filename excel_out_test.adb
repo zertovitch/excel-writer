@@ -6,6 +6,7 @@
 with Excel_Out;                         use Excel_Out;
 
 with Ada.Calendar;                      use Ada.Calendar;
+with Ada.Numerics.Float_Random;         use Ada.Numerics.Float_Random;
 with Ada.Streams.Stream_IO, Ada.Text_IO;
 
 procedure Excel_Out_Test is
@@ -26,10 +27,11 @@ procedure Excel_Out_Test is
   procedure Big_demo(excel_format_choice: Excel_type) is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
-    fmt_1, fmt_2, fmt_3, fmt_4, fmt_5, fmt_6, fmt_cust_num, fmt_8,
+    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_4, fmt_5, fmt_6, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
+    damier: Natural;
   begin
     Create(xl, "Big [" & Excel_type'Image(excel_format_choice) & "].xls", excel_format_choice);
     -- Some page layout for printing...
@@ -53,17 +55,17 @@ procedure Excel_Out_Test is
     --
     Define_font(xl, "Arial", 9, font_1, regular, blue);
     Define_font(xl, "Courier New", 11, font_2, bold & italic, red);
-    Define_font(xl, "Times New Roman", 13, font_3, bold);
+    Define_font(xl, "Times New Roman", 13, font_3, bold, teal);
     Define_font(xl, "Arial Narrow", 15, font_4, bold);
-    Define_font(xl, "Calibri", 15, font_5, bold, red);
+    Define_font(xl, "Calibri", 15, font_5, bold, dark_red);
     Define_font(xl, "Calibri", 9, font_6);
     --
     Define_number_format(xl, custom_num, "0.000000"); -- 6 decimals
     Define_number_format(xl, custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss"); -- ISO date
     --
     Define_format(xl, font_1, percent_0, fmt_1, centred, right);
-    Define_format(xl, font_2, decimal_2, fmt_2);
-    Define_format(xl, font_3, decimal_0, fmt_3, centred);
+    Define_format(xl, font_2, decimal_2, fmt_decimal_2);
+    Define_format(xl, font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
     Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     Define_format(xl, font_5, general,   fmt_6, border => box);
@@ -85,21 +87,22 @@ procedure Excel_Out_Test is
     Next(xl, 4);
     Put(xl, "Ref.: " & reference);
 
-    Use_format(xl, fmt_2);
+    Use_format(xl, fmt_decimal_2);
     for column in 1 .. 9 loop
       Write(xl, 3, column, Long_Float(column) + 0.5);
     end loop;
     Use_format(xl, fmt_8);
     Put(xl, "  <- = column + 0.5");
 
-    Use_format(xl, fmt_3);
+    Use_format(xl, fmt_decimal_0);
     for row in 4 .. 7 loop
       for column in 1 .. 9 loop
-        Write(xl, row, column, row * 1000 + column);
+        damier:= 10 + 990 * ((row + column) mod 2);
+        Write(xl, row, column, row * damier + column);
       end loop;
     end loop;
     Use_format(xl, fmt_8);
-    Put(xl, "  <- = row * 1000 + column");
+    Put(xl, "  <- = row * (1000 or 10) + column");
 
     Use_format(xl, fmt_4);
     for column in 1 .. 20 loop
@@ -135,6 +138,57 @@ procedure Excel_Out_Test is
     end loop;
     Close(xl);
   end Big_demo;
+
+  procedure Fancy is
+    xl: Excel_Out_File;
+    font_title, font_normal, font_normal_grey: Font_type;
+    fmt_title, fmt_subtitle, fmt_date, fmt_percent, fmt_amount: Format_type;
+    first_day: constant Time:= Time_Of(2014, 03, 28, 9.0*3600.0);
+    price, last_price: Long_Float;
+    gen: Generator;
+  begin
+    Create(xl, "Fancy.xls");
+    -- Some page layout for printing...
+    Header(xl, "Fancy sheet");
+    Footer(xl, "&D");
+    Margins(xl, 1.2, 1.1, 0.9, 0.8);
+    Print_Gridlines(xl);
+    Page_Setup(xl, fit_height_with_n_pages => 0, orientation => portrait, scale_or_fit => fit);
+    --
+    Write_column_width(xl, 1, 15); -- set to width of n times '0'
+    Write_column_width(xl, 3, 10); -- set to width of n times '0'
+    Define_font(xl, "Calibri", 15, font_title, bold, white);
+    Define_font(xl, "Calibri", 10, font_normal);
+    Define_font(xl, "Calibri", 10, font_normal_grey, color => grey);
+    Define_format(xl, font_title, general, fmt_title, border => bottom, background_color => dark_blue);
+    Define_format(xl, font_normal, general, fmt_subtitle, border => bottom);
+    Define_format(xl, font_normal, dd_mm_yyyy, fmt_date, background_color => silver);
+    Define_format(xl, font_normal, decimal_0_thousands_separator, fmt_amount);
+    Define_format(xl, font_normal_grey, percent_2_plus, fmt_percent);
+    Use_format(xl, fmt_title);
+Write_row_height(xl, 1, 25);
+    Put(xl, "Daily Excel Writer stock prices");
+close(xl); return;
+    Merge(xl, 3);
+    New_Line(xl);
+    Use_format(xl, fmt_subtitle);
+    Put(xl,"Date");
+    Put(xl,"Price");
+    Put_Line(xl,"Variation %");
+    Reset(gen);
+    price:= 950.0 + Long_Float(Random(gen)) * 200.0;
+    for i in 1..3650 loop
+      Use_format(xl, fmt_date);
+      Put(xl, first_day + i * Day_Duration'Last);
+      Use_format(xl, fmt_amount);
+      last_price:= price;
+      price:= price * (1.0 + 0.1 * (Long_Float(Random(gen)) - 0.4));
+      Put(xl, price);
+      Use_format(xl, fmt_percent);
+      Put_Line(xl, price / last_price - 1.0);
+    end loop;
+    Close(xl);
+  end Fancy;
 
   function My_nice_sheet(size: Positive) return String is
     xl: Excel_Out_String;
@@ -204,7 +258,9 @@ begin
   for f in Excel_type loop
     Big_demo(f);
   end loop;
-  Put_Line("String demo ( -> From_string.xls )");
+  Put_Line("Fancy sheet ( -> Fancy.xls )");
+  Fancy;
+  Put_Line("Excel sheet in a string demo ( -> From_string.xls )");
   String_demo;
   Put_Line("Speed test ( -> Speed_test.xls )");
   Speed_test;

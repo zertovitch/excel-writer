@@ -3,7 +3,10 @@
 with Excel_Out;                         use Excel_Out;
 
 with Ada.Command_Line;                  use Ada.Command_Line;
+with Ada.Directories;
 with Ada.Sequential_IO;
+with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+
 with Interfaces;                        use Interfaces;
 
 procedure BIFF_Dump is
@@ -86,9 +89,12 @@ procedure BIFF_Dump is
   formula4   : constant:= 16#0406#; -- Formula BIFF 4
   colwidth   : constant:= 16#0024#;
   defcolwidth: constant:= 16#0055#;
+  colinfo    : constant:= 16#007D#;
   header_x   : constant:= 16#0014#; -- 5.55 p.180
   footer_x   : constant:= 16#0015#; -- 5.48 p.173
   page_setup_x : constant:= 16#00A1#; -- 5.73 p.192
+  dimension_b2 : constant:= 16#0000#;
+  dimension_b3 : constant:= 16#0200#;
 
   subtype margin is Integer range 16#26#..16#29#;
 
@@ -112,15 +118,17 @@ procedure BIFF_Dump is
     Read(f,b);
   end;
 
+  name: Unbounded_String;
+
 begin
   if Argument_Count = 0 then
-    Open(f, In_File, "Big.xls");
+    name:= To_Unbounded_String("Big [BIFF3].xls");
   else
-    Open(f, In_File, Argument(1));
+    name:= To_Unbounded_String(Argument(1));
   end if;
-  Create(xl, "$Dump$.xls");
+  Create(xl, "_Dump of " & Ada.Directories.Simple_Name(To_String(name)) & "", BIFF2);
   -- Some page layout...
-  Header(xl, "&LBiff_dump of...&R" & Name(f));
+  Header(xl, "&LBiff_dump of...&R" & Ada.Directories.Simple_Name(To_String(name)));
   Footer(xl, "&L&D");
   Margins(xl, 0.7, 0.5, 1.0, 0.8);
   Print_Gridlines(xl);
@@ -138,7 +146,7 @@ begin
   --
   Define_format(xl, Default_font(xl), general, fmt_ul, border => bottom);
   --
-  Put_Line(xl, "Dump of the BIFF (Excel .xls) file: " & Name(f));
+  Put_Line(xl, "Dump of the BIFF (Excel .xls) file: " & To_String(name));
   New_Line(xl);
   --
   Use_format(xl, fmt_ul);
@@ -149,6 +157,7 @@ begin
   Put_Line(xl, "Comments");
   --
   Use_format(xl, Default_format(xl));
+  Open(f, In_File, To_String(name));
   while not End_Of_File(f) loop
     code  := in16;
     length:= in16;
@@ -175,7 +184,8 @@ begin
         biff_version:= 5;
       when 16#000A# => Put(xl, "EOF"); Put(xl, "End of File");
       --
-      when 16#0000# => Put(xl, "DIMENSION");
+      when dimension_b2 => Put(xl, "DIMENSION (BIFF2)");  -- 5.35 DIMENSION
+      when dimension_b3 => Put(xl, "DIMENSION (BIFF3+)"); -- 5.35 DIMENSION
       when 16#000C# => Put(xl, "CALCCOUNT");
       when 16#000D# => Put(xl, "CALCMODE");
       when 16#000E# => Put(xl, "PRECISION");
@@ -190,9 +200,10 @@ begin
       when margin   => Put(xl, "MARGIN");
       when 16#0022# => Put(xl, "DATEMODE");
       when 16#0042# => Put(xl, "CODEPAGE");
-      when colwidth    => Put(xl, "COLWIDTH");
+      when colwidth    => Put(xl, "COLWIDTH (BIFF2)");
       when defcolwidth => Put(xl, "DEFCOLWIDTH");
-      when 16#0025# => Put(xl, "DEFAULTROWHEIGHT");
+      when colinfo     => Put(xl, "COLINFO (BIFF3+)"); -- 5.18
+      when 16#0025#    => Put(xl, "DEFAULTROWHEIGHT");
       when row_2 | row_3 =>
         Put(xl, "ROW");
       when format2  =>
@@ -225,7 +236,8 @@ begin
       when formula2   => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
       when formula4   => Put(xl, "FORMULA (BIFF4)");
       when rk         => Put(xl, "RK (BIFF3+)");
-      when label2     => Put(xl, "LABEL");
+      when label2     => Put(xl, "LABEL (BIFF2)");
+      when label3     => Put(xl, "LABEL (BIFF3+)");
       when labelsst   => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
       when 16#0019#   => Put(xl, "WINDOWPROTECT");
       when 16#0040#   => Put(xl, "BACKUP");
@@ -259,11 +271,11 @@ begin
           Read(f,b);
           defaults:= b = 0;
           if defaults then
-            Put(xl, "no default attributes/formats");
+            Put(xl, "0: no default attributes/formats");
           else
             Put(xl, "default attributes");
           end if;
-          Put(xl, "offset to contents" & Integer'Image(in16));
+          Put(xl, "offset to contents = " & Integer'Image(in16));
           for i in 14..length loop
             Read(f,b);
           end loop;
@@ -403,6 +415,14 @@ begin
         Put(xl, "fit height="  & Integer'Image(in16));
         Put(xl, "options="  & Integer'Image(in16));
         for i in 13..length loop -- remaining contents (BIFF5+)
+          Read(f,b);
+        end loop;
+      when dimension_b2 | dimension_b3 =>
+        Put(xl, "row_min="    & Integer'Image(in16));
+        Put(xl, "row_max+1="  & Integer'Image(in16));
+        Put(xl, "col_min="    & Integer'Image(in16));
+        Put(xl, "col_max+1="  & Integer'Image(in16));
+        for i in 9..length loop -- remaining contents (BIFF3+)
           Read(f,b);
         end loop;
       when others =>
