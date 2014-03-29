@@ -49,8 +49,7 @@ package body Excel_Out is
     return b;
   end Intel_x86_buffer;
 
-  function Intel_16_inst is new Intel_x86_buffer( Unsigned_16, 2 );
-  pragma Unreferenced (Intel_16_inst);
+  function Intel_32 is new Intel_x86_buffer( Unsigned_32, 4 );
 
   function Intel_16( n: Unsigned_16 ) return Byte_buffer is
     pragma Inline(Intel_16);
@@ -324,7 +323,7 @@ package body Excel_Out is
     Comma_Style     : constant:= 3;
     Currency_Style  : constant:= 4;
     Percent_Style   : constant:= 5;
-    font_for_styles : Font_type;
+    font_for_styles, font_2, font_3 : Font_type;
   begin
     WriteBOF(xl);
     -- 5.17 CODEPAGE
@@ -337,13 +336,29 @@ package body Excel_Out is
     WriteBiff(xl, 16#0022#, Intel_16(0)); --  0 => 1900; 1 => 1904 Date system
     -- NB: the 1904 variant is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
-    Define_font(xl,"Arial", 10, xl.def_font);
-    Define_font(xl,"Arial", 10, font_for_styles); -- Used by BIFF3+'s styles
+    Define_font(xl,"Arial",   10, xl.def_font);
+    Define_font(xl,"Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
+    Define_font(xl,"Calibri", 10, font_2); -- Defined in BIFF3 files written by Excel 2002
+    Define_font(xl,"Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
     WriteFmtRecords(xl);
     -- 5.111 WINDOWPROTECT
     WriteBiff(xl, 16#0019#, Intel_16(0));
     -- Define default format
     Define_format(xl, xl.def_font, general, xl.def_fmt);
+    if xl.format = BIFF3 then
+      -- Don't ask why we need the following useless formats, but it is as Excel 2002
+      -- write formats and otherwise the default format is turned into decimal_2
+      -- when the file is opened in Excel (2002) !
+      Define_format(xl, font_for_styles, general, xl.def_fmt);
+      Define_format(xl, font_for_styles, general, xl.def_fmt);
+      Define_format(xl, font_2, general, xl.def_fmt);
+      Define_format(xl, font_2, general, xl.def_fmt);
+      for i in 5..15 loop
+        Define_format(xl, xl.def_font, general, xl.def_fmt);
+      end loop;
+      -- Final default format index is the last changed xl.def_fmt
+    end if;
+    Use_default_format(xl);
     -- Define formats for the BIFF3+ "styles":
     Define_format(xl, font_for_styles, decimal_2, xl.cma_fmt);
     Define_format(xl, font_for_styles, currency_0, xl.ccy_fmt);
@@ -809,6 +824,34 @@ package body Excel_Out is
     Jump_to(xl, r, c+1); -- Store and check new position
   end Write_as_16_bit_unsigned;
 
+  -- Internal. This is BIFF3+. BIFF format choice unchecked here.
+  --
+  procedure Write_as_30_bit_signed (
+        xl : in out Excel_Out_Stream;
+        r,
+        c      : Positive;
+        num    : Integer_32)
+  is
+    pragma Inline(Write_as_30_bit_signed);
+    RK_val: Unsigned_32;
+    RK_code: constant:= 2; -- Code for signed integer. See 2.5.5 RK Values
+  begin
+    if num >= 0 then
+      RK_val:= Unsigned_32(num) * 4 + RK_code;
+    else
+      RK_val:= (-Unsigned_32(-num)) * 4 + RK_code;
+    end if;
+    Jump_to_and_store_max(xl, r, c);
+    -- 5.87 RK
+    WriteBiff(xl, 16#027E#,
+      Intel_16(Unsigned_16(r-1)) &
+      Intel_16(Unsigned_16(c-1)) &
+      Intel_16(Unsigned_16(xl.xf_in_use)) &
+      Intel_32(RK_val)
+    );
+    Jump_to(xl, r, c+1); -- Store and check new position
+  end Write_as_30_bit_signed;
+
   --
   -- Profile with floating-point number
   --
@@ -819,21 +862,29 @@ package body Excel_Out is
         num    : Long_Float
   )
   is
+    max_16_u: constant:= 2.0 ** 16 - 1.0;
+    min_30_s: constant:= -(2.0 ** 29);
+    max_30_s: constant:= 2.0 ** 29 - 1.0;
   begin
     case xl.format is
       when BIFF2 =>
         if num >= 0.0 and then
-           num <= 65535.0 and then
+           num <= max_16_u and then
            Almost_zero(num - Long_Float'Floor(num))
         then
-          -- Write a 16-bit Integer (a BIFF2-only specialty),
-          -- with a smaller storage :-)
           Write_as_16_bit_unsigned(xl, r, c, Unsigned_16(Long_Float'Floor(num)));
         else
           Write_as_double(xl, r, c, num);
         end if;
       when BIFF3 =>
-        Write_as_double(xl, r, c, num);
+        if num >= min_30_s and then
+           num <= max_30_s and then
+           Almost_zero(num - Long_Float'Floor(num))
+        then
+          Write_as_30_bit_signed(xl, r, c, Integer_32(Long_Float'Floor(num)));
+        else
+          Write_as_double(xl, r, c, num);
+        end if;
     end case;
   end Write;
 
@@ -847,18 +898,21 @@ package body Excel_Out is
         num    : Integer)
   is
   begin
+    -- We use an integer representation (and small storage) if possible;
+    -- we need to use a floating-point in all other cases
     case xl.format is
       when BIFF2 =>
         if num in 0..2**16-1 then
-          -- We use a small storage for integers.
-          -- This is a BIFF2-only specialty.
           Write_as_16_bit_unsigned(xl, r, c, Unsigned_16(num));
         else
-          -- We need to us a floating-point in all other cases
           Write_as_double(xl, r, c, Long_Float(num));
         end if;
       when BIFF3 =>
-        Write_as_double(xl, r, c, Long_Float(num));
+        if num in -2**29..2**29-1 then
+          Write_as_30_bit_signed(xl, r, c, Integer_32(num));
+        else
+          Write_as_double(xl, r, c, Long_Float(num));
+        end if;
     end case;
   end Write;
 
