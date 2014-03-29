@@ -164,7 +164,7 @@ package Excel_Out is
   --     resize a row in Excel.
   procedure Write_default_row_height(xl: Excel_Out_Stream; height: Positive);
   procedure Write_row_height(xl : Excel_Out_Stream; row: Positive; height : Natural);
-  -- !! bug: bad display on MS Excel if height > 0 !!
+  -- !! bug: bad display on MS Excel if height > 0 ; LibreOffice OK
 
   ----------------------
   -- Formatting cells --

@@ -1,7 +1,7 @@
 with Text_IO;                           use Text_IO;
 with Spreadsheet_references;            use Spreadsheet_references;
 
-procedure Test_Spreadsheet_references is
+procedure Spreadsheet_references_demo is
   ii, jj, n0: Positive;
 begin
   Split("xfd1234", ii, jj);
@@ -22,6 +22,9 @@ begin
       Put_Line(Reference(i,i) & " = " & Reference(i,i,R1C1));
     end loop;
   end loop;
+  --
+  -- Consistency check on different rows, columns and on both styles
+  --
   for i in 1..123 loop
     for j in 1..16389 loop
       for style in Reference_style loop
@@ -32,4 +35,4 @@ begin
       end loop;
     end loop;
   end loop;
-end Test_Spreadsheet_references;
+end Spreadsheet_references_demo;

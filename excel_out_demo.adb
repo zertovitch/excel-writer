@@ -9,7 +9,7 @@ with Ada.Calendar;                      use Ada.Calendar;
 with Ada.Numerics.Float_Random;         use Ada.Numerics.Float_Random;
 with Ada.Streams.Stream_IO, Ada.Text_IO;
 
-procedure Excel_Out_Test is
+procedure Excel_Out_Demo is
 
   procedure Small_demo is
     xl: Excel_Out_File;
@@ -24,7 +24,7 @@ procedure Excel_Out_Test is
     Close(xl);
   end Small_demo;
 
-  procedure Big_demo(excel_format_choice: Excel_type) is
+  procedure Big_demo(ef: Excel_type) is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
     fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_4, fmt_5, fmt_6, fmt_cust_num, fmt_8,
@@ -33,7 +33,7 @@ procedure Excel_Out_Test is
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
     damier: Natural;
   begin
-    Create(xl, "Big [" & Excel_type'Image(excel_format_choice) & "].xls", excel_format_choice);
+    Create(xl, "Big [" & Excel_type'Image(ef) & "].xls", ef);
     -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");
@@ -79,7 +79,7 @@ procedure Excel_Out_Test is
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
     Merge(xl, 6);
     Next(xl);
-    Put(xl, "Excel format: " & Excel_type'Image(excel_format_choice));
+    Put(xl, "Excel format: " & Excel_type'Image(ef));
     Merge(xl, 1);
     New_Line(xl);
     Put(xl, "Version: " & version);
@@ -253,8 +253,8 @@ begin
   Put_Line("Small demo ( -> Small.xls )");
   Small_demo;
   Put_Line("Big demo ( -> Big [...].xls )");
-  for f in Excel_type loop
-    Big_demo(f);
+  for ef in Excel_type loop
+    Big_demo(ef);
   end loop;
   Put_Line("Fancy sheet ( -> Fancy.xls )");
   Fancy;
@@ -262,4 +262,4 @@ begin
   String_demo;
   Put_Line("Speed test ( -> Speed_test.xls )");
   Speed_test;
-end Excel_Out_Test;
+end Excel_Out_Demo;

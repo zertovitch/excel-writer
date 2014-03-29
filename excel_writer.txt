@@ -25,7 +25,7 @@ Contents
 
   - excel_out.ads        : package specification
   - excel_out.adb        : package body
-  - excel_out_test.adb   : test/demo procedure
+  - excel_out_demo.adb   : demo procedure
   - excel_out_gnat.gpr   : project file for the GNAT compiler
   - excel_writer.txt     : this file
   - ieee_754*            : packages used by excel_out.adb
@@ -38,7 +38,7 @@ Contents
   - extras/csv.adb                         : (body)
   - extras/spreadsheet_references.ads      : converts (i,j) to or from the "A1" or "R1C1" format (specification)
   - extras/spreadsheet_references.adb      : (body)
-  - extras/test_spreadsheet_references.adb : test procedure for Spreadsheet_references
+  - extras/spreadsheet_references_demo.adb : demo procedure for Spreadsheet_references
 
 Warning & legal
 ===============
@@ -50,38 +50,42 @@ This software can be compiled for any target machine, and with any Ada 95 or lat
 The compiler's Interfaces package must provide an Unsigned_64 type (this is for the portable
 IEEE double-precision export).
 
-How to build and test Excel Writer
-==================================
+How to build Excel Writer and its demo
+======================================
 Here is how to build with GNAT/GCC (for other compilers, it
 should be simple as well):
 
     - type "gnatmake -P excel_out_gnat" in the command line
 or
-    - type "gnatmake excel_out_test" in the command line
+    - type "gnatmake excel_out_demo" in the command line
 or
     - open the excel_out_gnat.gpr file with the GNAT Programming Studio (GPS),
       press F4
 or
-    - open excel_out_test.adb with AdaGIDE, press F3
+    - open excel_out_demo.adb with AdaGIDE, press F3
 or
     - your way...
 
 
-As a result there is a excel_out_test[.exe] executable.
+As a result there is a excel_out_demo[.exe] executable.
   
 Type hierarchy
 ==============
+In Excel_Out:
+
   |- Excel_Out_Stream  : root type, abstract
   \
    |- Excel_Out_File   : type for writing to files (defined in Excel_Out)
    |- Excel_Out_String : type for writing to strings (defined in Excel_Out)
+   |
+In your own extension, if needed:
    |
    |- (your own stream!)
 
 How to create properly Excel files or streams
 =============================================
 Most, if not all possibilities are in the Big_demo procedure
-nested in Excel_Out_Test. So it is a good place to pick code...
+nested in Excel_Out_Demo. So it is a good place to pick code...
 
 To summarize, you need to define the spreadsheet contents in
 a certain order:
