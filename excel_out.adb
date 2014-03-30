@@ -6,7 +6,6 @@
 -- To do:
 -- =====
 --  - fix Write_row_height bug (bad display on MS Excel)
---  - wrap text / text break (5.115 XF - Extended Format)
 --  - border line styles (5.115 XF - Extended Format)
 --  - freeze pane (5.75 PANE)
 --  - BIFF > 3 and XML-based formats support
@@ -431,7 +430,8 @@ package body Excel_Out is
     horiz_align      : in     Horizontal_alignment:= general_alignment;
     border           : in     Cell_border:= no_border;
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
-    background_color : in     Color_type:= automatic
+    background_color : in     Color_type:= automatic;
+    wrap_text        : in     Boolean:= False
   )
   is
     actual_number_format: Number_format_type:= number_format;
@@ -494,7 +494,10 @@ package body Excel_Out is
          16#FF#
          -- ^ 3 - XF_USED_ATTRIB
         ) &
-        Intel_16(Horizontal_alignment'Pos(horiz_align)) &
+        Intel_16(
+          Horizontal_alignment'Pos(horiz_align) +
+          Boolean'Pos(wrap_text) * 8
+        ) &
         -- ^ 4 - Horizontal alignment, text break, parent style XF
         Intel_16(area_code) &
         -- ^ 6 - XF_AREA_34

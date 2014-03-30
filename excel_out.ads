@@ -65,6 +65,7 @@
 --                  - BIFF3 format
 --                  - added background colours (only visible with BIFF3)
 --                  - added 8 more built-in colours (only visible with BIFF3)
+--                  - added wrap_text format option
 --
 -- 11: 13-Sep-2013: - added Next and Next_Row
 --
@@ -270,7 +271,8 @@ package Excel_Out is
     horiz_align      : in     Horizontal_alignment:= general_alignment;
     border           : in     Cell_border:= no_border;
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
-    background_color : in     Color_type:= automatic
+    background_color : in     Color_type:= automatic;
+    wrap_text        : in     Boolean:= False
   );
 
   ------------------------
