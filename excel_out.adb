@@ -691,7 +691,18 @@ package body Excel_Out is
       when BIFF2 =>
         WriteBiff(xl, 16#0008#, row_info_base & (1..3 => 0) & Intel_16(0)); -- offset to data
       when BIFF3 =>
-        WriteBiff(xl, 16#0208#, row_info_base & (0,0,0,0,0,1,0,0));
+        WriteBiff(xl, 16#0208#,
+          row_info_base &
+          -- http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
+          (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
+           0, 0,  -- unused1 (2 bytes): Undefined and MUST be ignored.
+           64,    -- 64  - E - fUnsynced (1 bit): row height was manually set
+                  -- 128 - F - fGhostDirty (1 bit): the row was formatted
+           1) &   -- reserved3 (1 byte): MUST be 1, and MUST be ignored
+           Intel_16(15)
+           -- ^ ixfe_val & 4 bits.
+           --   If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
+        );
     end case;
   end Write_row_height;
 

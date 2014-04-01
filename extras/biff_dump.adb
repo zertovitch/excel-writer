@@ -96,6 +96,14 @@ procedure BIFF_Dump is
   page_setup_x : constant:= 16#00A1#; -- 5.73 p.192
   dimension_b2 : constant:= 16#0000#;
   dimension_b3 : constant:= 16#0200#;
+  writeaccess  : constant:= 16#005C#; -- 5.112 WRITEACCESS
+  saverecalc   : constant:= 16#005F#; -- 5.90 SAVERECALC
+  guts         : constant:= 16#0080#; -- 5.53 GUTS
+  sheetpr      : constant:= 16#0081#; -- 5.97 SHEETPR
+  gridset      : constant:= 16#0082#; -- 5.52 GRIDSET
+  hcenter      : constant:= 16#0083#; -- 5.54 HCENTER
+  vcenter      : constant:= 16#0084#; -- 5.107 VCENTER
+  country      : constant:= 16#008C#; -- 5.22 COUNTRY
 
   subtype margin is Integer range 16#26#..16#29#;
 
@@ -204,7 +212,8 @@ begin
       when colwidth    => Put(xl, "COLWIDTH (BIFF2)");
       when defcolwidth => Put(xl, "DEFCOLWIDTH");
       when colinfo     => Put(xl, "COLINFO (BIFF3+)"); -- 5.18
-      when 16#0025#    => Put(xl, "DEFAULTROWHEIGHT");
+      when 16#0025#    => Put(xl, "DEFAULTROWHEIGHT (BIFF2)");
+      when 16#0225#    => Put(xl, "DEFAULTROWHEIGHT (BIFF3+)");
       when row_2 | row_3 =>
         Put(xl, "ROW");
       when format2  =>
@@ -219,7 +228,8 @@ begin
            xf_5     =>  -- Extended Format, BIFF5+
         Put(xl, "XF" & Integer'Image(xfs));
         xfs:= xfs + 1;
-      when 16#001F# => Put(xl, "BUILTINFMTCOUNT");
+      when 16#001F# | 16#0056# =>
+        Put(xl, "BUILTINFMTCOUNT");
       when font2 | font3 =>
         if fnt = 4 then
           fnt:= 5; -- Excel anomaly (p.171)
@@ -252,7 +262,15 @@ begin
       when hideobj    => Put(xl, "HIDEOBJ"); -- 5.56
       when 16#4D#     => Put(xl, "PLS (Current printer blob)");
       when 16#3C#     => Put(xl, "CONTINUE (Continue last BIFF record)");
-      when others     =>   Put(xl, "- ??? -");
+      when writeaccess => Put(xl, "WRITEACCESS"); -- 5.112 WRITEACCESS
+      when saverecalc  => Put(xl, "SAVERECALC");  -- 5.90 SAVERECALC
+      when gridset     => Put(xl, "GRIDSET");     -- 5.52 GRIDSET
+      when guts        => Put(xl, "GUTS");        -- 5.53 GUTS
+      when hcenter     => Put(xl, "HCENTER");     -- 5.107 HCENTER
+      when vcenter     => Put(xl, "VCENTER");
+      when sheetpr     => Put(xl, "SHEETPR");     -- 5.97 SHEETPR
+      when country     => Put(xl, "COUNTRY");     -- 5.22 COUNTRY
+      when others      => Put(xl, "- ??? -");
     end case;
     --
     -- Expand parameters
@@ -282,9 +300,17 @@ begin
             Read(f,b);
           end loop;
         else
-          for i in 9..length loop
-            Read(f,b);
-          end loop;
+          Put(xl, "reserved1=" & Integer'Image(in16)); -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
+          Put(xl, "unused1=" & Integer'Image(in16));   -- unused1 (2 bytes): Undefined and MUST be ignored.
+          Put(xl, "flags=" & Integer'Image(in8));
+          -- A - iOutLevel (3 bits): An unsigned integer that specifies the outline level (1) of the row.
+          -- B - reserved2 (1 bit): MUST be zero, and MUST be ignored.
+          -- C - fCollapsed (1 bit): A bit that specifies whether the rows that are one level of outlining deeper than the current row are included in the collapsed outline state.
+          -- D - fDyZero (1 bit): A bit that specifies whether the row is hidden.
+          -- E - fUnsynced (1 bit): A bit that specifies whether the row height was manually set.
+          -- F - fGhostDirty (1 bit): A bit that specifies whether the row was formatted.
+          Put(xl, "reserved3=" & Integer'Image(in8)); -- MUST be 1, and MUST be ignored
+          Put(xl, "ixfe_val_etc=" & Integer'Image(in16));   -- ixfe_val (12 bits) and 4 bits
         end if;
       when blank2 | number2 =>
         Put(xl, "row=" & Integer'Image(in16+1));
@@ -440,6 +466,15 @@ begin
         for i in 9..length loop -- remaining contents (BIFF3+)
           Read(f,b);
         end loop;
+      when writeaccess =>
+        declare
+          r: constant String:= str8;
+        begin
+          Put(xl, "User name=" & r);
+          for i in r'Length+2..length loop -- remaining characters (spaces)
+            Read(f,b);
+          end loop;
+        end;
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");
