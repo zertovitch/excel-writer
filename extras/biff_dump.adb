@@ -82,6 +82,7 @@ procedure BIFF_Dump is
   number2    : constant:= 16#0003#; -- 5.71
   number3    : constant:= 16#0203#; -- 5.71
   rk         : constant:= 16#027E#; -- 5.87 RK p.201
+  note       : constant:= 16#001C#; -- 5.70 NOTE p. 190
   label2     : constant:= 16#0004#;
   label3     : constant:= 16#0204#;
   labelsst   : constant:= 16#00FD#;
@@ -236,6 +237,7 @@ begin
       when formula2   => Put(xl, "FORMULA (BIFF2)"); -- 5.50 p.176
       when formula4   => Put(xl, "FORMULA (BIFF4)");
       when rk         => Put(xl, "RK (BIFF3+)");
+      when note       => Put(xl, "NOTE (Comment)"); -- 5.70 NOTE p. 190
       when label2     => Put(xl, "LABEL (BIFF2)");
       when label3     => Put(xl, "LABEL (BIFF3+)");
       when labelsst   => Put(xl, "LABELSST (BIFF8)"); -- SST = shared string table
@@ -303,6 +305,19 @@ begin
         for i in 7..length loop
           Read(f,b);
         end loop;
+      when note => -- 5.70 NOTE p. 190
+        Put(xl, "row=" & Integer'Image(in16+1));
+        Put(xl, "col=" & Integer'Image(in16+1));
+        Put(xl, "total length=" & Integer'Image(in16+1));
+        declare
+          chunk: String(7..length);
+        begin
+          for i in chunk'Range loop
+            Read(f,b);
+            chunk(i):= Character'Val(b);
+          end loop;
+          Put(xl, chunk);
+        end;
       when label2 => -- 5.63 LABEL p.187
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));

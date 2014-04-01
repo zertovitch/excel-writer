@@ -61,7 +61,7 @@
 -- Main changes:
 -- ============
 --
--- 12: xx-yyy-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
+-- 12: 30-Mar-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
 --                  - BIFF3 format
 --                  - added background colours (only visible with BIFF3)
 --                  - added 8 more built-in colours (only visible with BIFF3)
