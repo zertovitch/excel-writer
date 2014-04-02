@@ -667,33 +667,44 @@ package body Excel_Out is
   -- but single ROW commands can also be put before in the data stream,
   -- where the column widths are set. Excel saves with blocks of ROW
   -- commands, most of them useless.
-  -- !! Bug: on Excel height /= 0 displays a blank row with no row number...
 
   procedure Write_row_height(
-    xl : Excel_Out_Stream;
-    row: Positive; height : Natural
+    xl     : Excel_Out_Stream;
+    row    : Positive;
+    height : Natural
   )
   is
-    row_info_base: constant Byte_buffer:=
+    row_info_base: Byte_buffer:=
       Intel_16(Unsigned_16(row - 1)) &
       Intel_16(0)   & -- col. min.
       Intel_16(255) & -- col. max.
       Intel_16(Unsigned_16(height * y_scale));
+    fDyZero: Unsigned_8:= 0;
   begin
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#0008#, row_info_base & (1..3 => 0) & Intel_16(0)); -- offset to data
+        WriteBiff(xl, 16#0008#,
+          row_info_base &
+          (1..3 => 0) &
+          Intel_16(0) -- offset to data
+        );
       when BIFF3 =>
+        if height = 0 then -- proper hiding (needed with LibreOffice)
+          fDyZero:= 1;
+          row_info_base(row_info_base'Last - 1 .. row_info_base'Last):=
+            Intel_16(16#8000#);
+        end if;
         WriteBiff(xl, 16#0208#,
           row_info_base &
           -- http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
           (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
            0, 0,  -- unused1 (2 bytes): Undefined and MUST be ignored.
-           64,    -- 64  - E - fUnsynced (1 bit): row height was manually set
-                  -- 128 - F - fGhostDirty (1 bit): the row was formatted
+           fDyZero *  32 +  -- D - fDyZero (1 bit): row is hidden
+                 1 *  64 +  -- E - fUnsynced (1 bit): row height was manually set
+                 0 * 128,   -- F - fGhostDirty (1 bit): the row was formatted
            1) &   -- reserved3 (1 byte): MUST be 1, and MUST be ignored
            Intel_16(15)
-           -- ^ ixfe_val & 4 bits.
+           -- ^ ixfe_val, then 4 bits.
            --   If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
         );
     end case;
@@ -1228,9 +1239,9 @@ package body Excel_Out is
     end Write_Window2;
 
   begin
-    -- Calling Window1 and Window2 is not necessary for default settings, but without the calls
-    -- a Write_row_height call without a zero height displays a completely blank row, including
-    -- the header letters, on all MS Excel versions (clearly an Excel bug) !
+    -- Calling Window1 and Window2 is not necessary for default settings, but without these calls,
+    -- a Write_row_height call with a positive height results, on all MS Excel versions, in a
+    -- completely blank row, including the header letters - clearly an Excel bug !
     Write_Window1;
     Write_Window2;
     -- 5.75 PANE here !!

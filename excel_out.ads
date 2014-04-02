@@ -161,7 +161,7 @@ package Excel_Out is
   );
 
   -- * The row height unit is in font points, as appearing when you
-  --     resize a row in Excel.
+  --     resize a row in Excel. A zero height means the row is hidden.
   procedure Write_default_row_height(xl: Excel_Out_Stream; height: Positive);
   procedure Write_row_height(xl : Excel_Out_Stream; row: Positive; height : Natural);
 
