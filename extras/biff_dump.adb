@@ -1,11 +1,14 @@
--- Dump the contents of a file in BIFF (Excel .xls) format
+-- Dump the contents of a file in BIFF (Excel .xls) format.
+-- The output is also an Excel file.
 
 with Excel_Out;                         use Excel_Out;
 
 with Ada.Command_Line;                  use Ada.Command_Line;
 with Ada.Directories;
 with Ada.Sequential_IO;
+with Ada.Strings.Fixed;                 use Ada.Strings, Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Text_IO;
 
 with Interfaces;                        use Interfaces;
 
@@ -59,6 +62,10 @@ procedure BIFF_Dump is
     return r;
   end str8len16;
 
+  bof_2      : constant:= 16#0009#; -- 5.8 p.135
+  bof_3      : constant:= 16#0209#; -- 5.8 p.135
+  bof_4      : constant:= 16#0409#; -- 5.8 p.135
+  bof_5_8    : constant:= 16#0809#; -- 5.8 p.135
   row_2      : constant:= 16#0008#; -- 5.88 p.202
   row_3      : constant:= 16#0208#; -- 5.88 p.202
   style      : constant:= 16#0293#;
@@ -68,12 +75,14 @@ procedure BIFF_Dump is
   xf_5       : constant:= 16#00E0#;
   ole_2      : constant:= 16#CFD0#;
   pane       : constant:= 16#0041#;
+  selection  : constant:= 16#001D#;
   window1    : constant:= 16#003D#;
   window2_b2 : constant:= 16#003E#;
   window2_b3 : constant:= 16#023E#;
   hideobj    : constant:= 16#008D#;
-  font2      : constant:= 16#0031#;
-  font3      : constant:= 16#0231#;
+  font_b2    : constant:= 16#0031#;
+  font_b3    : constant:= 16#0231#;
+  fontcolor  : constant:= 16#0045#;
   format2    : constant:= 16#001E#;
   format4    : constant:= 16#041E#;
   blank2     : constant:= 16#0001#;
@@ -88,11 +97,12 @@ procedure BIFF_Dump is
   labelsst   : constant:= 16#00FD#;
   formula2   : constant:= 16#0006#; -- Formula BIFF 2, 5.50 p.176
   formula4   : constant:= 16#0406#; -- Formula BIFF 4
-  colwidth   : constant:= 16#0024#;
-  defcolwidth: constant:= 16#0055#;
-  colinfo    : constant:= 16#007D#;
-  header_x   : constant:= 16#0014#; -- 5.55 p.180
-  footer_x   : constant:= 16#0015#; -- 5.48 p.173
+  def_row_hgt_b2 : constant:= 16#0025#; -- DEFAULTROWHEIGHT
+  colwidth       : constant:= 16#0024#;
+  defcolwidth    : constant:= 16#0055#;
+  colinfo        : constant:= 16#007D#;
+  header_x       : constant:= 16#0014#; -- 5.55 p.180
+  footer_x       : constant:= 16#0015#; -- 5.48 p.173
   page_setup_x : constant:= 16#00A1#; -- 5.73 p.192
   dimension_b2 : constant:= 16#0000#;
   dimension_b3 : constant:= 16#0200#;
@@ -126,6 +136,28 @@ procedure BIFF_Dump is
     Put(xl, "font="       & Unsigned_8'Image(b / 16#40#));
     Read(f,b);
   end;
+
+  package FIO is new Ada.Text_IO.Float_IO(Float);
+
+  function Img(r: Float; digits_displayed: Natural:= 0) return String is
+    s: String(1..120);
+  begin
+    if digits_displayed > 0 then
+      FIO.Put(s,r,digits_displayed,0);
+      return Trim(s, Both);
+    else
+      return Trim(Long_Long_Integer'Image(Long_Long_Integer(r)), Both);
+    end if;
+  end Img;
+
+  package IIO is new Ada.Text_IO.Integer_IO(Integer);
+
+  function Hexa(i: Integer) return String is
+    s: String(1..120);
+  begin
+    IIO.Put(s,i,16);
+    return Trim(s, Both);
+  end Hexa;
 
   name: Unbounded_String;
 
@@ -175,19 +207,19 @@ begin
     Put(xl, "    ");
     case code is
       --
-      when 16#0009# =>
+      when bof_2  =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 2.1, BIFF2)");
         biff_version:= 2; -- some items, like font, are reused in biff 5 but not 3,4
-      when 16#0209# =>
+      when bof_3 =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 3.0, BIFF3)");
         biff_version:= 3;
-      when 16#0409# =>
+      when bof_4 =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 4.0, BIFF4)");
         biff_version:= 4;
-      when 16#0809# =>
+      when bof_5_8 =>
         Put(xl, "BOF");
         Put(xl, "Beginning of File (Excel 5-95 / 97-2003, BIFF5 / 8)");
         biff_version:= 5;
@@ -212,7 +244,7 @@ begin
       when colwidth    => Put(xl, "COLWIDTH (BIFF2)");
       when defcolwidth => Put(xl, "DEFCOLWIDTH");
       when colinfo     => Put(xl, "COLINFO (BIFF3+)"); -- 5.18
-      when 16#0025#    => Put(xl, "DEFAULTROWHEIGHT (BIFF2)");
+      when def_row_hgt_b2 => Put(xl, "DEFAULTROWHEIGHT (BIFF2)");
       when 16#0225#    => Put(xl, "DEFAULTROWHEIGHT (BIFF3+)");
       when row_2 | row_3 =>
         Put(xl, "ROW");
@@ -230,14 +262,14 @@ begin
         xfs:= xfs + 1;
       when 16#001F# | 16#0056# =>
         Put(xl, "BUILTINFMTCOUNT");
-      when font2 | font3 =>
+      when font_b2 | font_b3 =>
         if fnt = 4 then
           fnt:= 5; -- Excel anomaly (p.171)
         end if;
         Put(xl, "FONT" & Integer'Image(fnt));
         -- 5.45, p.171
         fnt:= fnt + 1;
-      when 16#0045#   => Put(xl, "FONTCOLOR");
+      when fontcolor  => Put(xl, "FONTCOLOR");
       when blank2     => Put(xl, "BLANK (BIFF2)");  -- 5.7 p.137
       when 16#0201#   => Put(xl, "BLANK (BIFF3+)");
       when index3     => Put(xl, "INDEX (BIFF3+)");
@@ -255,10 +287,10 @@ begin
       when 16#0040#   => Put(xl, "BACKUP");
       when style      => Put(xl, "STYLE");            -- 5.103
       when pane       => Put(xl, "PANE");             -- 5.75 p.197
+      when selection  => Put(xl, "SELECTION");        -- 5.93 p.205
       when window1    => Put(xl, "WINDOW1");          -- 5.109
       when window2_b2 => Put(xl, "WINDOW2 (BIFF2)");  -- 5.110 p.216
       when window2_b3 => Put(xl, "WINDOW2 (BIFF3+)"); -- 5.110 p.216
-      when 16#001D#   => Put(xl, "SELECTION"); -- 5.93 p.205
       when hideobj    => Put(xl, "HIDEOBJ"); -- 5.56
       when 16#4D#     => Put(xl, "PLS (Current printer blob)");
       when 16#3C#     => Put(xl, "CONTINUE (Continue last BIFF record)");
@@ -276,31 +308,38 @@ begin
     -- Expand parameters
     --
     case code is
+      when bof_2 | bof_3 | bof_4 | bof_5_8 =>
+        Next(xl);
+        Put(xl, "BIFF=" & Integer'Image(in16));
+        Put(xl, "Type=" & Integer'Image(in16));
+        for i in 5..length loop
+          Read(f,b);
+        end loop;
       when row_2 | row_3=> -- 5.88 p.202
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col1=" & Integer'Image(in16+1));
         Put(xl, "col2+1=" & Integer'Image(in16+1));
         w:= Unsigned_16(in16);
         if (w and 16#8000#) /= 0 then
-          Put(xl, "default height");
+          Put(xl, "default height, code=" & Hexa(Integer(w)));
         else
-          Put(xl, "height=" & Float'Image(Float(w and 16#7FFF#)/20.0));
+          Put(xl, "height=" & Img(Float(w and 16#7FFF#)/20.0,2));
         end if;
+        Next(xl);
+        Put(xl, "reserved1=" & Integer'Image(in16)); -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
         if biff_version = 2 then
-          Put(xl, Integer'Image(in16) & " unused ?");
           Read(f,b);
           defaults:= b = 0;
           if defaults then
-            Put(xl, "0: no default attributes/formats");
+            Put(xl, "0: no default row format");
           else
-            Put(xl, "default attributes");
+            Put(xl, "default row format");
           end if;
           Put(xl, "offset to contents = " & Integer'Image(in16));
           for i in 14..length loop
-            Read(f,b);
+            Put(xl, in8);
           end loop;
         else
-          Put(xl, "reserved1=" & Integer'Image(in16)); -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
           Put(xl, "unused1=" & Integer'Image(in16));   -- unused1 (2 bytes): Undefined and MUST be ignored.
           Put(xl, "flags=" & Integer'Image(in8));
           -- A - iOutLevel (3 bits): An unsigned integer that specifies the outline level (1) of the row.
@@ -362,8 +401,8 @@ begin
         end loop;
       when format2 =>
         Put(xl, str8);
-      when font2 =>
-        Put(xl, "height="  & Float'Image(Float(in16)/20.0));
+      when font_b2 =>
+        Put(xl, "height="  & Img(Float(in16)/20.0,2));
         Put(xl, "options=" & Integer'Image(in16));
         if biff_version = 2 then
           declare
@@ -380,8 +419,10 @@ begin
             Read(f,b);
           end loop;
         end if;
-      when font3 =>
-        Put(xl, "height=" & Float'Image(Float(in16)/20.0));
+      when fontcolor =>
+        Put(xl, "colour=" & Integer'Image(in16));
+      when font_b3 =>
+        Put(xl, "height=" & Img(Float(in16)/20.0));
         Put(xl, "options=" & Integer'Image(in16));
         Put(xl, "colour="  & Integer'Image(in16));
         Put(xl, str8);
@@ -430,12 +471,20 @@ begin
         Close(f);
         Close(xl);
         return;
+      when def_row_hgt_b2 =>
+        Next(xl);
+        w:= Unsigned_16(in16);
+        if (w and 16#8000#) /= 0 then
+          Put(xl, "height not changed manually, code=" & Hexa(Integer(w)));
+        else
+          Put(xl, "height=" & Img(Float(w and 16#7FFF#)/20.0,2));
+        end if;
       when colwidth =>
         Put(xl, "First Column: " & Integer'Image(in8+1));
         Put(xl, "Last Column : " & Integer'Image(in8+1));
-        Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
+        Put(xl, "Width: " & Img(Float(in16)/256.0,2));
       when defcolwidth =>
-        Put(xl, "Width: " & Float'Image(Float(in16)/256.0));
+        Put(xl, "Width: " & Img(Float(in16)/256.0,2));
       when header_x | footer_x =>
         if length > 0 then
           declare
@@ -475,6 +524,48 @@ begin
             Read(f,b);
           end loop;
         end;
+      when pane => -- 5.75 PANE p.197
+        Put(xl, "split_px="        & Integer'Image(in16)); -- vertical split
+        Put(xl, "split_py="        & Integer'Image(in16)); -- horizontal split
+        Put(xl, "row_1="           & Integer'Image(in16)); -- 1st visible row in bottom pane
+        Put(xl, "col_1="           & Integer'Image(in16)); -- 1st visible column in right pane
+        Put(xl, "active_pane_id="  & Integer'Image(in8));  -- identifier of pane with active cell cursor
+        for i in 10..length loop
+          Read(f,b);
+        end loop;
+      when selection => -- 5.93 SELECTION p.205
+        Put(xl, "pane_id="         & Integer'Image(in8));
+        Put(xl, "active_cell_row=" & Integer'Image(in16));
+        Put(xl, "active_cell_col=" & Integer'Image(in16));
+        Put(xl, "selected_idx="    & Integer'Image(in16));
+        for i in 8..length loop -- cell range list - 2.5.15 p.27
+          Read(f,b);
+        end loop;
+      when window1 =>
+        Put(xl, "w_x=" & Img(Float(in16)/20.0,2));
+        Put(xl, "w_y=" & Img(Float(in16)/20.0,2));
+        Put(xl, "w_w=" & Img(Float(in16)/20.0,2));
+        Put(xl, "w_h=" & Img(Float(in16)/20.0,2));
+        Put(xl, "w_hidden=" & Integer'Image(in16));
+      when window2_b2 =>
+        Put(xl, "form_results="  & Integer'Image(in8));
+        Put(xl, "grid_lines="    & Integer'Image(in8));
+        Put(xl, "sheet_head="    & Integer'Image(in8));
+        Put(xl, "frozen_panes="  & Integer'Image(in8));
+        Put(xl, "zero_as_empty=" & Integer'Image(in8));
+        Put(xl, "first_row="     & Integer'Image(in16));
+        Put(xl, "first_column="  & Integer'Image(in16));
+        Put(xl, "use_auto_grid_colour=" & Integer'Image(in8));
+        for i in 1..4 loop -- RGB
+          Read(f,b);
+        end loop;
+      when window2_b3 =>
+        Put(xl, "option_flags="     & Integer'Image(in16));
+        Put(xl, "first_row="     & Integer'Image(in16));
+        Put(xl, "first_column="  & Integer'Image(in16));
+        for i in 7..length loop
+          Read(f,b);
+        end loop;
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");

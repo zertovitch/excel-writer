@@ -101,19 +101,18 @@ with Ada.Text_IO;
 
 package Excel_Out is
 
-  ----------------------------------------------------------------
-  -- The Excel output stream root type. Cannot be used as such. --
-  -- From this package, you can use the following types:        --
-  --  * Excel_Out_File    : output in a file                    --
-  --  * Excel_Out_String  : output in a string                  --
-  -- Of course you can define your own derived types.           --
-  ----------------------------------------------------------------
+  -----------------------------------------------------------------
+  -- The Excel output stream root type. Cannot be used as such.  --
+  -- From this package, you can use the following derived types: --
+  --  * Excel_Out_File    : output in a file                     --
+  --  * Excel_Out_String  : output in a string                   --
+  -- Of course you can define your own derived types.            --
+  -----------------------------------------------------------------
 
   type Excel_Out_Stream is abstract tagged private;
 
   type Excel_type is (
     BIFF2,    -- Excel 2.1: the oldest & easiest format
-              --            - and necessarily the most compatible
     BIFF3     -- Excel 3.0
     -- BIFF4,    -- Excel 4.0 <-- last format as standalone file
     -- BIFF5,    -- Excel 5.0 to 7.0
@@ -165,7 +164,6 @@ package Excel_Out is
   --     resize a row in Excel.
   procedure Write_default_row_height(xl: Excel_Out_Stream; height: Positive);
   procedure Write_row_height(xl : Excel_Out_Stream; row: Positive; height : Natural);
-  -- !! bug: bad display on MS Excel if height > 0 ; LibreOffice OK
 
   ----------------------
   -- Formatting cells --

@@ -25,21 +25,8 @@ procedure EW_Test is
     Close(xl);
   end;
 
-  -- Issue: Write_row_height bad display on MS Excel if height > 0 ; LibreOffice OK
-  -- BIFF2 and BIFF3 affected
-  --
-  procedure Test_Row(ef: Excel_type) is
-    xl: Excel_Out_File;
-  begin
-    Create(xl, "Row height [" & Excel_type'Image(ef) & "].xls", ef);
-    Write_row_height(xl, 1, 33);
-    Put(xl, "A");
-    Close(xl);
-  end;
-
 begin
   for ef in Excel_type loop
     Test_General(ef);
-    Test_Row(ef);
   end loop;
 end;

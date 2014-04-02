@@ -48,9 +48,11 @@ procedure Excel_Out_Demo is
     Write_column_width(xl, 5, 11);
     Write_column_width(xl, 14, 0); -- hide this column
     --
-    Write_default_row_height(xl, 20);
-    -- Write_row_height(xl, 1, 23);   -- header row 1
-    -- Write_row_height(xl, 2, 23);   -- header row 2
+    Write_default_row_height(xl, 14);
+    Write_row_height(xl, 1, 23);   -- header row 1
+    Write_row_height(xl, 2, 23);   -- header row 2
+    Write_row_height(xl, 9, 23);
+    Write_row_height(xl, 11, 23);
     Write_row_height(xl, 13, 0);   -- hide this row
     --
     Define_font(xl, "Arial", 9, font_1, regular, blue);
@@ -166,6 +168,7 @@ procedure Excel_Out_Demo is
     Define_format(xl, font_normal, decimal_0_thousands_separator, fmt_amount);
     Define_format(xl, font_normal_grey, percent_2_plus, fmt_percent);
     Use_format(xl, fmt_title);
+    Write_row_height(xl, 1, 25);
     Put(xl, "Daily Excel Writer stock prices");
     Merge(xl, 3);
     New_Line(xl);

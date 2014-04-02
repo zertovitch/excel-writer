@@ -5,7 +5,6 @@
 --
 -- To do:
 -- =====
---  - fix Write_row_height bug (bad display on MS Excel)
 --  - border line styles (5.115 XF - Extended Format)
 --  - freeze pane (5.75 PANE)
 --  - BIFF > 3 and XML-based formats support
@@ -186,12 +185,6 @@ package body Excel_Out is
     end case;
   end WriteBOF;
 
-  -- 5.37 EOF: End of File
-  procedure WriteEOF(xl : Excel_Out_Stream'Class) is
-  begin
-    WriteBiff(xl, 16#000A#, (1..0 => 0));
-  end WriteEOF;
-
   -- 5.49 FORMAT (number format)
   procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
   begin
@@ -275,7 +268,7 @@ package body Excel_Out is
   end WriteFmtRecords;
 
   -- 5.35 DIMENSION
-  procedure WriteDimensions(xl: Excel_Out_Stream'Class) is
+  procedure Write_Dimensions(xl: Excel_Out_Stream'Class) is
     sheet_bounds: constant Byte_buffer:=
       Intel_16(0) &
       Intel_16(Unsigned_16(xl.maxrow)) &
@@ -294,7 +287,7 @@ package body Excel_Out is
       when BIFF3 =>
         WriteBiff(xl, 16#0200#, sheet_bounds & (0,0));
     end case;
-  end WriteDimensions;
+  end Write_Dimensions;
 
   procedure Define_number_format(
     xl           : in out Excel_Out_Stream;
@@ -333,7 +326,7 @@ package body Excel_Out is
     WriteBiff(xl, 16#000F#, Intel_16(1)); --  1 => A1 mode
     -- 5.28 DATEMODE
     WriteBiff(xl, 16#0022#, Intel_16(0)); --  0 => 1900; 1 => 1904 Date system
-    -- NB: the 1904 variant is ignored by LibreOffice (<= 3.5), then wrong dates !
+    -- NB: the 1904 variant (Mac) is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
     Define_font(xl,"Arial",   10, xl.def_font);
     Define_font(xl,"Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
@@ -373,7 +366,7 @@ package body Excel_Out is
     Define_style(xl.ccy_fmt, Currency_Style);
     Define_style(xl.pct_fmt, Percent_Style);
     xl.dimrecpos:= Index(xl);
-    WriteDimensions(xl);
+    Write_Dimensions(xl);
     xl.is_created:= True;
   end Write_Worksheet_header;
 
@@ -566,12 +559,12 @@ package body Excel_Out is
 
   procedure Print_Row_Column_Headers(xl : Excel_Out_Stream) is
   begin
-    WriteBiff(xl, 16#002A#, Intel_16(1)); -- 5.81 p.199
+    WriteBiff(xl, 16#002A#, Intel_16(1)); -- 5.81 PRINTHEADERS p.199
   end  Print_Row_Column_Headers;
 
   procedure Print_Gridlines(xl : Excel_Out_Stream) is
   begin
-    WriteBiff(xl, 16#002B#, Intel_16(1)); -- 5.80 p.199
+    WriteBiff(xl, 16#002B#, Intel_16(1)); -- 5.80 PRINTGRIDLINES p.199
   end Print_Gridlines;
 
   procedure Page_Setup(
@@ -1179,10 +1172,73 @@ package body Excel_Out is
   end Reset;
 
   procedure Finish(xl : in out Excel_Out_Stream'Class) is
+
+    procedure Write_Window1 is
+    begin
+      -- 5.109 WINDOW1
+      case xl.format is
+        when BIFF2 | BIFF3 =>
+          WriteBiff(xl, 16#003D#,
+            Intel_16(120)   & -- Window x
+            Intel_16(120)   & -- Window y
+            Intel_16(21900) & -- Window w
+            Intel_16(13425) & -- Window h
+            Intel_16(0)       -- Hidden
+          );
+      end case;
+    end Write_Window1;
+
+    procedure Write_Window2 is
+    begin
+      -- 5.110 WINDOW2
+      case xl.format is
+        when BIFF2 =>
+          WriteBiff(xl, 16#003E#,
+            (0, -- Display formulas, not results
+             1, -- Show grid lines
+             1, -- Show sheet headers
+             0, -- Panes are frozen --> !! freeze implem.
+             1  -- Show zero values as zeros, not empty cells
+            )
+             &
+            Intel_16(0) & -- First visible row
+            Intel_16(0) & -- First visible column
+            (1, -- Use automatic grid line colour
+             0,0,0,0) -- Grid line RGB colour
+          );
+        when BIFF3 =>
+          WriteBiff(xl, 16#023E#,
+            -- http://msdn.microsoft.com/en-us/library/dd947893(v=office.12).aspx
+            Intel_16(   -- Option flags:
+              0 *   1 + -- Display formulas, not results
+              1 *   2 + -- Show grid lines
+              1 *   4 + -- Show sheet headers
+              0 *   8 + -- Panes are frozen --> !! freeze implem.
+              1 *  16 + -- Show zero values as zeros, not empty cells
+              1 *  32 + -- Gridlines of the window drawn in the default window foreground color
+              0 *  64 + -- Right-to-left mode
+              1 * 128 + -- Show outlines (guts ?!)
+              0 * 256   -- Frozen, not split
+            ) &
+            Intel_16(0) & -- First visible row
+            Intel_16(0) & -- First visible column
+            Intel_32(0)   -- Grid line colour
+          );
+      end case;
+    end Write_Window2;
+
   begin
-    WriteEOF(xl);
+    -- Calling Window1 and Window2 is not necessary for default settings, but without the calls
+    -- a Write_row_height call without a zero height displays a completely blank row, including
+    -- the header letters, on all MS Excel versions (clearly an Excel bug) !
+    Write_Window1;
+    Write_Window2;
+    -- 5.75 PANE here !!
+    -- 5.93 SELECTION here !!
+    -- 5.37 EOF: End of File:
+    WriteBiff(xl, 16#000A#, (1..0 => 0));
     Set_Index(xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data
-    WriteDimensions(xl);
+    Write_Dimensions(xl);
     xl.is_closed:= True;
   end Finish;
 
