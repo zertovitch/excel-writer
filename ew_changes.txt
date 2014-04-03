@@ -1,0 +1,45 @@
+Main changes to Excel Writer
+============================
+
+Release:
+====Date:        Changes:
+    ====         =======
+
+13:        2014  ! freeze panes
+                 ! vertical text alignment
+                 - workaround for a MS Excel display bug on rows
+                     with custom heights
+                 
+
+12: 30-Mar-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
+                 - BIFF3 format
+                 - added background colours
+                 - added 8 more built-in colours
+                 - added wrap_text format option
+
+11: 13-Sep-2013: - added Next and Next_Row
+
+08:  7-Jul-2011: - fixed Put("") not jumping
+                 - Text_IO's New_Line(lines), Line, Col now available
+
+07:  6-Mar-2011: - added cell merging
+                 - fixes in internationalization and numeric formats
+
+06: 16-Mar-2010: - added page layout
+                 - added custom number formats
+                 - added styles (% or ,)
+                 - fixed Write_column_width
+
+05: 16-Feb-2010: - small Ada compliance issue fixed - see
+                     Excel_Out_Pre_Root_Type
+    10-Feb-2010: - added 'width' and 'base' optional parameters
+                     to Put(xl, int), to facilitate transition
+                     from Ada.Text_IO.* to Excel_Out
+                 - added function Is_Open(xl : in Excel_Out_File)
+03: 15-Feb-2009: - data stream can by any; supplied:
+                     Excel_Out_File, Excel_Out_String
+                 - added "Text_IO"-like Put, Put_Line, New_Line,...
+02: 14-Feb-2009: - row/column coordinates are 1-based (they have to!)
+                 - added horizontal alignment and cell borders
+01: 13-Feb-2009: 1st release
+00: 11-Feb-2009: translation from original ExcelOut in Modula-2

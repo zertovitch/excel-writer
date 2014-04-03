@@ -37,7 +37,7 @@
 -- (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------
 --
---  Follow these steps to create a stream with the contents of an Excel file:
+--  Follow these steps to create an Excel spreadsheet stream:
 --
 --  1. Create
 --
@@ -57,42 +57,6 @@
 --
 --  5. (Excel_Out_String only) function Contents returns the full .xls
 --------------------------------------------------------------------------
---
--- Main changes:
--- ============
---
--- 12: 30-Mar-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
---                  - BIFF3 format
---                  - added background colours (only visible with BIFF3)
---                  - added 8 more built-in colours (only visible with BIFF3)
---                  - added wrap_text format option
---
--- 11: 13-Sep-2013: - added Next and Next_Row
---
--- 08:  7-Jul-2011: - fixed Put("") not jumping
---                  - Text_IO's New_Line(lines), Line, Col now available
---
--- 07:  6-Mar-2011: - Added cell merging
---                  - Fixes in internationalization and numeric formats
---
--- 06: 16-Mar-2010: - added page layout
---                  - added custom number formats
---                  - added styles (% or ,)
---                  - fixed Write_column_width
---
--- 05: 16-Feb-2010: - small Ada compliance issue fixed - see
---                      Excel_Out_Pre_Root_Type
---     10-Feb-2010: - added 'width' and 'base' optional parameters
---                      to Put(xl, int), to facilitate transition
---                      from Ada.Text_IO.* to Excel_Out
---                  - added function Is_Open(xl : in Excel_Out_File)
--- 03: 15-Feb-2009: - data stream can by any; supplied:
---                      Excel_Out_File, Excel_Out_String
---                  - added "Text_IO"-like Put, Put_Line, New_Line,...
--- 02: 14-Feb-2009: - row/column coordinates are 1-based (they have to!)
---                  - added horizontal alignment and cell borders
--- 01: 13-Feb-2009: 1st release
--- 00: 11-Feb-2009: translation from original ExcelOut in Modula-2
 
 with Ada.Calendar;                      use Ada.Calendar;
 with Ada.Streams.Stream_IO;
@@ -102,10 +66,10 @@ with Ada.Text_IO;
 package Excel_Out is
 
   -----------------------------------------------------------------
-  -- The Excel output stream root type. Cannot be used as such.  --
+  -- The abstract Excel output stream root type.                 --
   -- From this package, you can use the following derived types: --
-  --  * Excel_Out_File    : output in a file                     --
-  --  * Excel_Out_String  : output in a string                   --
+  --    * Excel_Out_File    : output in a file                   --
+  --    * Excel_Out_String  : output in a string                 --
   -- Of course you can define your own derived types.            --
   -----------------------------------------------------------------
 
