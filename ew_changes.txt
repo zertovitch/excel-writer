@@ -5,7 +5,7 @@ Release:
 ====Date:        Changes:
     ====         =======
 
-13:        2014  ! freeze panes
+13: xx-yyy-2014: - freeze panes
                  ! vertical text alignment
                  - workaround for a MS Excel display bug on rows
                      with custom heights

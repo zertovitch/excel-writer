@@ -6,7 +6,6 @@
 -- To do:
 -- =====
 --  - border line styles (5.115 XF - Extended Format)
---  - freeze pane (5.75 PANE)
 --  - BIFF > 3 and XML-based formats support
 --  - ...
 
@@ -259,7 +258,7 @@ package body Excel_Out is
         when date_h_m_s  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
           -- !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
           --    understands it and translates it into aaaa, but is unable to
-          --    understand *our* yyyy !!
+          --    understand *our* yyyy
           -- Same issue as [Red] vs [Rot] above.
       end case;
     end loop;
@@ -1165,6 +1164,28 @@ package body Excel_Out is
     return xl.def_fmt;
   end Default_format;
 
+  procedure Freeze_Panes(xl: in out Excel_Out_Stream; row, column: Positive) is
+  begin
+    xl.frz_panes:= True;
+    xl.freeze_row:= row;
+    xl.freeze_col:= column;
+  end Freeze_Panes;
+
+  procedure Freeze_Panes_At_Cursor(xl: in out Excel_Out_Stream) is
+  begin
+    Freeze_Panes(xl, xl.curr_row, xl.curr_col);
+  end Freeze_Panes_At_Cursor;
+
+  procedure Freeze_Top_Row(xl: in out Excel_Out_Stream) is
+  begin
+    Freeze_Panes(xl, 2, 1);
+  end Freeze_Top_Row;
+
+  procedure Freeze_First_Column(xl: in out Excel_Out_Stream) is
+  begin
+    Freeze_Panes(xl, 1, 2);
+  end Freeze_First_Column;
+
   procedure Reset(
     xl           : in out Excel_Out_Stream'Class;
     excel_format :        Excel_type:= Default_Excel_type
@@ -1208,7 +1229,7 @@ package body Excel_Out is
             (0, -- Display formulas, not results
              1, -- Show grid lines
              1, -- Show sheet headers
-             0, -- Panes are frozen --> !! freeze implem.
+             Boolean'Pos(xl.frz_panes),
              1  -- Show zero values as zeros, not empty cells
             )
              &
@@ -1224,7 +1245,8 @@ package body Excel_Out is
               0 *   1 + -- Display formulas, not results
               1 *   2 + -- Show grid lines
               1 *   4 + -- Show sheet headers
-              0 *   8 + -- Panes are frozen --> !! freeze implem.
+              Boolean'Pos(xl.frz_panes)
+                *   8 + -- Panes are frozen
               1 *  16 + -- Show zero values as zeros, not empty cells
               1 *  32 + -- Gridlines of the window drawn in the default window foreground color
               0 *  64 + -- Right-to-left mode
@@ -1238,13 +1260,42 @@ package body Excel_Out is
       end case;
     end Write_Window2;
 
+    procedure Write_Pane is
+      active_pane: Unsigned_8;
+    begin
+      if xl.freeze_col = 1 then
+        if xl.freeze_row = 1 then
+          active_pane:= 3;
+        else
+          active_pane:= 2;
+        end if;
+      else
+        if xl.freeze_row = 1 then
+          active_pane:= 1;
+        else
+          active_pane:= 0;
+        end if;
+      end if;
+      -- 5.75 PANE
+      WriteBiff(xl, 16#0041#,
+        Intel_16(Unsigned_16(xl.freeze_col) - 1) &
+        Intel_16(Unsigned_16(xl.freeze_row) - 1) &
+        Intel_16(Unsigned_16(xl.freeze_row) - 1) &
+        Intel_16(Unsigned_16(xl.freeze_col) - 1) &
+        ( 1 => active_pane )
+      );
+    end Write_Pane;
+
   begin
     -- Calling Window1 and Window2 is not necessary for default settings, but without these calls,
     -- a Write_row_height call with a positive height results, on all MS Excel versions, in a
     -- completely blank row, including the header letters - clearly an Excel bug !
     Write_Window1;
     Write_Window2;
-    -- 5.75 PANE here !!
+    if xl.frz_panes and xl.format > BIFF2 then
+      -- Enabling PANE for BIFF2 causes a very strange behaviour on MS Excel 2002.
+      Write_Pane;
+    end if;
     -- 5.93 SELECTION here !!
     -- 5.37 EOF: End of File:
     WriteBiff(xl, 16#000A#, (1..0 => 0));

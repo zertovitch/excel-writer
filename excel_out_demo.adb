@@ -84,6 +84,7 @@ procedure Excel_Out_Demo is
     Put(xl, "Excel format: " & Excel_type'Image(ef));
     Merge(xl, 1);
     New_Line(xl);
+    Freeze_Top_Row(xl);
     Put(xl, "Version: " & version);
     Merge(xl, 3);
     Next(xl, 4);
@@ -176,6 +177,7 @@ procedure Excel_Out_Demo is
     Put(xl,"Date");
     Put(xl,"Price");
     Put_Line(xl,"Variation %");
+    Freeze_Panes_At_Cursor(xl);
     Reset(gen);
     price:= 950.0 + Long_Float(Random(gen)) * 200.0;
     for i in 1..3650 loop

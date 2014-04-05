@@ -298,6 +298,13 @@ package Excel_Out is
   );
   procedure Use_default_format(xl: in out Excel_Out_Stream);
 
+  -- The Freeze Pane methods can be called anytime before Close
+
+  procedure Freeze_Panes(xl: in out Excel_Out_Stream; row, column: Positive);
+  procedure Freeze_Panes_At_Cursor(xl: in out Excel_Out_Stream);
+  procedure Freeze_Top_Row(xl: in out Excel_Out_Stream);
+  procedure Freeze_First_Column(xl: in out Excel_Out_Stream);
+
   Excel_stream_not_created,
   Excel_stream_not_closed,
   Decreasing_row_index,
@@ -339,8 +346,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "12";
-  reference : constant String:= "30-Mar-2014";
+  version   : constant String:= "13 Preview 1";
+  reference : constant String:= "5-Apr-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
@@ -448,6 +455,9 @@ private
     is_closed  : Boolean:= False;
     curr_row   : Positive:= 1;
     curr_col   : Positive:= 1;
+    frz_panes  : Boolean:= False;
+    freeze_row : Positive;
+    freeze_col : Positive;
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;
