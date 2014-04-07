@@ -167,7 +167,7 @@ begin
   else
     name:= To_Unbounded_String(Argument(1));
   end if;
-  Create(xl, "_Dump of " & Ada.Directories.Simple_Name(To_String(name)) & "", BIFF2);
+  Create(xl, "_Dump of " & Ada.Directories.Simple_Name(To_String(name)) & "");
   -- Some page layout...
   Header(xl, "&LBiff_dump of...&R" & Ada.Directories.Simple_Name(To_String(name)));
   Footer(xl, "&L&D");
@@ -196,6 +196,7 @@ begin
   Put(xl, " ");
   Put(xl, "BIFF Topic");
   Put_Line(xl, "Comments");
+  Freeze_Panes_At_Cursor(xl);
   --
   Use_format(xl, Default_format(xl));
   Open(f, In_File, To_String(name));
@@ -401,6 +402,10 @@ begin
         end loop;
       when format2 =>
         Put(xl, str8);
+      when format4 =>
+        Read(f,b);
+        Read(f,b);
+        Put(xl, str8);
       when font_b2 =>
         Put(xl, "height="  & Img(Float(in16)/20.0,2));
         Put(xl, "options=" & Integer'Image(in16));
@@ -454,7 +459,7 @@ begin
         for i in 4..length loop -- skip remaining contents
           Read(f,b);
         end loop;
-      when xf_3 =>
+      when xf_3 | xf_4 =>
         Read(f,b);
         Put(xl, "Using font #" & Unsigned_8'Image(b));
         Read(f,b);
