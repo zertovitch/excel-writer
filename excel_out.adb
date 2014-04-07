@@ -747,7 +747,6 @@ package body Excel_Out is
           Intel_16(0) & -- Option flags
           (0,0)         -- Not used
         );
-        -- !! GCW in BIFF4 must be set...
     end case;
   end Write_column_width;
 
@@ -1387,6 +1386,10 @@ package body Excel_Out is
       Write_Pane;
     end if;
     -- 5.93 SELECTION here !!
+    if xl.format >= BIFF4 then
+      -- 5.51 GCW: Global Column Width - required for correct display by LibreOffice
+      WriteBiff(xl, 16#00AB#, Intel_16(32) & (1..32 => 255));
+    end if;
     -- 5.37 EOF: End of File:
     WriteBiff(xl, 16#000A#, (1..0 => 0));
     Set_Index(xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data

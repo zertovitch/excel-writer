@@ -6,7 +6,9 @@ Release:
     ====         =======
 
 13: xx-yyy-2014: - freeze panes
-                 ! vertical text alignment
+                 - BIFF4 format
+                 - vertical text alignment
+                 - text orientation
                  - workaround for a MS Excel display bug on rows
                      with custom heights
                  

@@ -83,7 +83,7 @@ package Excel_Out is
     -- BIFF8     -- Excel 8.0 to 11.0
   );
 
-  Default_Excel_type: constant Excel_type:= BIFF3;
+  Default_Excel_type: constant Excel_type:= BIFF4;
 
   ----------------------------------
   -- (2) Before any cell content: --
@@ -361,8 +361,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "13 Preview 1";
-  reference : constant String:= "5-Apr-2014";
+  version   : constant String:= "13 Preview 2";
+  reference : constant String:= "7-Apr-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
