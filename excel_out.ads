@@ -209,7 +209,13 @@ package Excel_Out is
   type Horizontal_alignment is (
     general_alignment, to_left, centred, to_right, filled,
     justified, centred_across_selection, -- (BIFF4-BIFF8)
-    distributed -- (BIFF8, Excel 10.0 and later only)
+    distributed -- (BIFF8, Excel 10.0 ("XP") and later only)
+  );
+
+  type Vertical_alignment is (
+    top_alignment, centred, bottom_alignment,
+    justified, -- (BIFF5-BIFF8)
+    distributed -- (BIFF8, Excel 10.0 ("XP") and later only)
   );
 
   type Cell_border is private;
@@ -230,11 +236,12 @@ package Excel_Out is
     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
     cell_format      :    out Format_type;
     -- Optional parameters --
-    horiz_align      : in     Horizontal_alignment:= general_alignment;
+    horizontal_align : in     Horizontal_alignment:= general_alignment;
     border           : in     Cell_border:= no_border;
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
     background_color : in     Color_type:= automatic;
-    wrap_text        : in     Boolean:= False
+    wrap_text        : in     Boolean:= False;
+    vertical_align   : in     Vertical_alignment:= bottom_alignment
   );
 
   ------------------------

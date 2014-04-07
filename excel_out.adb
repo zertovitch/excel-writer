@@ -6,7 +6,7 @@
 -- To do:
 -- =====
 --  - border line styles (5.115 XF - Extended Format)
---  - BIFF > 3 and XML-based formats support
+--  - XML-based formats support
 --  - ...
 
 with Ada.Unchecked_Deallocation, Ada.Unchecked_Conversion;
@@ -425,11 +425,12 @@ package body Excel_Out is
     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
     cell_format      :    out Format_type;
     -- Optional parameters --
-    horiz_align      : in     Horizontal_alignment:= general_alignment;
+    horizontal_align : in     Horizontal_alignment:= general_alignment;
     border           : in     Cell_border:= no_border;
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
     background_color : in     Color_type:= automatic;
-    wrap_text        : in     Boolean:= False
+    wrap_text        : in     Boolean:= False;
+    vertical_align   : in     Vertical_alignment:= bottom_alignment
   )
   is
     actual_number_format: Number_format_type:= number_format;
@@ -454,7 +455,7 @@ package body Excel_Out is
          -- ^ Not used
          Number_format_type'Pos(actual_number_format),
          -- ^ Number format and cell flags
-         Horizontal_alignment'Pos(horiz_align) +
+         Horizontal_alignment'Pos(horizontal_align) +
          border_bits +
          Boolean'Pos(shaded) * 128
          -- ^ Horizontal alignment, border style, and background
@@ -462,23 +463,10 @@ package body Excel_Out is
       );
     end Define_BIFF2_XF;
 
+    area_code: Unsigned_16;
+
     procedure Define_BIFF3_XF is
-      area_code: Unsigned_16;
     begin
-      -- 2.5.12 Patterns for Cell and Chart Background Area
-      if shaded then
-        area_code:=
-          Boolean'Pos(shaded) * 17 +                        -- Sparse pattern, like BIFF2 "shade"
-          16#40#  * color_code(BIFF3, black)(for_background) +           -- pattern colour
-          16#800# * color_code(BIFF3, background_color)(for_background); -- pattern background
-      elsif background_color = automatic then
-        area_code:= 0;
-      else
-        area_code:=
-          1 +                                                          -- Full pattern
-          16#40#  * color_code(BIFF3, background_color)(for_background) +  -- pattern colour
-          16#800# * color_code(BIFF3, background_color)(for_background);   -- pattern background
-      end if;
       -- 5.115.2 XF Record Contents
       WriteBiff(
         xl,
@@ -493,7 +481,7 @@ package body Excel_Out is
          -- ^ 3 - XF_USED_ATTRIB
         ) &
         Intel_16(
-          Horizontal_alignment'Pos(horiz_align) +
+          Horizontal_alignment'Pos(horizontal_align) +
           Boolean'Pos(wrap_text) * 8
         ) &
         -- ^ 4 - Horizontal alignment, text break, parent style XF
@@ -509,15 +497,64 @@ package body Excel_Out is
       );
     end Define_BIFF3_XF;
 
+    procedure Define_BIFF4_XF is
+    begin
+      -- 5.115.2 XF Record Contents
+      WriteBiff(
+        xl,
+        16#0443#, -- XF code in BIFF3
+        (Unsigned_8(font),
+         -- ^ 0 - Index to FONT record
+         Number_format_type'Pos(actual_number_format),
+         -- ^ 1 - Number format and cell flags
+         0, 0,
+         -- ^ 2 - XF_TYPE_PROT (not used yet)
+         Horizontal_alignment'Pos(horizontal_align) +
+         Boolean'Pos(wrap_text) * 8 +
+         (Vertical_alignment'Pos(vertical_align) and 3) * 16,
+         -- ^ 4 - Alignment (hor & ver), text break, and text orientation
+         16#FF#
+         -- ^ 3 - XF_USED_ATTRIB
+        ) &
+        -- ^ 4 - Horizontal alignment, text break, parent style XF
+        Intel_16(area_code) &
+        -- ^ 6 - XF_AREA_34
+        (  Boolean'Pos(border(top_single)),
+           Boolean'Pos(border(left_single)),
+           Boolean'Pos(border(bottom_single)),
+           Boolean'Pos(border(right_single))
+        )
+        -- ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+        --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
+      );
+    end Define_BIFF4_XF;
+
   begin
+    -- 2.5.12 Patterns for Cell and Chart Background Area
+    -- This is for BIFF3+
+    if shaded then
+      area_code:=
+        Boolean'Pos(shaded) * 17 +                        -- Sparse pattern, like BIFF2 "shade"
+        16#40#  * color_code(BIFF3, black)(for_background) +           -- pattern colour
+        16#800# * color_code(BIFF3, background_color)(for_background); -- pattern background
+    elsif background_color = automatic then
+      area_code:= 0;
+    else
+      area_code:=
+        1 +                                                          -- Full pattern
+        16#40#  * color_code(BIFF3, background_color)(for_background) +  -- pattern colour
+        16#800# * color_code(BIFF3, background_color)(for_background);   -- pattern background
+    end if;
     case xl.format is
       when BIFF2 =>
         if actual_number_format in dd_mm_yyyy .. last_custom then
           actual_number_format:= actual_number_format - 2;
         end if;
         Define_BIFF2_XF;
-      when BIFF3 | BIFF4 => -- biff4 specific !!
+      when BIFF3 =>
         Define_BIFF3_XF;
+      when BIFF4 =>
+        Define_BIFF4_XF;
     end case;
     xl.xfs:= xl.xfs + 1;
     cell_format:= Format_type(xl.xfs);

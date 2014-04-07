@@ -26,8 +26,8 @@ procedure Excel_Out_Demo is
 
   procedure Big_demo(ef: Excel_type) is
     xl: Excel_Out_File;
-    font_1, font_2, font_3, font_4, font_5, font_6: Font_type;
-    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_4, fmt_5, fmt_6, fmt_cust_num, fmt_8,
+    font_1, font_2, font_3, font_title, font_5, font_6: Font_type;
+    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_6, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
@@ -58,17 +58,21 @@ procedure Excel_Out_Demo is
     Define_font(xl, "Arial", 9, font_1, regular, blue);
     Define_font(xl, "Courier New", 11, font_2, bold & italic, red);
     Define_font(xl, "Times New Roman", 13, font_3, bold, teal);
-    Define_font(xl, "Arial Narrow", 15, font_4, bold);
+    Define_font(xl, "Arial Narrow", 15, font_title, bold);
     Define_font(xl, "Calibri", 15, font_5, bold, dark_red);
     Define_font(xl, "Calibri", 9, font_6);
     --
     Define_number_format(xl, custom_num, "0.000000"); -- 6 decimals
     Define_number_format(xl, custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss"); -- ISO date
     --
+    Define_format(xl,
+      font_title, general,
+      fmt_title,
+      border => top & bottom, vertical_align => centred
+    );
     Define_format(xl, font_1, percent_0, fmt_1, centred, right);
     Define_format(xl, font_2, decimal_2, fmt_decimal_2);
     Define_format(xl, font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
-    Define_format(xl, font_4, general,   fmt_4, border => top & bottom);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
     Define_format(xl, font_5, general,   fmt_6, border => box);
     Define_format(xl, font_1, custom_num,  fmt_cust_num, centred);
@@ -77,7 +81,7 @@ procedure Excel_Out_Demo is
     Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
     Define_format(xl, font_6, hh_mm_ss,         fmt_date_3, shaded => True); -- custom_date_num
     --
-    Use_format(xl, fmt_4);
+    Use_format(xl, fmt_title);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
     Merge(xl, 6);
     Next(xl);
@@ -107,7 +111,7 @@ procedure Excel_Out_Demo is
     Use_format(xl, fmt_8);
     Put(xl, "  <- = row * (1000 or 10) + column");
 
-    Use_format(xl, fmt_4);
+    Use_format(xl, fmt_title);
     for column in 1 .. 20 loop
       Write(xl, 9, column, Character'Val(64 + column) & "");
     end loop;
