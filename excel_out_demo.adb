@@ -170,7 +170,10 @@ procedure Excel_Out_Demo is
     Define_font(xl, "Calibri", 15, font_title, bold, white);
     Define_font(xl, "Calibri", 10, font_normal);
     Define_font(xl, "Calibri", 10, font_normal_grey, color => grey);
-    Define_format(xl, font_title, general, fmt_title, border => bottom, background_color => dark_blue);
+    Define_format(xl, font_title, general, fmt_title,
+      border => bottom, background_color => dark_blue,
+      vertical_align => centred
+    );
     Define_format(xl, font_normal, general, fmt_subtitle, border => bottom);
     Define_format(xl, font_normal, dd_mm_yyyy, fmt_date, background_color => silver);
     Define_format(xl, font_normal, decimal_0_thousands_separator, fmt_amount);

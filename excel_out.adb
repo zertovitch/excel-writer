@@ -706,11 +706,12 @@ package body Excel_Out is
 
   -- 5.32 DEFCOLWIDTH
   procedure Write_default_column_width (
-        xl : Excel_Out_Stream;
+        xl : in out Excel_Out_Stream;
         width  : Positive)
   is
   begin
     WriteBiff(xl, 16#0055#, Intel_16(Unsigned_16(width)));
+    xl.defcolwdth:= 256 * width;
   end Write_default_column_width;
 
   procedure Write_column_width (
@@ -1389,6 +1390,10 @@ package body Excel_Out is
     if xl.format >= BIFF4 then
       -- 5.51 GCW: Global Column Width - required for correct display by LibreOffice
       WriteBiff(xl, 16#00AB#, Intel_16(32) & (1..32 => 255));
+      if xl.defcolwdth > 0 then
+        -- 5.101 STANDARDWIDTH
+        WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
+      end if;
     end if;
     -- 5.37 EOF: End of File:
     WriteBiff(xl, 16#000A#, (1..0 => 0));

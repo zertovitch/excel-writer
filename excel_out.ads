@@ -115,7 +115,7 @@ package Excel_Out is
 
   -- * The column width unit is as it appears in Excel when you resize a column.
   --     It is the width of a '0' in a standard font.
-  procedure Write_default_column_width(xl : Excel_Out_Stream; width : Positive);
+  procedure Write_default_column_width(xl : in out Excel_Out_Stream; width : Positive);
   procedure Write_column_width(xl : Excel_Out_Stream; column: Positive; width: Natural);
   procedure Write_column_width(
     xl            : Excel_Out_Stream;
@@ -477,6 +477,7 @@ private
     frz_panes  : Boolean:= False;
     freeze_row : Positive;
     freeze_col : Positive;
+    defcolwdth : Natural:= 0; -- 0 = not set; 1/256 of the width of the zero character
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;
