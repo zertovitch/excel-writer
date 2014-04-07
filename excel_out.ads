@@ -76,9 +76,9 @@ package Excel_Out is
   type Excel_Out_Stream is abstract tagged private;
 
   type Excel_type is (
-    BIFF2,    -- Excel 2.1: the oldest & easiest format
-    BIFF3     -- Excel 3.0
-    -- BIFF4,    -- Excel 4.0 <-- last format as standalone file
+    BIFF2,    -- Excel 2.1, 2,2
+    BIFF3,    -- Excel 3.0
+    BIFF4     -- Excel 4.0 <-- last format as standalone file
     -- BIFF5,    -- Excel 5.0 to 7.0
     -- BIFF8     -- Excel 8.0 to 11.0
   );
