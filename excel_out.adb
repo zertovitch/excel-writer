@@ -210,8 +210,10 @@ package body Excel_Out is
     -- 5.12 BUILTINFMTCOUNT
     case xl.format is
       when BIFF2 =>
-        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in-1)));
-      when BIFF3 | BIFF4 =>
+        WriteBiff(xl, 16#001F#, Intel_16(Unsigned_16(last_built_in-5)));
+      when BIFF3 =>
+        WriteBiff(xl, 16#0056#, Intel_16(Unsigned_16(last_built_in-3)));
+      when BIFF4 =>
         WriteBiff(xl, 16#0056#, Intel_16(Unsigned_16(last_built_in+1)));
     end case;
     -- loop & case avoid omitting any choice
@@ -224,6 +226,25 @@ package body Excel_Out is
           WriteFmtStr(xl, "#" & sep_1000 & "##0");
         when decimal_2_thousands_separator =>
           WriteFmtStr(xl, "#" & sep_1000 & "##0" & sep_deci & "00");
+        when no_currency_0       =>
+          if xl.format >= BIFF4 then
+            WriteFmtStr(xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
+          end if;
+        when no_currency_red_0   =>
+          if xl.format >= BIFF4 then
+            WriteFmtStr(xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
+          -- [Red] doesn't go with non-English versions of Excel !!
+          end if;
+        when no_currency_2       =>
+          if xl.format >= BIFF4 then
+            WriteFmtStr(xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
+                          "-#" & sep_1000 & "##0" & sep_deci & "00");
+          end if;
+        when no_currency_red_2   =>
+          if xl.format >= BIFF4 then
+            WriteFmtStr(xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
+                          "-#" & sep_1000 & "##0" & sep_deci & "00");
+          end if;
         when currency_0       =>
           WriteFmtStr(xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
         when currency_red_0   =>
@@ -270,6 +291,19 @@ package body Excel_Out is
     end loop;
     -- ^ Some formats in the original list caused problems, probably
     --   because of regional placeholder symbols
+    case xl.format is
+      when BIFF2 =>
+        for i in 1..6 loop
+          WriteFmtStr(xl, "@");
+        end loop;
+      when BIFF3 =>
+        for i in 1..4 loop
+          WriteFmtStr(xl, "@");
+        end loop;
+      when BIFF4 =>
+        null;
+    end case;
+    -- ^ Stuffing for having the same number of built-in and EW custom
   end WriteFmtRecords;
 
   -- 5.35 DIMENSION
@@ -549,11 +583,21 @@ package body Excel_Out is
     end if;
     case xl.format is
       when BIFF2 =>
-        if actual_number_format in dd_mm_yyyy .. last_custom then
-          actual_number_format:= actual_number_format - 2;
-        end if;
+        case actual_number_format is
+          when general .. no_currency_2 =>
+            null;
+          when currency_0 .. fraction_2 =>
+            actual_number_format:= actual_number_format - 4;
+          when dd_mm_yyyy .. last_custom =>
+            actual_number_format:= actual_number_format - 6;
+          when others =>
+            null;
+        end case;
         Define_BIFF2_XF;
       when BIFF3 =>
+        if actual_number_format in currency_0 .. last_custom then
+          actual_number_format:= actual_number_format - 4;
+        end if;
         Define_BIFF3_XF;
       when BIFF4 =>
         Define_BIFF4_XF;
