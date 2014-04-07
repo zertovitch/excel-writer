@@ -218,6 +218,13 @@ package Excel_Out is
     distributed -- (BIFF8, Excel 10.0 ("XP") and later only)
   );
 
+  type Text_orientation is (
+    normal,
+    stacked,     -- vertical, top to bottom
+    rotated_90,  -- vertical, rotated 90 degrees counterclockwise
+    rotated_270  -- vertical, rotated 90 degrees clockwise
+  );
+
   type Cell_border is private;
 
   -- Operator for combining borders (e.g.: left & top):
@@ -241,7 +248,8 @@ package Excel_Out is
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
     background_color : in     Color_type:= automatic;
     wrap_text        : in     Boolean:= False;
-    vertical_align   : in     Vertical_alignment:= bottom_alignment
+    vertical_align   : in     Vertical_alignment:= bottom_alignment;
+    text_orient      : in     Text_orientation:= normal
   );
 
   ------------------------

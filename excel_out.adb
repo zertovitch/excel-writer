@@ -430,7 +430,8 @@ package body Excel_Out is
     shaded           : in     Boolean:= False;    -- Add a dotted background pattern
     background_color : in     Color_type:= automatic;
     wrap_text        : in     Boolean:= False;
-    vertical_align   : in     Vertical_alignment:= bottom_alignment
+    vertical_align   : in     Vertical_alignment:= bottom_alignment;
+    text_orient      : in     Text_orientation:= normal
   )
   is
     actual_number_format: Number_format_type:= number_format;
@@ -511,7 +512,8 @@ package body Excel_Out is
          -- ^ 2 - XF_TYPE_PROT (not used yet)
          Horizontal_alignment'Pos(horizontal_align) +
          Boolean'Pos(wrap_text) * 8 +
-         (Vertical_alignment'Pos(vertical_align) and 3) * 16,
+         (Vertical_alignment'Pos(vertical_align) and 3) * 16 +
+         Text_orientation'Pos(text_orient) * 64,
          -- ^ 4 - Alignment (hor & ver), text break, and text orientation
          16#FF#
          -- ^ 3 - XF_USED_ATTRIB

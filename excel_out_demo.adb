@@ -28,7 +28,7 @@ procedure Excel_Out_Demo is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_title, font_5, font_6: Font_type;
     fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_6, fmt_cust_num, fmt_8,
-    fmt_date_1, fmt_date_2, fmt_date_3: Format_type;
+    fmt_date_1, fmt_date_2, fmt_date_3, fmt_vertical: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
     damier: Natural;
@@ -80,6 +80,7 @@ procedure Excel_Out_Demo is
     Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
     Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
     Define_format(xl, font_6, hh_mm_ss,         fmt_date_3, shaded => True); -- custom_date_num
+    Define_format(xl, font_6, general, fmt_vertical, text_orient => rotated_90);
     --
     Use_format(xl, fmt_title);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
@@ -118,6 +119,8 @@ procedure Excel_Out_Demo is
 
     Use_format(xl, fmt_6);
     Write(xl, 11, 1, "Calibri font");
+    Use_format(xl, fmt_vertical);
+    Put(xl, "90°");
     Use_format(xl, fmt_8);
     Write(xl, 11, 4, "First number:");
     Write(xl, 11, 6, Long_Float'First);
