@@ -136,6 +136,9 @@ procedure Excel_Out_Demo is
     Put(xl, some_time);
     Use_format(xl, fmt_date_3);
     Put(xl, some_time);
+    Use_default_format(xl);
+    Put(xl, 0.0);
+    Put(xl, " <- default fmt (general)");
     New_Line(xl);
 
     for row in 15 .. 300 loop

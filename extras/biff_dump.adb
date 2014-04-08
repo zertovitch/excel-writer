@@ -159,6 +159,13 @@ procedure BIFF_Dump is
     return Trim(s, Both);
   end Hexa;
 
+  procedure Ignore_from(from: Positive) is
+  begin
+    for i in from..length loop
+      Read(f,b);
+    end loop;
+  end;
+
   name: Unbounded_String;
 
 begin
@@ -356,9 +363,7 @@ begin
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
         Cell_Attributes;
-        for i in 8..length loop
-          Read(f,b);
-        end loop;
+        Ignore_from(8);
       when integer2 =>
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
@@ -368,9 +373,7 @@ begin
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
         Put(xl, "xf="  & Integer'Image(in16));
-        for i in 7..length loop
-          Read(f,b);
-        end loop;
+        Ignore_from(7);
       when note => -- 5.70 NOTE p. 190
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
@@ -397,9 +400,7 @@ begin
       when labelsst => -- SST = shared string table
         Put(xl, "row=" & Integer'Image(in16+1));
         Put(xl, "col=" & Integer'Image(in16+1));
-        for i in 5..length loop
-          Read(f,b);
-        end loop;
+        Ignore_from(5);
       when format2 =>
         Put(xl, str8);
       when format4 =>
@@ -456,9 +457,7 @@ begin
         Read(f,b); -- skip
         Read(f,b);
         Put(xl, "(Number) format #" & Unsigned_8'Image(b and 16#3F#));
-        for i in 4..length loop -- skip remaining contents
-          Read(f,b);
-        end loop;
+        Ignore_from(4); -- skip remaining contents
       when xf_3 | xf_4 =>
         Read(f,b);
         Put(xl, "Using font #" & Unsigned_8'Image(b));
@@ -466,9 +465,7 @@ begin
         Put(xl, "(Number) format #" & Unsigned_8'Image(b));
         Read(f,b); -- skip Protection
         Read(f,b); -- skip Used attributes
-        for i in 5..length loop -- skip remaining contents
-          Read(f,b);
-        end loop;
+        Ignore_from(5); -- skip remaining contents
       when ole_2 =>
         Put_Line(xl, "This is an OLE-OLE 2 file, eventually wrapping a BIFF one");
         Put_Line(xl, "Check: Microsoft Compound Document File Format, compdocfileformat.pdf");
@@ -489,7 +486,7 @@ begin
         Put(xl, "Last Column : " & Integer'Image(in8+1));
         Put(xl, "Width: " & Img(Float(in16)/256.0,2));
       when defcolwidth =>
-        Put(xl, "Width: " & Img(Float(in16)/256.0,2));
+        Put(xl, "Width:" & Integer'Image(in16) & " zeros");
       when header_x | footer_x =>
         if length > 0 then
           declare
@@ -509,17 +506,13 @@ begin
         Put(xl, "fit width="  & Integer'Image(in16));
         Put(xl, "fit height="  & Integer'Image(in16));
         Put(xl, "options="  & Integer'Image(in16));
-        for i in 13..length loop -- remaining contents (BIFF5+)
-          Read(f,b);
-        end loop;
+        Ignore_from(13); -- remaining contents (BIFF5+)
       when dimension_b2 | dimension_b3 =>
         Put(xl, "row_min="    & Integer'Image(in16));
         Put(xl, "row_max+1="  & Integer'Image(in16));
         Put(xl, "col_min="    & Integer'Image(in16));
         Put(xl, "col_max+1="  & Integer'Image(in16));
-        for i in 9..length loop -- remaining contents (BIFF3+)
-          Read(f,b);
-        end loop;
+        Ignore_from(9); -- remaining contents (BIFF3+)
       when writeaccess =>
         declare
           r: constant String:= str8;
@@ -535,23 +528,20 @@ begin
         Put(xl, "row_1="           & Integer'Image(in16)); -- 1st visible row in bottom pane
         Put(xl, "col_1="           & Integer'Image(in16)); -- 1st visible column in right pane
         Put(xl, "active_pane_id="  & Integer'Image(in8));  -- identifier of pane with active cell cursor
-        for i in 10..length loop
-          Read(f,b);
-        end loop;
+        Ignore_from(10);
       when selection => -- 5.93 SELECTION p.205
         Put(xl, "pane_id="         & Integer'Image(in8));
         Put(xl, "active_cell_row=" & Integer'Image(in16));
         Put(xl, "active_cell_col=" & Integer'Image(in16));
         Put(xl, "selected_idx="    & Integer'Image(in16));
-        for i in 8..length loop -- cell range list - 2.5.15 p.27
-          Read(f,b);
-        end loop;
+        Ignore_from(8); -- cell range list - 2.5.15 p.27
       when window1 =>
         Put(xl, "w_x=" & Img(Float(in16)/20.0,2));
         Put(xl, "w_y=" & Img(Float(in16)/20.0,2));
         Put(xl, "w_w=" & Img(Float(in16)/20.0,2));
         Put(xl, "w_h=" & Img(Float(in16)/20.0,2));
-        Put(xl, "w_hidden=" & Integer'Image(in16));
+        Put(xl, "w_hidden=" & Integer'Image(in8));
+        Ignore_from(10); -- Excel v.2002 puts an extra byte there, some other versions not...
       when window2_b2 =>
         Put(xl, "form_results="  & Integer'Image(in8));
         Put(xl, "grid_lines="    & Integer'Image(in8));
@@ -568,14 +558,12 @@ begin
         Put(xl, "option_flags="     & Integer'Image(in16));
         Put(xl, "first_row="     & Integer'Image(in16));
         Put(xl, "first_column="  & Integer'Image(in16));
-        for i in 7..length loop
-          Read(f,b);
-        end loop;
+        Ignore_from(7);
       when others =>
         --  if length > 0 then
         --    Put(xl, "skipping contents");
         --  end if;
-        for i in 1..length loop -- just skip the contents
+        for i in 1..length loop -- just skip the contents, show some
           if i <= 10 then
             Put(xl, in8);
           else

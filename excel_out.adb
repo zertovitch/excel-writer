@@ -376,10 +376,10 @@ package body Excel_Out is
     WriteBiff(xl, 16#0019#, Intel_16(0));
     -- Define default format
     Define_format(xl, xl.def_font, general, xl.def_fmt);
-    if xl.format = BIFF3 then
+    if xl.format >= BIFF3 then
       -- Don't ask why we need the following useless formats, but it is as Excel 2002
-      -- write formats and otherwise the default format is turned into decimal_2
-      -- when the file is opened in Excel (2002) !
+      -- write formats. Additionally, the default format is turned into decimal_2
+      -- when a file without those useless formats is opened in Excel (2002) !
       Define_format(xl, font_for_styles, general, xl.def_fmt);
       Define_format(xl, font_for_styles, general, xl.def_fmt);
       Define_format(xl, font_2, general, xl.def_fmt);
