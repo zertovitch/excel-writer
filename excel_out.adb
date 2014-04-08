@@ -1419,7 +1419,7 @@ package body Excel_Out is
         end if;
       end loop;
       -- 5.51 GCW: Global Column Width - trying to get a correct display by LibreOffice
-      -- Result: OK useless on MS Excel, not working on LibreOffice :-(
+      -- Result: OK but useless on MS Excel, not working on LibreOffice :-(
       WriteBiff(xl, 16#00AB#, Intel_16(32) & col_bits);
       -- if xl.defcolwdth > 0 then
       --   -- 5.101 STANDARDWIDTH -- this confuses MS Excel...

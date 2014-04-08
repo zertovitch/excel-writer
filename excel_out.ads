@@ -364,7 +364,7 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "13 Preview 2";
+  version   : constant String:= "13 Preview 3";
   reference : constant String:= "7-Apr-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
