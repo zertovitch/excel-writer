@@ -715,7 +715,7 @@ package body Excel_Out is
   end Write_default_column_width;
 
   procedure Write_column_width (
-        xl     : Excel_Out_Stream;
+        xl     : in out Excel_Out_Stream;
         column : Positive;
         width  : Natural)
   is
@@ -724,7 +724,7 @@ package body Excel_Out is
   end Write_column_width;
 
   procedure Write_column_width(
-    xl            : Excel_Out_Stream;
+    xl            : in out Excel_Out_Stream;
     first_column,
     last_column   : Positive;
     width         : Natural
@@ -748,6 +748,9 @@ package body Excel_Out is
           Intel_16(0) & -- Option flags
           (0,0)         -- Not used
         );
+        for j in first_column .. last_column loop
+          xl.std_col_width(j):= False;
+        end loop;
     end case;
   end Write_column_width;
 
@@ -1147,6 +1150,21 @@ package body Excel_Out is
     end loop;
   end Merge;
 
+  procedure Write_cell_comment(xl: Excel_Out_Stream; row, column: Positive; text: String) is
+  begin
+    -- 5.70 Note
+    WriteBiff(xl, 16#001C#,
+      Intel_16(Unsigned_16(row-1)) &
+      Intel_16(Unsigned_16(column-1)) &
+      To_buf_16_bit(text)
+    );
+  end Write_cell_comment;
+
+  procedure Write_cell_comment_at_cursor(xl: Excel_Out_Stream; text: String) is
+  begin
+    Write_cell_comment(xl, Row(xl), Column(xl), text);
+  end Write_cell_comment_at_cursor;
+
   procedure Put_Line(xl: in out Excel_Out_Stream; num : Long_Float) is
   begin
     Put(xl, num);
@@ -1261,10 +1279,10 @@ package body Excel_Out is
     xl.freeze_col:= column;
   end Freeze_Panes;
 
-  procedure Freeze_Panes_At_Cursor(xl: in out Excel_Out_Stream) is
+  procedure Freeze_Panes_at_cursor(xl: in out Excel_Out_Stream) is
   begin
     Freeze_Panes(xl, xl.curr_row, xl.curr_col);
-  end Freeze_Panes_At_Cursor;
+  end Freeze_Panes_at_cursor;
 
   procedure Freeze_Top_Row(xl: in out Excel_Out_Stream) is
   begin
@@ -1376,6 +1394,9 @@ package body Excel_Out is
       );
     end Write_Pane;
 
+    col_bits: Byte_buffer(1..32):= (others => 0);
+    byte_idx, bit_idx: Positive:= 1;
+
   begin
     -- Calling Window1 and Window2 is not necessary for default settings, but without these calls,
     -- a Write_row_height call with a positive height results, on all MS Excel versions, in a
@@ -1388,12 +1409,22 @@ package body Excel_Out is
     end if;
     -- 5.93 SELECTION here !!
     if xl.format >= BIFF4 then
-      -- 5.51 GCW: Global Column Width - required for correct display by LibreOffice
-      WriteBiff(xl, 16#00AB#, Intel_16(32) & (1..32 => 255));
-      if xl.defcolwdth > 0 then
-        -- 5.101 STANDARDWIDTH
-        WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
-      end if;
+      for i in 1..256 loop
+        col_bits(byte_idx):= col_bits(byte_idx) +
+          Boolean'Pos(xl.std_col_width(i)) * (2**(bit_idx-1));
+        bit_idx:= bit_idx + 1;
+        if bit_idx = 9 then
+          bit_idx:= 1;
+          byte_idx:= byte_idx + 1;
+        end if;
+      end loop;
+      -- 5.51 GCW: Global Column Width - trying to get a correct display by LibreOffice
+      -- Result: OK useless on MS Excel, not working on LibreOffice :-(
+      WriteBiff(xl, 16#00AB#, Intel_16(32) & col_bits);
+      -- if xl.defcolwdth > 0 then
+      --   -- 5.101 STANDARDWIDTH -- this confuses MS Excel...
+      --   WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
+      -- end if;
     end if;
     -- 5.37 EOF: End of File:
     WriteBiff(xl, 16#000A#, (1..0 => 0));

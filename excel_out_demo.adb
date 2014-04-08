@@ -138,6 +138,7 @@ procedure Excel_Out_Demo is
     Put(xl, some_time);
     Use_default_format(xl);
     Put(xl, 0.0);
+    Write_cell_comment_at_cursor(xl, "This is a comment." & ASCII.LF & "Nice, isn't it ?");
     Put(xl, " <- default fmt (general)");
     New_Line(xl);
 
@@ -190,7 +191,7 @@ procedure Excel_Out_Demo is
     Put(xl,"Date");
     Put(xl,"Price");
     Put_Line(xl,"Variation %");
-    Freeze_Panes_At_Cursor(xl);
+    Freeze_Panes_at_cursor(xl);
     Reset(gen);
     price:= 950.0 + Long_Float(Random(gen)) * 200.0;
     for i in 1..3650 loop

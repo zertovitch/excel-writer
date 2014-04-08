@@ -6,6 +6,7 @@ Release:
     ====         =======
 
 13: xx-yyy-2014: - freeze panes
+                 - cell comments
                  - BIFF4 format
                  - vertical text alignment
                  - text orientation

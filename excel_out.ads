@@ -116,9 +116,9 @@ package Excel_Out is
   -- * The column width unit is as it appears in Excel when you resize a column.
   --     It is the width of a '0' in a standard font.
   procedure Write_default_column_width(xl : in out Excel_Out_Stream; width : Positive);
-  procedure Write_column_width(xl : Excel_Out_Stream; column: Positive; width: Natural);
+  procedure Write_column_width(xl : in out Excel_Out_Stream; column: Positive; width: Natural);
   procedure Write_column_width(
-    xl            : Excel_Out_Stream;
+    xl            : in out Excel_Out_Stream;
     first_column,
     last_column   : Positive;
     width         : Natural
@@ -305,6 +305,9 @@ package Excel_Out is
   -- right to that cell, on the same row.
   procedure Merge(xl: in out Excel_Out_Stream; cells: Positive);
 
+  procedure Write_cell_comment(xl: Excel_Out_Stream; row, column: Positive; text: String);
+  procedure Write_cell_comment_at_cursor(xl: Excel_Out_Stream; text: String);
+
   -- Cells written after Use_format will be using the given format,
   -- defined by Define_format.
   procedure Use_format(
@@ -316,7 +319,7 @@ package Excel_Out is
   -- The Freeze Pane methods can be called anytime before Close
 
   procedure Freeze_Panes(xl: in out Excel_Out_Stream; row, column: Positive);
-  procedure Freeze_Panes_At_Cursor(xl: in out Excel_Out_Stream);
+  procedure Freeze_Panes_at_cursor(xl: in out Excel_Out_Stream);
   procedure Freeze_Top_Row(xl: in out Excel_Out_Stream);
   procedure Freeze_First_Column(xl: in out Excel_Out_Stream);
 
@@ -447,6 +450,8 @@ private
   -- End of our custom formats
   last_custom   : constant Number_format_type:= date_h_m_s;
 
+  type Col_width_set is array(1..256) of Boolean;
+
   -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   -- type. A variable of that type is initialized with default values and
   -- can help re-initialize a Excel_Out_Stream when re-used several times.
@@ -478,6 +483,7 @@ private
     freeze_row : Positive;
     freeze_col : Positive;
     defcolwdth : Natural:= 0; -- 0 = not set; 1/256 of the width of the zero character
+    std_col_width: Col_width_set:= (others => True);
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;
