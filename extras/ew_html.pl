@@ -235,7 +235,7 @@ sub create_header
 <meta name=\"keywords\" content=\"Ada, programming, excel, spreadsheet, biff, xls\">
 <link rel=\"Shortcut Icon\" href=../ew.ico>
 </HEAD>
-<BODY bgcolor=#fff0dd>\n";
+<BODY bgcolor=#fff3f1>\n";
   
   if (($main eq "_main_") or ($adafile ne ""))
   {
@@ -280,7 +280,7 @@ sub create_footer
   local ($adafile) = shift;
   local ($string) = "";
   $string = "</PRE>" if ($adafile ne "");
-  return $string . "<br><font color=#fcf0dc>
+  return $string . "<br><font color=#fcf0ec>
   Excel Writer: Ada package writing Excel files (.xls).
   Ada programming.</font>
   </BODY></HTML>\n";
@@ -291,11 +291,11 @@ sub create_ada_frame_footer
   local ($adafile) = shift;
   local ($string) = "";
   $string = "</PRE>" if ($adafile ne "");
-  return $string . "<br><font color=#feebdd>
+  return $string . "<br><font color=#feebed>
   Excel Writer: Ada package writing Excel files (.xls).
   Ada programming.</font>
   <hr>
-  <foNt face=\"Calibri, Arial\">Some news about Excel Writer and other related Ada projects
+  <foNt face=\"Calibri, Arial\">Some news about <b>Excel Writer</b> and other Ada projects
   <a target=_blank href=http://gautiersblog.blogspot.com/search/label/Ada>on Gautier's blog</a>.
   </foNt>
   </BODY></HTML>\n";
@@ -735,7 +735,8 @@ sub output_file
       || die "Couldn't write $output_dir/" . &http_string ($filename)
 	  . ".htm\n";
   print OUTPUT &create_header ($filename_param,""), "\n";
-
+  print OUTPUT "<foNt size=\"2\" face=\"Consolas, Monaco, Lucida Console, Courier New\">\n";
+  
   ## Print the file
   $filename = &http_string ($filename);
   foreach (@file)
@@ -857,6 +858,7 @@ sub output_file
       $lineno ++;
   }
   
+  print OUTPUT "</foNt>\n";
   print OUTPUT &create_ada_frame_footer ($filename);
   close (OUTPUT);
   return 1;
@@ -904,21 +906,23 @@ EOF
   open (MAIN, ">$output_dir/main.htm") || die "couldn't write $output_dir/main.htm";
   print MAIN &create_header ("","_main_"),
   "<P ALIGN=right>",
-  "<A HREF=main.htm TARGET=_top>[No frame version is here]</A>",
+  "<A HREF=main.htm TARGET=_top><foNt face=\"Calibri, Arial\">[No frame version is here]</font></A>",
   "<P>",
   join ("\n", @files), "\n<HR>",
   join ("\n", @functions), "\n";
 
   if ($dependencies) {
       print MAIN "<HR>\n";
-      print MAIN "You should start your browsing with one of these files:\n";
+      print MAIN "<foNt face=\"Calibri, Arial\">You should start your browsing with one of these files:</font>\n";
+      print MAIN "<foNt size=\"2\" face=\"Consolas, Monaco, Lucida Console, Courier New\">\n";
       print MAIN "<UL>\n";
       foreach (@original_list) {
-	  print MAIN "<LI><A HREF=", &http_string (&get_real_file_name ($_)),
-	     ".htm>$_</A>\n";
-      }
+    	  print MAIN "<LI><A HREF=", &http_string (&get_real_file_name ($_)),
+    	     ".htm>$_</A>\n";
+      };
+      print MAIN "</UL></foNt>\n"
   }
-  print MAIN &create_footer ("");
+  print MAIN &create_ada_frame_footer ("");
   close (MAIN);
 }
 
@@ -938,7 +942,7 @@ sub uppercases {
 #######
 sub create_file_index
 {
-  local (@output) = ("<H2 ALIGN=CENTER>Files</H2>");
+  local (@output) = ("<H2 ALIGN=CENTER><foNt face=\"Calibri, Arial\">Files</font></H2>");
   
   
   open (FILES, ">$output_dir/files.htm") || die "couldn't write $output_dir/files.htm";
@@ -955,7 +959,7 @@ sub create_file_index
       {
 	if ($last_letter ne '')
 	{
-	  print INDEX_FILE "</UL><font color=#fef0de>Ada programming.</font></BODY></HTML>\n";
+	  print INDEX_FILE "</UL><font color=#fef0ee>Ada programming.</font></BODY></HTML>\n";
 	  close (INDEX_FILE);
 	}
 	$last_letter = &uppercases (substr ($_, 0, 1));
@@ -963,13 +967,13 @@ sub create_file_index
 	|| die "couldn't write $output_dir/files/$last_letter.htm";
 	print INDEX_FILE <<"EOF";
 <HTML><HEAD><TITLE>$last_letter</TITLE></HEAD>
-<BODY bgcolor=#fff0dd>
-<H2>Files - $last_letter</H2>
-<A HREF=../files.htm TARGET=_self>[index]</A>
-<UL COMPACT TYPE=DISC>
+<BODY bgcolor=#fff3f1>
+<H2><foNt face="Calibri, Arial">Files - $last_letter</foNt></H2>
+<A HREF=../files.htm TARGET=_self><foNt face="Calibri, Arial">[index]</foNt></A>
+<foNt face="Calibri, Arial"><UL COMPACT TYPE=DISC>
 EOF
 	;
-	local ($str) = "<A HREF=files/$last_letter.htm>[$last_letter]</A>";
+	local ($str) = "<A HREF=files/$last_letter.htm><foNt face=\"Calibri, Arial\">[$last_letter]</font></A>";
 	push (@output, $str); 
 	print FILES "$str\n";
       }
@@ -978,13 +982,13 @@ EOF
       ".htm TARGET=main>$_</A>\n";   ## Problem with TARGET when in no_frame mode!
     }
     
-    print INDEX_FILE "</UL><font color=#fef0de>Ada programming.</font></BODY></HTML>\n";
+    print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></foNt></BODY></HTML>\n";
     close INDEX_FILE;
   }
   else
   {
-    push (@output, "<UL COMPACT TYPE=DISC>");
-    print FILES "<UL COMPACT TYPE=DISC>";
+    push (@output, "<foNt face=\"Calibri, Arial\"><UL COMPACT TYPE=DISC>");
+    print FILES "<foNt face=\"Calibri, Arial\"><UL COMPACT TYPE=DISC>";
     foreach (sort {&uppercases ($a) cmp &uppercases ($b)} @list_files)
     {
       next if ($_ eq "");
@@ -994,10 +998,11 @@ EOF
     }
   }
   
+  print FILES "</UL></foNt>\n";
   print FILES &create_footer ("");
   close (FILES);
   
-  push (@output, "</UL>");
+  push (@output, "</UL></foNt>");
   return @output;
 }
 
@@ -1007,7 +1012,7 @@ EOF
 #######
 sub create_function_index
 {
-  local (@output) = ("<H2 ALIGN=CENTER>Functions/Procedures</H2>");
+  local (@output) = ("<H2 ALIGN=CENTER><foNt face=\"Calibri, Arial\">Functions / Procedures</font></H2>");
   local ($initial) = "";
   
   open (FUNCS, ">$output_dir/funcs.htm") || die "couldn't write $output_dir/funcs.htm";
@@ -1025,7 +1030,7 @@ sub create_function_index
       {
 	if ($last_letter ne '')
 	{
-	  print INDEX_FILE "</UL><font color=#fef0de>Ada programming.</font></BODY></HTML>\n";
+	  print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></BODY></HTML>\n";
 	  close (INDEX_FILE);
 	}
 	
@@ -1041,13 +1046,13 @@ sub create_function_index
 		|| die "couldn't write $output_dir/funcs/$initial.htm";
 	    print INDEX_FILE <<"EOF";
 <HTML><HEAD><TITLE>$initial</TITLE></HEAD>
-<BODY bgcolor=#fff0dd>
-<H2>Functions - $initial</H2>
-<A HREF=../funcs.htm TARGET=_self>[index]</A>
-<UL COMPACT TYPE=DISC>
+<BODY bgcolor=#fff3f1>
+<H2><foNt face="Calibri, Arial">Func. / Proc. - $initial</foNt></H2>
+<A HREF=../funcs.htm TARGET=_self><foNt face="Calibri, Arial">[index]</foNt></A>
+<foNt face="Calibri, Arial"><UL COMPACT TYPE=DISC>
 EOF
 				    ;
-	    local ($str) = "<A HREF=funcs/$initial.htm>[$initial]</A>";
+	    local ($str) = "<A HREF=funcs/$initial.htm><foNt face=\"Calibri, Arial\">[$initial]</font></A>";
 	    push (@output, $str);
 	    print FUNCS "$str\n";
 	}
@@ -1062,13 +1067,13 @@ EOF
       }
     }
     
-    print INDEX_FILE "</UL><font color=#fef0de>Ada programming.</font></BODY></HTML>\n";
+    print INDEX_FILE "</UL><font color=#fef0fe>Ada programming.</font></foNt></BODY></HTML>\n";
     close INDEX_FILE;
   }
   else
   {
-    push (@output, "<UL COMPACT TYPE=DISC>");
-    print FUNCS "<UL COMPACT TYPE=DISC>";
+    push (@output, "<foNt face=\"Calibri, Arial\"><UL COMPACT TYPE=DISC>");
+    print FUNCS "<foNt face=\"Calibri, Arial\"><UL COMPACT TYPE=DISC>";
     foreach (sort {&uppercases ($a) cmp &uppercases ($b)} keys %global_index)
     {
       local ($ref);
@@ -1083,10 +1088,11 @@ EOF
     }
   }
   
+  print FUNCS "</UL></foNt>\n";
   print FUNCS &create_footer ("");
   close (FUNCS);
   
-  push (@output, "</UL>");
+  push (@output, "</UL></foNt>");
   return (@output);
 }
 

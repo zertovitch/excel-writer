@@ -18,8 +18,9 @@ rem Call GNATMake without project file: we want the .ali here.
 gnatmake ..\excel_out_demo.adb -I..
 gnatmake small_demo.adb -I..
 
+rem Small_Demo without local references
+perl ew_html.pl small_demo -d -I.. -oew_html
 perl ew_html.pl excel_out_demo excel_out.ads excel_out.adb -I.. -f -d -oew_html
-perl ew_html.pl small_demo -d -I.. -osmall_demo_html
 
 del *.ali
 del *.o

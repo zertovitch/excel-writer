@@ -1152,6 +1152,9 @@ package body Excel_Out is
 
   procedure Write_cell_comment(xl: Excel_Out_Stream; row, column: Positive; text: String) is
   begin
+    if text'Length >= 2048 then 
+      raise Constraint_Error;
+    end if;
     -- 5.70 Note
     WriteBiff(xl, 16#001C#,
       Intel_16(Unsigned_16(row-1)) &
