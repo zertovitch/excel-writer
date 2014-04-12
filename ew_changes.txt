@@ -5,14 +5,13 @@ Release:
 ====Date:        Changes:
     ====         =======
 
-13: xx-yyy-2014: - freeze panes
+13: 12-Apr-2014: - freeze panes
                  - cell comments
                  - BIFF4 format
                  - vertical text alignment
                  - text orientation
                  - workaround for a MS Excel display bug on rows
                      with custom heights
-                 
 
 12: 30-Mar-2014: - added Ada.Calendar.Time Put/Write and date built-in formats
                  - BIFF3 format

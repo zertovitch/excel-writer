@@ -27,7 +27,7 @@ procedure Excel_Out_Demo is
   procedure Big_demo(ef: Excel_type) is
     xl: Excel_Out_File;
     font_1, font_2, font_3, font_title, font_5, font_6: Font_type;
-    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_6, fmt_cust_num, fmt_8,
+    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3, fmt_vertical: Format_type;
     custom_num, custom_date_num: Number_format_type;
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
@@ -52,7 +52,7 @@ procedure Excel_Out_Demo is
     Write_row_height(xl, 1, 23);   -- header row 1
     Write_row_height(xl, 2, 23);   -- header row 2
     Write_row_height(xl, 9, 23);
-    Write_row_height(xl, 11, 23);
+    Write_row_height(xl, 11, 43);
     Write_row_height(xl, 13, 0);   -- hide this row
     --
     Define_font(xl, "Arial", 9, font_1, regular, blue);
@@ -74,13 +74,13 @@ procedure Excel_Out_Demo is
     Define_format(xl, font_2, decimal_2, fmt_decimal_2);
     Define_format(xl, font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
     Define_format(xl, font_1, percent_2_plus, fmt_5, centred, right);
-    Define_format(xl, font_5, general,   fmt_6, border => box);
+    Define_format(xl, font_5, general,   fmt_boxed, border => box, vertical_align => centred);
     Define_format(xl, font_1, custom_num,  fmt_cust_num, centred);
     Define_format(xl, font_6, general, fmt_8);
     Define_format(xl, font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
     Define_format(xl, font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
     Define_format(xl, font_6, hh_mm_ss,         fmt_date_3, shaded => True); -- custom_date_num
-    Define_format(xl, font_6, general, fmt_vertical, text_orient => rotated_90);
+    Define_format(xl, font_6, general, fmt_vertical, wrap_text => True, text_orient => rotated_90);
     --
     Use_format(xl, fmt_title);
     Put(xl, "This is a big demo for Excel Writer / Excel_Out");
@@ -117,10 +117,10 @@ procedure Excel_Out_Demo is
       Write(xl, 9, column, Character'Val(64 + column) & "");
     end loop;
 
-    Use_format(xl, fmt_6);
+    Use_format(xl, fmt_boxed);
     Write(xl, 11, 1, "Calibri font");
     Use_format(xl, fmt_vertical);
-    Put(xl, "90°");
+    Put(xl, "Wrapped text, rotated 90°");
     Use_format(xl, fmt_8);
     Write(xl, 11, 4, "First number:");
     Write(xl, 11, 6, Long_Float'First);
@@ -269,16 +269,16 @@ procedure Excel_Out_Demo is
   use Ada.Text_IO;
 
 begin
-  Put_Line("Small demo ( -> Small.xls )");
+  Put_Line("Small demo -> Small.xls");
   Small_demo;
-  Put_Line("Big demo ( -> Big [...].xls )");
+  Put_Line("Big demo -> Big [...].xls");
   for ef in Excel_type loop
     Big_demo(ef);
   end loop;
-  Put_Line("Fancy sheet ( -> Fancy.xls )");
+  Put_Line("Fancy sheet -> Fancy.xls");
   Fancy;
-  Put_Line("Excel sheet in a string demo ( -> From_string.xls )");
+  Put_Line("Excel sheet in a string demo -> From_string.xls");
   String_demo;
-  Put_Line("Speed test ( -> Speed_test.xls )");
+  Put_Line("Speed test -> Speed_test.xls");
   Speed_test;
 end Excel_Out_Demo;

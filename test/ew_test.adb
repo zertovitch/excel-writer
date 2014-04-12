@@ -4,6 +4,24 @@ with Ada.Strings.Fixed;                 use Ada.Strings, Ada.Strings.Fixed;
 
 procedure EW_Test is
 
+  procedure Test_def_col_width(ef: Excel_type) is
+    xl: Excel_Out_File;
+  begin
+    Create(xl, "With def col width [" & Excel_type'Image(ef) & "].xls", ef);
+    Write_default_column_width(xl, 20);
+    Write_column_width(xl,1,5);
+    Write_column_width(xl,5,10,4);
+    Put(xl,"A");
+    Put(xl,"B");
+    Close(xl);
+    Create(xl, "Without def col width [" & Excel_type'Image(ef) & "].xls", ef);
+    Write_column_width(xl,1,5);
+    Write_column_width(xl,5,10,4);
+    Put(xl,"A");
+    Put(xl,"B");
+    Close(xl);
+  end Test_def_col_width;
+
   -- Test automatic choice for integer output
   --
   procedure Test_General(ef: Excel_type) is
@@ -39,6 +57,7 @@ procedure EW_Test is
 
 begin
   for ef in Excel_type loop
+    Test_def_col_width(ef);
     Test_General(ef);
   end loop;
 end;
