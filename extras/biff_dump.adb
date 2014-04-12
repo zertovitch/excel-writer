@@ -203,7 +203,7 @@ begin
   Put(xl, " ");
   Put(xl, "BIFF Topic");
   Put_Line(xl, "Comments");
-  Freeze_Panes_At_Cursor(xl);
+  Freeze_Panes_at_cursor(xl);
   --
   Use_format(xl, Default_format(xl));
   Open(f, In_File, To_String(name));

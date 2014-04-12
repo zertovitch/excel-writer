@@ -37,7 +37,7 @@ project Excel_Out_Gnat is
    end Builder;
 
    package Ide is
-      for Default_Switches ("adacontrol") use ("-f", "verif.aru");
+      for Default_Switches ("adacontrol") use ("-f", "extras/verif.aru");
    end Ide;
 
 end Excel_Out_Gnat;
