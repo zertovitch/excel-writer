@@ -3,7 +3,7 @@
 -- http://www.adalog.fr/adacontrol2.htm --
 ------------------------------------------
 
--- Set for Zip-Ada.
+-- Set for Excel Writer.
 
 ------------------
 -- (1) Required --
@@ -12,7 +12,7 @@ check style (no_closing_name);
 check style (negative_condition);
 check style (compound_statement);
 check style (casing_keyword, lowercase);
--- check max_nesting (6);
+check max_nesting (6);
 check parameter_aliasing (certain);
 check simplifiable_expressions (range, logical); -- , parentheses
 check simplifiable_statements;
@@ -20,12 +20,12 @@ check statements (goto, abort);
 -- check if_for_case;
 check expressions (real_equality);
 check entities (debug);
--- check entities (all 'Unchecked_Access);
+check entities (all 'Unchecked_Access);
 -- check entity_inside_exception (ada.text_io.put_line);
--- check exception_propagation (interface, C);
--- check exception_propagation (task);
--- check pragmas (elaborate_all, elaborate_body);
-check representation_clauses (at, 'address);
+check exception_propagation (interface, C);
+check exception_propagation (task);
+check pragmas (elaborate_all, elaborate_body);
+-- check representation_clauses (at, 'address);
 check representation_clauses ('size);
 check directly_accessed_globals(plain);
 check max_line_length (99);
@@ -33,6 +33,7 @@ check max_line_length (99);
 check abnormal_function_return;
 check reduceable_scope (variable, type);
 -- check improper_initialization;
+check Unsafe_Elaboration;
 
 -------------------------------------
 -- Forbid GNAT-specific attributes --
@@ -115,5 +116,5 @@ search instantiations (ada.unchecked_conversion);
 search statements(multiple_exits); -- case_others_null, case_others
 -- search statements(exception_others_null); -- exception_others
 search pragmas (nonstandard);
-search characters (not_iso_646);
+-- search characters (not_iso_646);
 search reduceable_scope (use);

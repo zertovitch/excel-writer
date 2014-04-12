@@ -17,6 +17,7 @@ with Interfaces;                        use Interfaces;
 -- IEEE_754 from: Simple components for Ada by Dmitry A. Kazakov
 -- http://www.dmitry-kazakov.de/ada/components.htm
 with IEEE_754.Long_Floats;
+pragma Elaborate(IEEE_754.Long_Floats);
 
 package body Excel_Out is
 
@@ -103,9 +104,9 @@ package body Excel_Out is
   function IEEE_Double_Intel_Native is new
     Ada.Unchecked_Conversion(Long_Float, Byte_buffer_8);
 
-  x: constant Long_Float:= -12345.0e-67;
+  x_test: constant Long_Float:= -12345.0e-67;
   Can_use_native_IEEE: constant Boolean:=
-    IEEE_Double_Intel_Portable(x) = IEEE_Double_Intel_Native(x);
+    IEEE_Double_Intel_Portable(x_test) = IEEE_Double_Intel_Native(x_test);
 
   function IEEE_Double_Intel(x: Long_Float) return Byte_buffer is
     pragma Inline(IEEE_Double_Intel);
@@ -280,9 +281,9 @@ package body Excel_Out is
           WriteFmtStr(xl, "+0%;-0%;0%");
         when percent_2_plus  =>
           WriteFmtStr(xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
-        when date        => WriteFmtStr(xl, "yyyy\-mm\-dd");
-        when date_h_m    => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm");
-        when date_h_m_s  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
+        when date_iso        => WriteFmtStr(xl, "yyyy\-mm\-dd");
+        when date_h_m_iso    => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm");
+        when date_h_m_s_iso  => WriteFmtStr(xl, "yyyy\-mm\-dd\ hh:mm:ss");
           -- !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
           --    understands it and translates it into aaaa, but is unable to
           --    understand *our* yyyy
@@ -1119,11 +1120,7 @@ package body Excel_Out is
   procedure Merge(xl: in out Excel_Out_Stream; cells : Positive) is
 
     -- 5.7 BLANK
-    procedure Blank (
-          xl : in out Excel_Out_Stream;
-          r,
-          c      : Positive)
-    is
+    procedure Blank (r, c: Positive) is
     begin
       Jump_to_and_store_max(xl, r, c);
       case xl.format is
@@ -1146,7 +1143,7 @@ package body Excel_Out is
     end Blank;
   begin
     for i in 1..cells loop
-      Blank(xl, xl.curr_row, xl.curr_col);
+      Blank(xl.curr_row, xl.curr_col);
     end loop;
   end Merge;
 

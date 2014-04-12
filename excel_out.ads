@@ -444,11 +444,11 @@ private
 
   percent_0_plus   : constant Number_format_type:= 27; -- +3%, 0%, -4%
   percent_2_plus   : constant Number_format_type:= 28;
-  date             : constant Number_format_type:= 29; -- ISO 8601 format: 2014-03-16
-  date_h_m         : constant Number_format_type:= 30; -- date, hour, minutes
-  date_h_m_s       : constant Number_format_type:= 31; -- date, hour, minutes, seconds
+  date_iso         : constant Number_format_type:= 29; -- ISO 8601 format: 2014-03-16
+  date_h_m_iso     : constant Number_format_type:= 30; -- date, hour, minutes
+  date_h_m_s_iso   : constant Number_format_type:= 31; -- date, hour, minutes, seconds
   -- End of our custom formats
-  last_custom   : constant Number_format_type:= date_h_m_s;
+  last_custom   : constant Number_format_type:= date_h_m_s_iso;
 
   type Col_width_set is array(1..256) of Boolean;
 
