@@ -4,6 +4,7 @@
 --                   into HTML array output.
 --                   CSV is "the" ASCII format for Lotus 1-2-3 and MS Excel
 --  Date / Version:  21-Jan-2010; 10-Nov-2007; 11-Nov-2002
+--  Syntax (example) csv2html <demo_data.csv >demo_data.html
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
@@ -27,6 +28,7 @@ procedure CSV2HTML is
       when 'ô' => return "&ocirc;";
       when 'ö' => return "&ouml;";
       when 'Ö' => return "&Ouml;";
+      when 'ß' => return "&szlig;"; -- ************20140416ph
       when 'û' => return "&ucirc;";
       when 'ü' => return "&uuml;";
       when 'Ü' => return "&Uuml;";
@@ -56,6 +58,9 @@ procedure CSV2HTML is
 
   special_sport: constant Boolean:= True;
 
+  separator: constant Character := ';' ;
+  -- ';', ',' or ASCII.HT
+
 begin
   Put_Line("<!-- Array translated by CSV2HTML !--> ");
   Put_Line("<!-- Check http://excel-writer.sourceforge.net/ , !--> ");
@@ -66,7 +71,7 @@ begin
     line_count:= line_count + 1;
     declare
       line: String renames s(1..l);
-      bds: constant CSV.Fields_Bounds:= CSV.Get_Bounds( line, ';' );
+      bds: constant CSV.Fields_Bounds:= CSV.Get_Bounds( line, separator );
     begin
       for i in bds'Range loop
         Put("<td>");

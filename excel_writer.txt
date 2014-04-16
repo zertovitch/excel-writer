@@ -1,5 +1,6 @@
 Intro to Excel Writer 
 =====================
+
 The Excel Writer consists of a package, Excel_Out,
 which produces Excel files - as physical files, or as
 other types of data streams.
@@ -36,6 +37,8 @@ Contents
   - extras/biff_dump.adb                   : procedure for viewing the Excel BIFF format
   - extras/csv.ads                         : CSV parser (specification)
   - extras/csv.adb                         : (body)
+  - extras/csv2html.adb                    : a CSV to HTML translation tool
+  - extras/csv2tex.adb                     : a CSV to LaTeX translation tool
   - extras/spreadsheet_references.ads      : converts (i,j) to or from the "A1" or "R1C1" format (specification)
   - extras/spreadsheet_references.adb      : (body)
   - extras/spreadsheet_references_demo.adb : demo procedure for Spreadsheet_references
@@ -117,3 +120,4 @@ ad libitum.
 Enjoy!
 
 Gautier de Montmollin
+gautier.de.montmollin, at: gmail dot com.

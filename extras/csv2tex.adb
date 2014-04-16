@@ -16,12 +16,14 @@ procedure CSV2TeX is
   l: Integer;
   s: String(1..1000);
   first: Boolean:= True;
+  separator: constant Character := ';' ;
+  -- ';', ',' or ASCII.HT
 begin
   while not End_Of_File(Standard_Input) loop
     Get_Line(s,l);
     declare
       line: String renames s(1..l);
-      bds: constant CSV.Fields_Bounds:= CSV.Get_Bounds( line, ';' );
+      bds: constant CSV.Fields_Bounds:= CSV.Get_Bounds( line, separator );
     begin
       if first then
         Put_Line("% Array translated by CSV2TeX");
