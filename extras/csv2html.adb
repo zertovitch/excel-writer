@@ -28,7 +28,7 @@ procedure CSV2HTML is
       when 'ô' => return "&ocirc;";
       when 'ö' => return "&ouml;";
       when 'Ö' => return "&Ouml;";
-      when 'ß' => return "&szlig;"; -- ************20140416ph
+      when 'ß' => return "&szlig;";
       when 'û' => return "&ucirc;";
       when 'ü' => return "&uuml;";
       when 'Ü' => return "&Uuml;";
