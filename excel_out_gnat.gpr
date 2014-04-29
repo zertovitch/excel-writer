@@ -7,7 +7,7 @@ project Excel_Out_Gnat is
    type Build_Mode_Type is
       ("Debug", "Fast");
    Build_Mode : Build_Mode_Type := external ("Build_Mode", "Debug");
-   for Main use ("excel_out_demo.adb", "biff_dump.adb", "spreadsheet_references_demo.adb", "csv2tex.adb", "csv2html.adb", "ew_test.adb");
+   for Main use ("excel_out_demo.adb", "biff_dump.adb", "spreadsheet_references_demo.adb", "csv2tex.adb", "csv2html.adb", "csv2xls.adb", "ew_test.adb");
    for Source_Dirs use (".", "extras", "test");
    for Exec_Dir use ".";
 
