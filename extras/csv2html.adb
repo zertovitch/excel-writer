@@ -66,7 +66,7 @@ begin
   Put_Line("<!-- Check http://excel-writer.sourceforge.net/ , !--> ");
   Put_Line("<!-- in the ./extras directory !--> ");
   Put_Line("<table border=2><tr>");
-  while not End_Of_File(Standard_Input) loop
+  while not End_Of_File loop
     Get_Line(s,l);
     line_count:= line_count + 1;
     declare

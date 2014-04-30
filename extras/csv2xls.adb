@@ -8,23 +8,37 @@
 --                   the text will already have been used as separators and
 --                   you will end up with a total mess. CSV2XLS prevents this
 --                   issue.
+--  Syntax:          csv2xls <data.csv
+--       or          csv2xls data.csv
 --  Date / Version:  29-Apr-2014
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
 with CSV;
 with Excel_Out;
-with Ada.Text_IO, Ada.Strings.Fixed;
+with Ada.Command_Line, Ada.Directories, Ada.Text_IO, Ada.Strings.Fixed;
 
 procedure CSV2XLS is
-  use Ada.Text_IO, Ada.Strings, Excel_Out;
+  use Ada.Command_Line, Ada.Directories, Ada.Text_IO, Ada.Strings, Excel_Out;
+  input: File_Type;
   xl: Excel_Out_File;
   first: Boolean:= True;
   separator: constant Character := ',';
   -- ';', ',' or ASCII.HT
 begin
-  Create(xl, "translated.xls");
-  while not End_Of_File(Standard_Input) loop
+  if Argument_Count = 0 then
+    Create(xl, "From_CSV.xls");
+  else
+    declare
+      name: constant String:= Argument(1);
+      ext: constant String:= Extension(name);
+    begin
+      Open(input, In_File, name);
+      Set_Input(input);
+      Create(xl, name(name'First..name'Last-ext'Length) & "xls");
+    end;
+  end if;
+  while not End_Of_File loop
     declare
       line: constant String:= Get_Line;
       bds: constant CSV.Fields_Bounds:= CSV.Get_Bounds( line, separator );
@@ -43,4 +57,7 @@ begin
     New_Line(xl);
   end loop;
   Close(xl);
+  if Is_Open(input) then
+    Close(input);
+  end if;
 end CSV2XLS;

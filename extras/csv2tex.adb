@@ -19,7 +19,7 @@ procedure CSV2TeX is
   separator: constant Character := ';' ;
   -- ';', ',' or ASCII.HT
 begin
-  while not End_Of_File(Standard_Input) loop
+  while not End_Of_File loop
     Get_Line(s,l);
     declare
       line: String renames s(1..l);
