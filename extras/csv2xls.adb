@@ -8,9 +8,14 @@
 --                   the text will already have been used as separators and
 --                   you will end up with a total mess. CSV2XLS prevents this
 --                   issue.
---  Syntax:          csv2xls <data.csv
---       or          csv2xls data.csv
---  Date / Version:  29-Apr-2014
+--  Syntax:          csv2xls {option} <data.csv
+--       or          csv2xls {option} data.csv
+--                   Options:
+--                     -c : comma is the separator
+--                     -s : semicolon is the separator
+--                     -t : tab is the separator
+--                     -f : freeze top row (header line)
+--  Date / Version:  14-May-2014; 29-Apr-2014
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------
 
@@ -23,14 +28,14 @@ procedure CSV2XLS is
   input: File_Type;
   xl: Excel_Out_File;
   first: Boolean:= True;
-  separator: constant Character := ',';
+  separator: Character := ',';
   -- ';', ',' or ASCII.HT
 begin
   if Argument_Count = 0 then
     Create(xl, "From_CSV.xls");
   else
     declare
-      name: constant String:= Argument(1);
+      name: constant String:= Argument(Argument_Count);
       ext: constant String:= Extension(name);
     begin
       Open(input, In_File, name);
@@ -38,6 +43,22 @@ begin
       Create(xl, name(name'First..name'Last-ext'Length) & "xls");
     end;
   end if;
+  for i in 1..Argument_Count loop
+    if Argument(i)'Length = 2 and then Argument(i)(1)='-' then
+      case Argument(i)(2) is
+        when 'c' =>
+          separator:= ',';
+        when 's' =>
+          separator:= ';';
+        when 't' =>
+          separator:= ASCII.HT;
+        when 'f' =>
+          Freeze_Top_Row(xl);
+        when others =>
+          null;
+      end case;
+    end if;
+  end loop;
   while not End_Of_File loop
     declare
       line: constant String:= Get_Line;
