@@ -1238,12 +1238,12 @@ package body Excel_Out is
     xl.curr_col:= column;
   end Jump_to;
 
-  procedure Next(xl: in out Excel_Out_Stream; columns: Positive:= 1) is
+  procedure Next (xl: in out Excel_Out_Stream; columns: Natural:= 1) is
   begin
     Jump(xl, rows => 0, columns => columns);
   end Next;
 
-  procedure Next_Row(xl: in out Excel_Out_Stream; rows: Positive:= 1) is
+  procedure Next_Row (xl: in out Excel_Out_Stream; rows: Natural:= 1) is
   begin
     Jump(xl, rows => rows, columns => 0);
   end Next_Row;

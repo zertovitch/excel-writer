@@ -298,8 +298,8 @@ package Excel_Out is
   -- Relative / absolute jumps
   procedure Jump(xl: in out Excel_Out_Stream; rows, columns: Natural);
   procedure Jump_to(xl: in out Excel_Out_Stream; row, column: Positive);
-  procedure Next(xl: in out Excel_Out_Stream; columns: Positive:= 1);  -- Jump 1 or more cell right
-  procedure Next_Row(xl: in out Excel_Out_Stream; rows: Positive:= 1); -- Jump 1 or more cell down
+  procedure Next(xl: in out Excel_Out_Stream; columns: Natural:= 1);  -- Jump 0 or more cells right
+  procedure Next_Row(xl: in out Excel_Out_Stream; rows: Natural:= 1); -- Jump 0 or more cells down
   --
   -- Merge a certain amount of cells with the last one,
   -- right to that cell, on the same row.
@@ -364,8 +364,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "13";
-  reference : constant String:= "12-Apr-2014";
+  version   : constant String:= "14 preview 1";
+  reference : constant String:= "06-Jun-2014";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 
