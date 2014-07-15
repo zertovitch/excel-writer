@@ -470,6 +470,8 @@ package body Excel_Out is
   )
   is
     actual_number_format: Number_format_type:= number_format;
+    cell_is_locked: constant:= 1; 
+    -- ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
     procedure Define_BIFF2_XF is
       border_bits, mask: Unsigned_8;
     begin
@@ -489,7 +491,7 @@ package body Excel_Out is
          -- ^ Index to FONT record
          0,
          -- ^ Not used
-         Number_format_type'Pos(actual_number_format),
+         Number_format_type'Pos(actual_number_format) + 16#40# * cell_is_locked,
          -- ^ Number format and cell flags
          Horizontal_alignment'Pos(horizontal_align) +
          border_bits +
@@ -511,8 +513,8 @@ package body Excel_Out is
          -- ^ 0 - Index to FONT record
          Number_format_type'Pos(actual_number_format),
          -- ^ 1 - Number format and cell flags
-         0,
-         -- ^ 2 - XF_TYPE_PROT (not used yet)
+         cell_is_locked,
+         -- ^ 2 - XF_TYPE_PROT (5.115.1)
          16#FF#
          -- ^ 3 - XF_USED_ATTRIB
         ) &
@@ -543,8 +545,8 @@ package body Excel_Out is
          -- ^ 0 - Index to FONT record
          Number_format_type'Pos(actual_number_format),
          -- ^ 1 - Number format and cell flags
-         0, 0,
-         -- ^ 2 - XF_TYPE_PROT (not used yet)
+         cell_is_locked, 0,
+         -- ^ 2 - XF type, cell protection, and parent style XF
          Horizontal_alignment'Pos(horizontal_align) +
          Boolean'Pos(wrap_text) * 8 +
          (Vertical_alignment'Pos(vertical_align) and 3) * 16 +
