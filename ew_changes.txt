@@ -5,7 +5,7 @@ Release:
 ====Date:        Changes:
     ====         =======
 
-14: xx-yyy-2014: - cells "locked" (Excel's default, this allows formula protection)
+14: 20-Jul-2014: - cells "locked" (Excel's default, this allows formula protection)
                  - Next, Next_Row admit zero as parameter
 
 13: 12-Apr-2014: - freeze panes
