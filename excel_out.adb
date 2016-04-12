@@ -55,7 +55,8 @@ package body Excel_Out is
     return (Unsigned_8(n and 255), Unsigned_8(Shift_Right(n, 8)));
   end Intel_16;
 
-  function To_buf_8_bit(s: String) return Byte_buffer is
+  --  2.5.2 Byte Strings, 8-bit string length (BIFF2-BIFF5), p. 187
+  function To_buf_8_bit_length(s: String) return Byte_buffer is
     b: Byte_buffer(s'Range);
   begin
     if s'Length > 255 then -- length doesn't fit in a byte
@@ -65,19 +66,20 @@ package body Excel_Out is
       b(i):= Character'Pos(s(i));
     end loop;
     return Unsigned_8(s'Length) & b;
-  end To_buf_8_bit;
+  end To_buf_8_bit_length;
 
-  function To_buf_16_bit(s: String) return Byte_buffer is
+  --  2.5.2 Byte Strings, 16-bit string length (BIFF2-BIFF5), p. 187
+  function To_buf_16_bit_length(s: String) return Byte_buffer is
     b: Byte_buffer(s'Range);
   begin
-    if s'Length > 2**16-1 then -- length doesn't fit in a U16
+    if s'Length > 2**16-1 then -- length doesn't fit in a 16-bit number
       raise Constraint_Error;
     end if;
     for i in b'Range loop
       b(i):= Character'Pos(s(i));
     end loop;
     return Intel_16(s'Length) & b;
-  end To_buf_16_bit;
+  end To_buf_16_bit_length;
 
   -- Gives a byte sequence of an IEEE 64-bit number as if taken
   -- from an Intel machine (i.e. with the same endianess).
@@ -194,9 +196,9 @@ package body Excel_Out is
   begin
     case xl.format is
       when BIFF2 | BIFF3 =>
-        WriteBiff(xl, 16#001E#, To_buf_8_bit(s));
+        WriteBiff(xl, 16#001E#, To_buf_8_bit_length(s));
       when BIFF4 =>
-        WriteBiff(xl, 16#041E#, (0, 0) & To_buf_8_bit(s));
+        WriteBiff(xl, 16#041E#, (0, 0) & To_buf_8_bit_length(s));
     end case;
   end WriteFmtStr;
 
@@ -470,7 +472,7 @@ package body Excel_Out is
   )
   is
     actual_number_format: Number_format_type:= number_format;
-    cell_is_locked: constant:= 1; 
+    cell_is_locked: constant:= 1;
     -- ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
     procedure Define_BIFF2_XF is
       border_bits, mask: Unsigned_8;
@@ -612,12 +614,12 @@ package body Excel_Out is
 
   procedure Header(xl : Excel_Out_Stream; page_header_string: String) is
   begin
-    WriteBiff(xl, 16#0014#, To_buf_8_bit(page_header_string)); -- 5.55 p.180
+    WriteBiff(xl, 16#0014#, To_buf_8_bit_length(page_header_string)); -- 5.55 p.180
   end Header;
 
   procedure Footer(xl : Excel_Out_Stream; page_footer_string: String) is
   begin
-    WriteBiff(xl, 16#0015#, To_buf_8_bit(page_footer_string)); -- 5.48 p.173
+    WriteBiff(xl, 16#0015#, To_buf_8_bit_length(page_footer_string)); -- 5.48 p.173
   end Footer;
 
   procedure Left_Margin(xl : Excel_Out_Stream; inches: Long_Float) is
@@ -836,7 +838,7 @@ package body Excel_Out is
         WriteBiff(xl, 16#0031#,
           Intel_16(Unsigned_16(height * y_scale)) &
           Intel_16(style_bits) &
-          To_buf_8_bit(font_name)
+          To_buf_8_bit_length(font_name)
         );
         if color /= automatic then
           -- 5.47 FONTCOLOR
@@ -847,7 +849,7 @@ package body Excel_Out is
           Intel_16(Unsigned_16(height * y_scale)) &
           Intel_16(style_bits) &
           Intel_16(color_code(BIFF3, color)(for_font)) &
-          To_buf_8_bit(font_name)
+          To_buf_8_bit_length(font_name)
         );
     end case;
     font:= Font_type(xl.fonts);
@@ -1045,14 +1047,14 @@ package body Excel_Out is
             Intel_16(Unsigned_16(r-1)) &
             Intel_16(Unsigned_16(c-1)) &
             Cell_attributes(xl) &
-            To_buf_8_bit(str)
+            To_buf_8_bit_length(str)
           );
         when BIFF3 | BIFF4 =>
           WriteBiff(xl, 16#0204#,
             Intel_16(Unsigned_16(r-1)) &
             Intel_16(Unsigned_16(c-1)) &
             Intel_16(Unsigned_16(xl.xf_in_use)) &
-            To_buf_16_bit(str)
+            To_buf_16_bit_length(str)
           );
       end case;
     end if;
@@ -1158,7 +1160,7 @@ package body Excel_Out is
     WriteBiff(xl, 16#001C#,
       Intel_16(Unsigned_16(row-1)) &
       Intel_16(Unsigned_16(column-1)) &
-      To_buf_16_bit(text)
+      To_buf_16_bit_length(text)
     );
   end Write_cell_comment;
 
