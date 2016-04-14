@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009..2014 Gautier de Montmollin
+--  Copyright (c) 2009 .. 2016 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -364,8 +364,8 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "14";
-  reference : constant String:= "20-Jul-2014";
+  version   : constant String:= "15, preview 1";
+  reference : constant String:= "xx-yyy-2016";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
 

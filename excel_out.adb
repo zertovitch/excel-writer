@@ -1,10 +1,11 @@
--- Derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
--- First translated with Mod2Pas and P2Ada, then expanded
+-- Version 01 is derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
+-- Modula-2 code has been translated with Mod2Pas and P2Ada.
 --
 -- References to documentation are to: http://sc.openoffice.org/excelfileformat.pdf
 --
 -- To do:
 -- =====
+--  - Unicode (requires BIFF8)
 --  - border line styles (5.115 XF - Extended Format)
 --  - XML-based formats support
 --  - ...
@@ -28,6 +29,7 @@ package body Excel_Out is
   -- totally portable on all systems and processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
+  empty_buffer: constant Byte_buffer(1..0):= (others => 0);
 
   -- Put numbers with correct endianess as bytes:
   generic
@@ -170,8 +172,19 @@ package body Excel_Out is
     Block_Write(xl.xl_stream.all, data);
   end WriteBiff;
 
-  -- 5.8  BOF: Beginning of File
+  -- 5.8  BOF: Beginning of File, p.135
   procedure Write_BOF(xl : Excel_Out_Stream'Class) is
+
+    function BOF_suffix return Byte_buffer is  --  5.8.1 Record BOF
+    begin
+      case xl.format is
+        when BIFF2 =>
+          return empty_buffer;
+        when BIFF3 | BIFF4 =>
+          return (0,0);  --  Not used
+      end case;
+    end BOF_suffix;
+
     --  0005H = Workbook globals
     --  0006H = Visual Basic module
     --  0010H = Sheet or dialogue (see SHEETPR, S5.97)
@@ -187,21 +200,12 @@ package body Excel_Out is
        BIFF3 => 16#0003#,
        BIFF4 => 16#0004#);
   begin
-    case xl.format is
-      when BIFF2 =>  --  5.8.1 Record BOF, BIFF2
-        WriteBiff(xl,
-          biff_record_identifier(xl.format),
-          Intel_16(biff_version(xl.format)) &
-          Intel_16(Sheet_or_dialogue)
-        );
-      when BIFF3 | BIFF4 =>  --  5.8.1 Record BOF, BIFF3 and BIFF4
-        WriteBiff(xl,
-          biff_record_identifier(xl.format),
-          Intel_16(biff_version(xl.format)) &
-          Intel_16(Sheet_or_dialogue) &
-          (0,0)  --  Not used
-        );
-    end case;
+    WriteBiff(xl,
+      biff_record_identifier(xl.format),
+      Intel_16(biff_version(xl.format)) &
+      Intel_16(Sheet_or_dialogue) &
+      BOF_suffix
+    );
   end Write_BOF;
 
   -- 5.49 FORMAT (number format)
