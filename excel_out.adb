@@ -171,25 +171,38 @@ package body Excel_Out is
   end WriteBiff;
 
   -- 5.8  BOF: Beginning of File
-  procedure WriteBOF(xl : Excel_Out_Stream'Class) is
-    data_type: constant Unsigned_16 := 16#10#;
+  procedure Write_BOF(xl : Excel_Out_Stream'Class) is
     --  0005H = Workbook globals
     --  0006H = Visual Basic module
     --  0010H = Sheet or dialogue (see SHEETPR, S5.97)
+    Sheet_or_dialogue: constant:= 16#10#;
     --  0020H = Chart
     --  0040H = Macro sheet
-    biff_version: constant array(Excel_type) of Unsigned_16:=
+    biff_record_identifier: constant array(Excel_type) of Unsigned_16:=
       (BIFF2 => 16#0009#,
        BIFF3 => 16#0209#,
        BIFF4 => 16#0409#);
+    biff_version: constant array(Excel_type) of Unsigned_16:=
+      (BIFF2 => 16#0002#,
+       BIFF3 => 16#0003#,
+       BIFF4 => 16#0004#);
   begin
     case xl.format is
-      when BIFF2 =>
-        WriteBiff(xl, 16#0009#, Intel_16(2) & Intel_16(data_type));
-      when BIFF3 | BIFF4 =>
-        WriteBiff(xl, biff_version(xl.format), Intel_16(2) & Intel_16(data_type) & (0,0));
+      when BIFF2 =>  --  5.8.1 Record BOF, BIFF2
+        WriteBiff(xl,
+          biff_record_identifier(xl.format),
+          Intel_16(biff_version(xl.format)) &
+          Intel_16(Sheet_or_dialogue)
+        );
+      when BIFF3 | BIFF4 =>  --  5.8.1 Record BOF, BIFF3 and BIFF4
+        WriteBiff(xl,
+          biff_record_identifier(xl.format),
+          Intel_16(biff_version(xl.format)) &
+          Intel_16(Sheet_or_dialogue) &
+          (0,0)  --  Not used
+        );
     end case;
-  end WriteBOF;
+  end Write_BOF;
 
   -- 5.49 FORMAT (number format)
   procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
@@ -359,7 +372,7 @@ package body Excel_Out is
     Percent_Style   : constant:= 5;
     font_for_styles, font_2, font_3 : Font_type;
   begin
-    WriteBOF(xl);
+    Write_BOF(xl);
     -- 5.17 CODEPAGE
     WriteBiff(xl, 16#0042#, Intel_16(16#8001#)); -- Windows CP-1252
     -- 5.14 CALCMODE
