@@ -24,12 +24,12 @@ package body Excel_Out is
 
   use Ada.Streams.Stream_IO, Ada.Streams;
 
-  -- Very low level part which deals with transferring data endian-proof,
-  -- and floats in the IEEE format. This is needed for having Excel Writer
-  -- totally portable on all systems and processor architectures.
+  --  Very low level part which deals with transferring data in an endian-neutral way,
+  --  and floats in the IEEE format. This is needed for having Excel Writer
+  --  totally portable on all systems and processor architectures.
 
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
-  empty_buffer: constant Byte_buffer(1..0):= (others => 0);
+  empty_buffer: constant Byte_buffer:= (1..0 => 0);
 
   -- Put numbers with correct endianess as bytes:
   generic
@@ -1448,7 +1448,7 @@ package body Excel_Out is
       -- end if;
     end if;
     -- 5.37 EOF: End of File:
-    WriteBiff(xl, 16#000A#, (1..0 => 0));
+    WriteBiff(xl, 16#000A#, empty_buffer);
     Set_Index(xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data
     Write_Dimensions(xl);
     xl.is_closed:= True;
