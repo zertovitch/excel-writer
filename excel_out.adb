@@ -1,7 +1,7 @@
 -- Version 01 is derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
 -- Modula-2 code has been translated with Mod2Pas and P2Ada.
 --
--- References to documentation are to: http://sc.openoffice.org/excelfileformat.pdf
+-- References to documentation are to: http://www.openoffice.org/sc/excelfileformat.pdf
 --
 -- To do:
 -- =====
@@ -413,7 +413,12 @@ package body Excel_Out is
   begin
     Write_BOF(xl);
     -- 5.17 CODEPAGE
-    WriteBiff(xl, 16#0042#, Intel_16(16#8001#)); -- Windows CP-1252
+    case xl.format is
+      when BIFF8 =>   --  UTF-16
+      WriteBiff(xl, 16#0042#, Intel_16(16#04B0#));
+      when others =>  --  Windows CP-1252 (Latin I), superset of ISO 8859-1 
+      WriteBiff(xl, 16#0042#, Intel_16(16#8001#));
+    end case;
     -- 5.14 CALCMODE
     WriteBiff(xl, 16#000D#, Intel_16(1)); --  1 => automatic
     -- 5.85 REFMODE
@@ -1085,6 +1090,17 @@ package body Excel_Out is
     end case;
   end Write;
 
+  --  Function taken from Wasabee.Encoding.
+  function ISO_8859_1_to_UTF_16(s: String) return Wide_String is
+    --  This conversion is a trivial 8-bit to 16-bit copy.
+    r: Wide_String(s'Range);
+  begin
+    for i in s'Range loop
+      r(i):= Wide_Character'Val(Character'Pos(s(i)));
+    end loop;
+    return r;
+  end ISO_8859_1_to_UTF_16;
+  
   -- 5.63 LABEL
   procedure Write (
         xl : in out Excel_Out_Stream;
@@ -1092,7 +1108,6 @@ package body Excel_Out is
         c      : Positive;
         str    : String)
   is
-    wstr: constant Wide_String:= "ABCD"; -- !!
   begin
     Jump_to_and_store_max(xl, r, c);
     if str'Length > 0 then
@@ -1116,7 +1131,7 @@ package body Excel_Out is
             Intel_16(Unsigned_16(r-1)) &
             Intel_16(Unsigned_16(c-1)) &
             Intel_16(Unsigned_16(xl.xf_in_use)) &
-            To_buf_16_bit_length(wstr)
+            To_buf_16_bit_length(ISO_8859_1_to_UTF_16(str))
           );
       end case;
     end if;
@@ -1219,11 +1234,21 @@ package body Excel_Out is
       raise Constraint_Error;
     end if;
     -- 5.70 Note
-    WriteBiff(xl, 16#001C#,
-      Intel_16(Unsigned_16(row-1)) &
-      Intel_16(Unsigned_16(column-1)) &
-      To_buf_16_bit_length(text)
-    );
+    case xl.format is
+      when BIFF8 =>  --  https://msdn.microsoft.com/en-us/library/dd945371(v=office.12).aspx
+        WriteBiff(xl, 16#001C#,
+          Intel_16(Unsigned_16(row-1)) &
+          Intel_16(Unsigned_16(column-1)) &
+          (0, 0) &  --  Show / hide options
+          (0, 0) --  idObj - it begins to be tough there...
+        );
+      when others =>
+        WriteBiff(xl, 16#001C#,
+          Intel_16(Unsigned_16(row-1)) &
+          Intel_16(Unsigned_16(column-1)) &
+          To_buf_16_bit_length(text)
+        );
+    end case;
   end Write_cell_comment;
 
   procedure Write_cell_comment_at_cursor(xl: Excel_Out_Stream; text: String) is
