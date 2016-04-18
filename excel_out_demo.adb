@@ -239,6 +239,7 @@ procedure Excel_Out_Demo is
     iter: constant:= 1000;
     size: constant:= 150;
     secs: Long_Float;
+    dummy_int: Integer:= 0;
   begin
     Create(xl, "Speed_test.xls");
     t0:= Clock;
@@ -246,9 +247,7 @@ procedure Excel_Out_Demo is
       declare
         dummy: constant String:= My_nice_sheet(size);
       begin
-        if dummy = "" then
-          null;
-        end if;
+        dummy_int:= 0 * dummy_int + dummy'Length;
       end;
     end loop;
     t1:= Clock;
