@@ -14,6 +14,7 @@ procedure EW_Test is
     Put(xl,"A");
     Put(xl,"B");
     Close(xl);
+    --
     Create(xl, "Without def col width [" & Excel_type'Image(ef) & "].xls", ef);
     Write_column_width(xl,1,5);
     Write_column_width(xl,5,10,4);
@@ -28,6 +29,18 @@ procedure EW_Test is
     xl: Excel_Out_File;
   begin
     Create(xl, "Integer [" & Excel_type'Image(ef) & "].xls", ef);
+    Freeze_Top_Row(xl);
+    Put(xl, "x");
+    Next(xl);
+    Put(xl,  "2.0**x");
+    Put(xl, "-2.0**x");
+    Put(xl,  "2.0**x - 1");
+    Next(xl);
+    Put(xl,  "2**x");
+    Put(xl, "-2**x");
+    Put(xl,  "2**x - 1");
+    Next(xl);
+    Put_Line(xl, "Check formulas");
     for power in 0 .. 66 loop
       Put(xl, power);
       Next(xl);
