@@ -75,16 +75,6 @@ package Excel_Out is
 
   type Excel_Out_Stream is abstract tagged private;
 
-  type Excel_type is (
-    BIFF2,    --  Excel 2.1, 2,2
-    BIFF3,    --  Excel 3.0
-    BIFF4     --  Excel 4.0
-    --  BIFF5,    --  Excel 5.0 to 7.0
-    --  BIFF8     --  Excel 8.0 (97) to 11.0 (2003)
-  );
-
-  Default_Excel_type: constant Excel_type:= BIFF4;
-
   ----------------------------------
   -- (2) Before any cell content: --
   ----------------------------------
@@ -330,6 +320,39 @@ package Excel_Out is
   Row_out_of_range,
   Column_out_of_range : exception;
 
+  type Excel_type is (
+    BIFF2,    --  Excel 2.1, 2,2
+    BIFF3,    --  Excel 3.0
+    BIFF4     --  Excel 4.0
+    --  BIFF5,    --  Excel 5.0 to 7.0
+    --  BIFF8     --  Excel 8.0 (97) to 11.0 (2003) - UTF-16 support
+  );
+
+  Default_Excel_type: constant Excel_type:= BIFF4;
+
+  --  Assumed encoding for types Character and String (8-bit):
+
+  type Encoding_type is (
+    Windows_CP_874,  --  Thai
+    Windows_CP_932,  --  Japanese Shift-JIS
+    Windows_CP_936,  --  Chinese Simplified GBK
+    Windows_CP_949,  --  Korean (Wansung)
+    Windows_CP_950,  --  Chinese Traditional BIG5
+    Windows_CP_1250, --  Latin II (Central European)
+    Windows_CP_1251, --  Cyrillic
+    Windows_CP_1252, --  Latin I, superset of ISO 8859-1
+    Windows_CP_1253, --  Greek
+    Windows_CP_1254, --  Turkish
+    Windows_CP_1255, --  Hebrew
+    Windows_CP_1256, --  Arabic
+    Windows_CP_1257, --  Baltic
+    Windows_CP_1258, --  Vietnamese
+    Windows_CP_1361, --  Korean (Johab)
+    Apple_Roman
+  );
+
+  Default_encoding: constant Encoding_type:= Windows_CP_1252;
+
   -----------------------------------------------------------------
   -- Here, the derived stream types pre-defined in this package. --
   -----------------------------------------------------------------
@@ -340,7 +363,8 @@ package Excel_Out is
   procedure Create(
     xl           : in out Excel_Out_File;
     file_name    :        String;
-    excel_format :        Excel_type:= Default_Excel_type
+    excel_format :        Excel_type    := Default_Excel_type;
+    encoding     :        Encoding_type := Default_encoding
   );
 
   procedure Close(xl : in out Excel_Out_File);
@@ -353,7 +377,8 @@ package Excel_Out is
 
   procedure Create(
     xl           : in out Excel_Out_String;
-    excel_format :        Excel_type:= Default_Excel_type
+    excel_format :        Excel_type    := Default_Excel_type;
+    encoding     :        Encoding_type := Default_encoding
   );
 
   procedure Close(xl : in out Excel_Out_String);
@@ -461,7 +486,8 @@ private
   --
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
-    format     : Excel_type:= Default_Excel_type;
+    format     : Excel_type    := Default_Excel_type;
+    encoding   : Encoding_type := Default_encoding;
     dimrecpos  : Ada.Streams.Stream_IO.Positive_Count;
     maxcolumn  : Positive:= 1;
     maxrow     : Positive:= 1;

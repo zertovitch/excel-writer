@@ -33,7 +33,7 @@ procedure Excel_Out_Demo is
     some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
     damier: Natural;
   begin
-    Create(xl, "Big [" & Excel_type'Image(ef) & "].xls", ef);
+    Create(xl, "Big [" & Excel_type'Image(ef) & "].xls", ef, Windows_CP_1253);
     -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");
@@ -128,7 +128,11 @@ procedure Excel_Out_Demo is
     Write(xl, 11, 10, Long_Float'Last);
     Write(xl, 11, 12, "Smallest number:");
     Write(xl, 11, 15, (1.0+Long_Float'Model_Epsilon) * Long_Float'Model_Small);
-    New_Line(xl);
+    Next(xl);
+    --  Testing a specific code page (Windows_CP_1253), which was set upon the Create call above.
+    Put_Line(xl, "A few Greek letters (alpha, beta, gamma): " &
+      Character'Val(16#E1#) & ", " & Character'Val(16#E2#) & ", " & Character'Val(16#E3#)
+    );
     -- Date: 2014-03-16 11:55:15
     Use_format(xl, fmt_date_2);
     Put(xl, some_time);
@@ -214,7 +218,7 @@ procedure Excel_Out_Demo is
     Put_Line(xl, "This Excel file is fully created in memory.");
     Put_Line(xl, "It can be stuffed directly into a zip stream,");
     Put_Line(xl, "or sent from a server!");
-    Put_Line(xl, "- see ZipTest @ unzip-ada or zip-ada");
+    Put_Line(xl, "- see ZipTest @ project Zip-Ada (search ""unzip-ada"" or ""zip-ada""");
     for row in 1 .. size loop
       for column in 1 .. size loop
         Write(xl, row + 5, column, 0.01 + Long_Float(row * column));

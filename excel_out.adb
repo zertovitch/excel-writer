@@ -412,14 +412,43 @@ package body Excel_Out is
     Currency_Style  : constant:= 4;
     Percent_Style   : constant:= 5;
     font_for_styles, font_2, font_3 : Font_type;
+    --
+    function Encoding_code return Unsigned_16 is  --  5.17 CODEPAGE, p. 145
+    begin
+      case xl.encoding is
+        when Windows_CP_874  => return 874;
+        when Windows_CP_932  => return 932;
+        when Windows_CP_936  => return 936;
+        when Windows_CP_949  => return 949;
+        when Windows_CP_950  => return 950;
+        when Windows_CP_1250 => return 1250;
+        when Windows_CP_1251 => return 1251;
+        when Windows_CP_1252 =>
+          case xl.format is
+            when BIFF2 .. BIFF3 =>
+              return 16#8001#;
+            when BIFF4 =>
+              return 1252;
+          end case;
+        when Windows_CP_1253 => return 1253;
+        when Windows_CP_1254 => return 1254;
+        when Windows_CP_1255 => return 1255;
+        when Windows_CP_1256 => return 1256;
+        when Windows_CP_1257 => return 1257;
+        when Windows_CP_1258 => return 1258;
+        when Windows_CP_1361 => return 1361;
+        when Apple_Roman     => return 10000;
+      end case;
+    end Encoding_code;
+    --
   begin
     Write_BOF(xl);
-    -- 5.17 CODEPAGE
+    --  5.17 CODEPAGE, p. 145
     case xl.format is
       --  when BIFF8 =>   --  UTF-16
       --    WriteBiff(xl, 16#0042#, Intel_16(16#04B0#));
-      when others =>  --  Windows CP-1252 (Latin I), superset of ISO 8859-1
-        WriteBiff(xl, 16#0042#, Intel_16(16#8001#));
+      when others =>
+        WriteBiff(xl, 16#0042#, Intel_16(Encoding_code));
     end case;
     -- 5.14 CALCMODE
     WriteBiff(xl, 16#000D#, Intel_16(1)); --  1 => automatic
@@ -1389,7 +1418,8 @@ package body Excel_Out is
 
   procedure Reset(
     xl           : in out Excel_Out_Stream'Class;
-    excel_format :        Excel_type:= Default_Excel_type
+    excel_format :        Excel_type;
+    encoding     :        Encoding_type
   )
   is
     dummy_xl_with_defaults: Excel_Out_Pre_Root_Type;
@@ -1398,8 +1428,9 @@ package body Excel_Out is
     if xl.is_created and not xl.is_closed then
       raise Excel_stream_not_closed;
     end if;
-    -- We will reset evything with defaults, except this:
-    dummy_xl_with_defaults.format:= excel_format;
+    -- We will reset everything with defaults, except this:
+    dummy_xl_with_defaults.format   := excel_format;
+    dummy_xl_with_defaults.encoding := encoding;
     -- Now we reset xl:
     Excel_Out_Pre_Root_Type(xl):= dummy_xl_with_defaults;
   end Reset;
@@ -1533,11 +1564,12 @@ package body Excel_Out is
   procedure Create(
     xl           : in out Excel_Out_File;
     file_name    :        String;
-    excel_format :        Excel_type:= Default_Excel_type
+    excel_format :        Excel_type    := Default_Excel_type;
+    encoding     :        Encoding_type := Default_encoding
   )
   is
   begin
-    Reset(xl, excel_format);
+    Reset(xl, excel_format, encoding);
     xl.xl_file:= new Ada.Streams.Stream_IO.File_Type;
     Create(xl.xl_file.all, Out_File, file_name);
     xl.xl_stream:= XL_Raw_Stream_Class(Stream(xl.xl_file.all));
@@ -1639,11 +1671,12 @@ package body Excel_Out is
 
   procedure Create(
     xl           : in out Excel_Out_String;
-    excel_format :        Excel_type:= Default_Excel_type
+    excel_format :        Excel_type    := Default_Excel_type;
+    encoding     :        Encoding_type := Default_encoding
   )
   is
   begin
-    Reset(xl, excel_format);
+    Reset(xl, excel_format, encoding);
     xl.xl_memory:= new Unbounded_Stream;
     xl.xl_memory.Unb:= Null_Unbounded_String;
     xl.xl_memory.Loc:= 1;
