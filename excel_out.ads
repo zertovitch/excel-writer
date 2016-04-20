@@ -307,11 +307,13 @@ package Excel_Out is
   procedure Use_default_format(xl: in out Excel_Out_Stream);
 
   -- The Freeze Pane methods can be called anytime before Close
-
   procedure Freeze_Panes(xl: in out Excel_Out_Stream; row, column: Positive);
   procedure Freeze_Panes_at_cursor(xl: in out Excel_Out_Stream);
   procedure Freeze_Top_Row(xl: in out Excel_Out_Stream);
   procedure Freeze_First_Column(xl: in out Excel_Out_Stream);
+
+  --  Zoom level. Example: for 85%, call with parameters 85, 100.
+  procedure Zoom_level(xl: in out Excel_Out_Stream; numerator, denominator: Positive);
 
   Excel_stream_not_created,
   Excel_stream_not_closed,
@@ -389,7 +391,7 @@ package Excel_Out is
   -- Information about this package - e.g. for an "about" box --
   --------------------------------------------------------------
 
-  version   : constant String:= "15, preview 1";
+  version   : constant String:= "15, preview 2";
   reference : constant String:= "xx-yyy-2016";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
@@ -508,6 +510,8 @@ private
     frz_panes  : Boolean:= False;
     freeze_row : Positive;
     freeze_col : Positive;
+    zoom_num   : Positive:= 100;
+    zoom_den   : Positive:= 100;
     defcolwdth : Natural:= 0; -- 0 = not set; 1/256 of the width of the zero character
     std_col_width: Col_width_set:= (others => True);
   end record;

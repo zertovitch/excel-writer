@@ -5,6 +5,14 @@ Release:
 ====Date:        Changes:
     ====         =======
 
+15: xx-yyy-2016: - zoom factor for viewing / editing sheet
+                 - international code pages were added:
+                     Thai, Japanese Shift-JIS, Chinese Simplified GBK,
+                     Korean (Wansung), Chinese Traditional BIG5,
+                     Latin II (Central European), Cyrillic, Latin I,
+                     Greek, Turkish, Hebrew, Arabic, Baltic,
+                     Vietnamese, Korean (Johab).
+
 14: 20-Jul-2014: - cells "locked" (Excel's default, this allows formula protection)
                  - Next, Next_Row admit zero as parameter
 

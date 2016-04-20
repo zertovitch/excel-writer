@@ -34,6 +34,7 @@ procedure Excel_Out_Demo is
     damier: Natural;
   begin
     Create(xl, "Big [" & Excel_type'Image(ef) & "].xls", ef, Windows_CP_1253);
+    Zoom_level(xl, 85, 100);  --  Zoom level 85% (Excel: Ctrl + one bump down with the mouse wheel)
     -- Some page layout for printing...
     Header(xl, "Big demo");
     Footer(xl, "&D");

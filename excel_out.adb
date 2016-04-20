@@ -1416,6 +1416,12 @@ package body Excel_Out is
     Freeze_Panes(xl, 1, 2);
   end Freeze_First_Column;
 
+  procedure Zoom_level(xl: in out Excel_Out_Stream; numerator, denominator: Positive) is
+  begin
+    xl.zoom_num:= numerator;
+    xl.zoom_den:= denominator;
+  end Zoom_level;
+
   procedure Reset(
     xl           : in out Excel_Out_Stream'Class;
     excel_format :        Excel_type;
@@ -1527,6 +1533,11 @@ package body Excel_Out is
     -- completely blank row, including the header letters - clearly an Excel bug !
     Write_Window1;
     Write_Window2;
+    --  5.92 SCL = Zoom, Magnification. Defined for BIFF4+ only, but works with BIFF2, BIFF3.
+    WriteBiff(xl, 16#00A0#,
+      Intel_16(Unsigned_16(xl.zoom_num)) &
+      Intel_16(Unsigned_16(xl.zoom_den))
+    );
     if xl.frz_panes and xl.format > BIFF2 then
       -- Enabling PANE for BIFF2 causes a very strange behaviour on MS Excel 2002.
       Write_Pane;
