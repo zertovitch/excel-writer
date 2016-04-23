@@ -15,10 +15,9 @@ with Ada.Strings.Fixed;
 
 with Interfaces;                        use Interfaces;
 
--- IEEE_754 from: Simple components for Ada by Dmitry A. Kazakov
+-- Package IEEE_754 is from: Simple components for Ada by Dmitry A. Kazakov
 -- http://www.dmitry-kazakov.de/ada/components.htm
-with IEEE_754.Long_Floats;
-pragma Elaborate(IEEE_754.Long_Floats);
+with IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
 
@@ -107,12 +106,14 @@ package body Excel_Out is
   --
   -- http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
+
+   package IEEE_LF is new IEEE_754.Generic_Double_Precision (Long_Float);
+
   function IEEE_Double_Intel_Portable(x: Long_Float) return Byte_buffer is
     pragma Inline(IEEE_Double_Intel_Portable);
     d : Byte_buffer(1..8);
     --
-    use IEEE_754.Long_Floats;
-    f64: constant Float_64:= To_IEEE(x);
+    f64: constant IEEE_LF.Float_64:= IEEE_LF.To_IEEE(x);
   begin
     for i in d'Range loop
       d(i):= f64(9-i); -- Order is reversed

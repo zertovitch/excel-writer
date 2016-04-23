@@ -40,7 +40,7 @@ procedure EW_Test is
     Put(xl, "-2**x");
     Put(xl,  "2**x - 1");
     Next(xl);
-    Put_Line(xl, "Check formulas");
+    Put_Line(xl, "Formulas for checking (all results should be 0)");
     for power in 0 .. 66 loop
       Put(xl, power);
       Next(xl);
@@ -57,11 +57,17 @@ procedure EW_Test is
       end if;
       Next(xl);
       declare
-        row: constant String:= Trim(Integer'Image(power+1),Both);
+        row: constant String:= Trim(Integer'Image(power+2),Both);
       begin
         Put(xl, "= (2^A" & row & ")     - C" & row);
         Put(xl, "=-(2^A" & row & ")     - D" & row);
         Put(xl, "= (2^A" & row & ") - 1 - E" & row);
+        Next(xl);
+        if power <= 30 then
+          Put(xl, "= (2^A" & row & ")     - G" & row);
+          Put(xl, "=-(2^A" & row & ")     - H" & row);
+          Put(xl, "= (2^A" & row & ") - 1 - I" & row);
+        end if;
       end;
       New_Line(xl);
     end loop;
