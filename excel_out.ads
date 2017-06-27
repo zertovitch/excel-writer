@@ -315,6 +315,18 @@ package Excel_Out is
   --  Zoom level. Example: for 85%, call with parameters 85, 100.
   procedure Zoom_level(xl: in out Excel_Out_Stream; numerator, denominator: Positive);
 
+  --  Set_Index and Index are not directly useful for Excel_Out users.
+  --  They are private indeed, but they must be visible (RM 3.9.3(10)).
+
+  -- Set the index on the stream
+  procedure Set_Index (xl: in out Excel_Out_Stream;
+                       to: Ada.Streams.Stream_IO.Positive_Count)
+  is abstract;
+
+  -- Return the index of the stream
+  function Index (xl: Excel_Out_Stream) return Ada.Streams.Stream_IO.Count
+  is abstract;
+
   Excel_stream_not_created,
   Excel_stream_not_closed,
   Decreasing_row_index,
@@ -395,19 +407,6 @@ package Excel_Out is
   reference : constant String:= "23-Apr-2016";
   web       : constant String:= "http://excel-writer.sf.net/";
   -- hopefully the latest version is at that URL...  ---^
-
-  ----------------------------------
-  -- End of the part for the user --
-  ----------------------------------
-
-  -- Set the index on the stream
-  procedure Set_Index (xl: in out Excel_Out_Stream;
-                       to: Ada.Streams.Stream_IO.Positive_Count)
-  is abstract;
-
-  -- Return the index of the stream
-  function Index (xl: Excel_Out_Stream) return Ada.Streams.Stream_IO.Count
-  is abstract;
 
 private
 
