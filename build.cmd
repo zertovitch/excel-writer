@@ -1,1 +1,1 @@
-gnatmake -P excel_out_gnat -XBuild_Mode=Fast
+gprbuild -p -P excel_out_gnat -XBuild_Mode=Fast
