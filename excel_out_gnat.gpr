@@ -1,6 +1,6 @@
--- This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
--- for the Excel Writer ( http://excel-writer.sf.net/ )
--- Build me with "gnatmake -P excel_out_gnat", or open me with GPS
+--  This is a GNAT, GCC or GNAT Programming Studio (GPS) project file
+--  for the Excel Writer ( http://excel-writer.sf.net/ )
+--  Build me with "gnatmake -p -P excel_out_gnat", or open me with GPS
 --
 project Excel_Out_Gnat is
 
@@ -29,7 +29,7 @@ project Excel_Out_Gnat is
               "-gnatyaknpr",  --  Style: check all casings: a:attribute, k:keywords, n:package Standard identifiers, p:pragma, r:identifier references
               "-gnatybfhiu",  --  Style: check b:no blanks at end of lines, f:no ff/vtabs, h: no htabs, i:if-then layout, u:no unnecessary blank lines
               "-gnatyx",      --  Style: check x:no extra parens
-              "-gnato", "-fno-inline", "-fstack-check", "-gnatwa", "-g", "-gnatVa", "-gnatecdebug.pra");
+              "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnatVa", "-gnatec=" & project'Project_Dir & "debug.pra");
 
          when "Fast" =>
             for Default_Switches ("ada") use ("-gnat95", "-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
@@ -37,7 +37,7 @@ project Excel_Out_Gnat is
    end Compiler;
 
    package Builder is
-      for Default_Switches ("ada") use ("-j2");
+      for Default_Switches ("ada") use ("-j0");  --   "If -j0 is used, then the maximum number of simultaneous compilation jobs is the number of core processors on the platform."
    end Builder;
 
    package Ide is

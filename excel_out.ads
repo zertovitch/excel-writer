@@ -9,7 +9,7 @@
 
 -- Legal licensing note:
 
---  Copyright (c) 2009 .. 2016 Gautier de Montmollin
+--  Copyright (c) 2009 .. 2017 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -399,14 +399,14 @@ package Excel_Out is
 
   function Contents(xl: Excel_Out_String) return String;
 
-  --------------------------------------------------------------
-  -- Information about this package - e.g. for an "about" box --
-  --------------------------------------------------------------
+  ----------------------------------------------------------------
+  --  Information about this package - e.g. for an "about" box  --
+  ----------------------------------------------------------------
 
-  version   : constant String:= "15";
-  reference : constant String:= "23-Apr-2016";
+  version   : constant String:= "16";
+  reference : constant String:= "25-Nov-2017";
   web       : constant String:= "http://excel-writer.sf.net/";
-  -- hopefully the latest version is at that URL...  ---^
+  --  hopefully the latest version is at that URL...  -----^
 
 private
 
