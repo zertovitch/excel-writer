@@ -30,7 +30,7 @@ procedure Excel_Out_Demo is
     fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3, fmt_vertical: Format_type;
     custom_num, custom_date_num: Number_format_type;
-    some_time: constant Time:= Time_Of(2014, 03, 16, (11.0*60.0 + 55.0)* 60.0 + 17.0);
+    some_time: constant Time:= Time_Of(2014, 03, 16, Duration((11.0*60.0 + 55.0)* 60.0 + 17.0));
     damier: Natural;
   begin
     Create(xl, "Big [" & Excel_type'Image(ef) & "].xls", ef, Windows_CP_1253);

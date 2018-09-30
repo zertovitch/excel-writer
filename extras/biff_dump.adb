@@ -146,7 +146,7 @@ procedure BIFF_Dump is
       FIO.Put(s,r,digits_displayed,0);
       return Trim(s, Both);
     else
-      return Trim(Long_Long_Integer'Image(Long_Long_Integer(r)), Both);
+      return Trim(Integer_64'Image(Integer_64(r)), Both);
     end if;
   end Img;
 
