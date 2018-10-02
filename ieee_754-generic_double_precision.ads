@@ -29,6 +29,7 @@ generic
    type Number is digits <>;
 package IEEE_754.Generic_Double_Precision is
    pragma Pure (IEEE_754.Generic_Double_Precision);
+   use Interfaces;
 --
 -- Float_64 -- 64-bit double-precision IEEE 754 float. The memory layout
 --             is big endian, i.e. the byte containing the number's sign

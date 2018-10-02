@@ -112,7 +112,7 @@ package body IEEE_754.Generic_Double_Precision is
 
    function From_IEEE (Value : Float_64) return Number is
    begin
-      if (  0 = (Value (1) and 16#7F#)
+      if 0 = (Value (1) and 16#7F#)
          and then
             Value (2) = 0
          and then
@@ -127,7 +127,6 @@ package body IEEE_754.Generic_Double_Precision is
             Value (7) = 0
          and then
             Value (8) = 0
-         )
       then
          return 0.0;
       end if;

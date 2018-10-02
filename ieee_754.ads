@@ -25,7 +25,7 @@
 --  executable file might be covered by the GNU Public License.       --
 --____________________________________________________________________--
 
-with Interfaces;  use Interfaces;
+with Interfaces;
 
 package IEEE_754 is
    pragma Pure (IEEE_754);
