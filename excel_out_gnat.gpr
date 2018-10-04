@@ -32,12 +32,14 @@ project Excel_Out_Gnat is
               "-gnato", "-fno-inline", "-fstack-check", "-g", "-gnatwa", "-gnatVa", "-gnatec=" & project'Project_Dir & "debug.pra");
 
          when "Fast" =>
-            for Default_Switches ("ada") use ("-gnat95", "-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
+            for Default_Switches ("ada") use ("-O2", "-gnatn", "-gnatp", "-gnatwa", "-fno-strict-aliasing", "-funroll-loops", "-fpeel-loops", "-ftracer", "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
    end Compiler;
 
    package Builder is
-      for Default_Switches ("ada") use ("-j0");  --   "If -j0 is used, then the maximum number of simultaneous compilation jobs is the number of core processors on the platform."
+      --   "If -j0 is used, then the maximum number of simultaneous compilation
+      --    jobs is the number of core processors on the platform."
+      for Default_Switches ("ada") use ("-j0");
    end Builder;
 
    package Ide is

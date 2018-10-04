@@ -24,12 +24,13 @@ Contents
   Excel Writer
   ============
 
-  - excel_out.ads        : package specification
-  - excel_out.adb        : package body
-  - excel_out_demo.adb   : demo procedure
-  - excel_out_gnat.gpr   : project file for the GNAT compiler
-  - excel_writer.txt     : this file
-  - ieee_754*            : packages used by excel_out.adb
+  - excel_out.ads             : package specification
+  - excel_out.adb             : package body
+  - excel_out_demo.adb        : demo procedure
+  - excel_out_gnat.gpr        : project file for the GNAT compiler
+  - excel_out_objectada.prj   : project file for the ObjectAda64 compiler
+  - excel_writer.txt          : this file
+  - ieee_754*                 : packages used by excel_out.adb
 
   Some goodies - around Excel, CSV's, spreadsheets in general
   ===========================================================

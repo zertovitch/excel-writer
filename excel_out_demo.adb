@@ -30,6 +30,7 @@ procedure Excel_Out_Demo is
     fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3, fmt_vertical: Format_type;
     custom_num, custom_date_num: Number_format_type;
+    --  We test the output of some date (here: 2014-03-16 11:55:17)
     some_time: constant Time:= Time_Of(2014, 03, 16, Duration((11.0*60.0 + 55.0)* 60.0 + 17.0));
     damier: Natural;
   begin
@@ -204,7 +205,8 @@ procedure Excel_Out_Demo is
       Put(xl, first_day + i * Day_Duration'Last);
       Use_format(xl, fmt_amount);
       last_price:= price;
-      price:= price * (1.0 + 0.1 * (Long_Float(Random(gen)) - 0.49));
+      --  Subtract 0.5 after Random for zero growth / inflation / ...
+      price:= price * (1.0 + 0.1 * (Long_Float(Random(gen)) - 0.489));
       Put(xl, price);
       Use_format(xl, fmt_percent);
       Put_Line(xl, price / last_price - 1.0);
