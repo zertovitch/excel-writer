@@ -5,7 +5,8 @@ Release:
 ====Date:        Changes:
     ====         =======
 
-17:              - time output routine is compatible with
+17:              - successful run on ObjectAda64
+                 - time output routine is compatible with
                      ObjectAda64's Duration type range
 
 15: 23-Apr-2016: - zoom factor for viewing / editing sheet

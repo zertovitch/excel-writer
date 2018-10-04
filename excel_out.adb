@@ -1226,7 +1226,7 @@ package body Excel_Out is
       y_diff_4   := (y - 1) / 4   - 1900 / 4;
       y_diff_100 := (y - 1) / 100 - 1900 / 100;
       y_diff_400 := (y - 1) / 400 - 1900 / 400;
-      --  Add leap years from 1901 (included) to now (excluded).
+      --  Add extra days of leap years from 1901 (included) to year y (excluded).
       days_of_previous_years := 365 * y_diff + y_diff_4 - y_diff_100 + y_diff_400;
       --
       return days_of_previous_years + days_of_previous_months + d - 1;
