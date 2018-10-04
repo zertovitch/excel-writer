@@ -163,7 +163,7 @@ procedure Excel_Out_Demo is
     xl: Excel_Out_File;
     font_title, font_normal, font_normal_grey: Font_type;
     fmt_title, fmt_subtitle, fmt_date, fmt_percent, fmt_amount: Format_type;
-    first_day: constant Time:= Time_Of(2014, 03, 28, 9.0*3600.0);
+    quotation_day: Time:= Time_Of(2014, 03, 28, 9.0*3600.0);
     price, last_price: Long_Float;
     gen: Generator;
   begin
@@ -202,7 +202,8 @@ procedure Excel_Out_Demo is
     price:= 950.0 + Long_Float(Random(gen)) * 200.0;
     for i in 1..3650 loop
       Use_format(xl, fmt_date);
-      Put(xl, first_day + i * Day_Duration'Last);
+      Put(xl, quotation_day);
+      quotation_day := quotation_day + Day_Duration'Last;
       Use_format(xl, fmt_amount);
       last_price:= price;
       --  Subtract 0.5 after Random for zero growth / inflation / ...

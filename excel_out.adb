@@ -1176,6 +1176,8 @@ package body Excel_Out is
     Write(xl, r,c, To_String(str));
   end Write;
 
+  --  Excel uses a floating-point type for time - ouch!
+  --
   function To_Number(date: Time) return Long_Float is
     --  1901 is the lowest year supported by Ada.Calendar.
     --  1900 is not a leap year, but Lotus 1-2-3, then Excel, consider it
@@ -1239,7 +1241,7 @@ package body Excel_Out is
       Long_Float (sec) / 86_400.0 +
       Long_Float (Days_since_1901 (Year (date), Month (date), Day (date))) +
       367.0;  --  Days from 1899-12-31 to 1901-01-01.
-      --  Lotus 1-2-3, then Excel, are based on 1899-12-31.
+      --  Lotus 1-2-3, then Excel, are based on 1899-12-31 (and believe it is 1900-01-01).
   end To_Number;
 
   procedure Write(xl: in out Excel_Out_Stream; r,c : Positive; date: Time)
