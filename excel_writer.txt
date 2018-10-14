@@ -44,13 +44,16 @@ Contents
   - extras/spreadsheet_references.adb      : (body)
   - extras/spreadsheet_references_demo.adb : demo procedure for Spreadsheet_references
 
-Warning & legal
-===============
-There is NO WARRANTY in this software. Read copyright notice in excel_out.ads.
+License / Warning / Legal stuff
+===============================
+
+There is NO WARRANTY in the Excel Writer software.
+Excel Writer is licensed under the MIT License.
+You find the full license and copyright notice in excel_out.ads.
 
 Portability
 ===========
-This software can be compiled for any target machine, and with any Ada 95 or later compiler.
+Excel Writer can be compiled for any target machine, and with any Ada 95 or later compiler.
 The compiler's Interfaces package must provide an Unsigned_64 type (this is for the portable
 IEEE double-precision export).
 
