@@ -404,7 +404,7 @@ package Excel_Out is
   ----------------------------------------------------------------
 
   version   : constant String:= "17";
-  reference : constant String:= ">= 04-Oct-2018";
+  reference : constant String:= "18-Oct-2018";
   web       : constant String:= "http://excel-writer.sf.net/";
   --  hopefully the latest version is at that URL...  -----^
 
