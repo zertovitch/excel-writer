@@ -617,8 +617,4 @@ private
   -- Return the index of the Excel string stream
   function Index (xl: Excel_Out_String) return Ada.Streams.Stream_IO.Count;
 
-  -- Some performance tuning
-  pragma Inline(Jump_to);
-  pragma Inline(New_Line);
-
 end Excel_Out;
