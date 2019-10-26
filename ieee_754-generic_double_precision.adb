@@ -38,7 +38,7 @@ package body IEEE_754.Generic_Double_Precision is
    begin
       return
          Integer
-         (  Shift_Left  (Unsigned_16 (Value (1)) and 16#7F#, 4)
+         (Shift_Left  (Unsigned_16 (Value (1)) and 16#7F#, 4)
          or Shift_Right (Unsigned_16 (Value (2)), 4)
          );
    end Exponent;
@@ -47,19 +47,19 @@ package body IEEE_754.Generic_Double_Precision is
       pragma Inline (Mantissa);
    begin
       return
-      (  Unsigned_64 (Value (8))
-      or Shift_Left (Unsigned_64 (Value (7)), 8  )
-      or Shift_Left (Unsigned_64 (Value (6)), 2*8)
-      or Shift_Left (Unsigned_64 (Value (5)), 3*8)
-      or Shift_Left (Unsigned_64 (Value (4)), 4*8)
-      or Shift_Left (Unsigned_64 (Value (3)), 5*8)
-      or Shift_Left (Unsigned_64 (Value (2)) and 16#0F#, 6*8)
+      (Unsigned_64 (Value (8))
+      or Shift_Left (Unsigned_64 (Value (7)), 8)
+      or Shift_Left (Unsigned_64 (Value (6)), 2 * 8)
+      or Shift_Left (Unsigned_64 (Value (5)), 3 * 8)
+      or Shift_Left (Unsigned_64 (Value (4)), 4 * 8)
+      or Shift_Left (Unsigned_64 (Value (3)), 5 * 8)
+      or Shift_Left (Unsigned_64 (Value (2)) and 16#0F#, 6 * 8)
       or 2 ** Fraction_Bits
       );
    end Mantissa;
 
    procedure Normalize
-             (  Value    : Number;
+             (Value    : Number;
                 Mantissa : out Unsigned_64;
                 Exponent : out Integer
              )  is
@@ -177,7 +177,7 @@ package body IEEE_754.Generic_Double_Precision is
    function Is_NaN (Value : Float_64) return Boolean is
    begin
       return
-      (  Exponent (Value) = Exponent_Last
+      (Exponent (Value) = Exponent_Last
       and then
          Mantissa (Value) /= 2 ** Fraction_Bits
       );
@@ -225,15 +225,15 @@ package body IEEE_754.Generic_Double_Precision is
             Exponent := 0;
          end if;
          return
-         (  Sign or Byte (Exponent / 2**4),
-            (  Byte (Shift_Right (Fraction, 8*6) and 16#0F#)
+         (Sign or Byte (Exponent / 2**4),
+            (Byte (Shift_Right (Fraction, 8 * 6) and 16#0F#)
             or Shift_Left (Byte (Exponent mod 2**4), 4)
             ),
-            Byte (Shift_Right (Fraction, 8*5) and 16#FF#),
-            Byte (Shift_Right (Fraction, 8*4) and 16#FF#),
-            Byte (Shift_Right (Fraction, 8*3) and 16#FF#),
-            Byte (Shift_Right (Fraction, 8*2) and 16#FF#),
-            Byte (Shift_Right (Fraction, 8  ) and 16#FF#),
+            Byte (Shift_Right (Fraction, 8 * 5) and 16#FF#),
+            Byte (Shift_Right (Fraction, 8 * 4) and 16#FF#),
+            Byte (Shift_Right (Fraction, 8 * 3) and 16#FF#),
+            Byte (Shift_Right (Fraction, 8 * 2) and 16#FF#),
+            Byte (Shift_Right (Fraction, 8) and 16#FF#),
             Byte (Fraction                    and 16#FF#)
          );
       end;

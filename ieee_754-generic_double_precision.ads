@@ -37,7 +37,7 @@ package IEEE_754.Generic_Double_Precision is
 -- element.  The  byte  containing  the  least  significant  bits of the
 -- mantissa is the last array element.
 --
-   type Float_64 is array (1..8) of Byte;
+   type Float_64 is array (1 .. 8) of Byte;
    Positive_Infinity : constant Float_64;
    Positive_Zero     : constant Float_64;
    Negative_Infinity : constant Float_64;
@@ -99,7 +99,7 @@ package IEEE_754.Generic_Double_Precision is
 --    Exponent - The binary exponent
 --
    procedure Normalize
-             (  Value    : Number;
+             (Value    : Number;
                 Mantissa : out Unsigned_64;
                 Exponent : out Integer
              );
@@ -124,9 +124,9 @@ private
    pragma Inline (Is_Real);
    pragma Inline (Normalize);
 
-   Positive_Infinity : constant Float_64 := (16#7F#,16#F0#,others => 0);
+   Positive_Infinity : constant Float_64 := (16#7F#, 16#F0#, others => 0);
    Positive_Zero     : constant Float_64 := (others => 0);
-   Negative_Infinity : constant Float_64 := (16#FF#,16#F8#,others => 0);
-   Negative_Zero     : constant Float_64 := (16#80#,others => 0);
+   Negative_Infinity : constant Float_64 := (16#FF#, 16#F8#, others => 0);
+   Negative_Zero     : constant Float_64 := (16#80#, others => 0);
 
 end IEEE_754.Generic_Double_Precision;

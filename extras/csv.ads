@@ -11,10 +11,10 @@ package CSV is
    function Get_Bounds (Item : String; Separator : Character := ',') return Fields_Bounds;
 
    function Extract (
-      Item   : String;
-      Fields : Fields_Bounds;
-      Column : Positive;
-      Unquote: Boolean:= True
+      Item    : String;
+      Fields  : Fields_Bounds;
+      Column  : Positive;
+      Unquote : Boolean := True
    )
    return String;
 

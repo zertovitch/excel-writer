@@ -12,10 +12,10 @@ package body CSV is
       In_Quotes : Boolean := False;
    begin
       for I in Item'Range loop
-         if Item(I) = '"' then
+         if Item (I) = '"' then
             In_Quotes := not In_Quotes;
          elsif not In_Quotes and Item (I) = Separator then
-            return Bounds'(Item'First, I-1) & Get_Bounds (Item (I+1 .. Item'Last), Separator);
+            return Bounds'(Item'First, I - 1) & Get_Bounds (Item (I + 1 .. Item'Last), Separator);
          end if;
       end loop;
 
@@ -27,20 +27,20 @@ package body CSV is
    -------------
 
    function Extract (
-      Item   : String;
-      Fields : Fields_Bounds;
-      Column : Positive;
-      Unquote: Boolean:= True
+      Item    : String;
+      Fields  : Fields_Bounds;
+      Column  : Positive;
+      Unquote : Boolean := True
    )
    return String
    is
-      Extracted: constant String:=
-         Item( Fields(Column).Start .. Fields(Column).Stop );
+      Extracted : constant String :=
+         Item (Fields (Column).Start .. Fields (Column).Stop);
    begin
       if Unquote then
-        return CSV.Unquote(Extracted);
+         return CSV.Unquote (Extracted);
       else
-        return Extracted;
+         return Extracted;
       end if;
    end Extract;
 
@@ -75,7 +75,7 @@ package body CSV is
    function Unquote (Item : String) return String is
       use Ada.IO_Exceptions;
 
-      Result    : String(Item'Range);
+      Result    : String (Item'Range);
       Index_In  : Positive;
       Index_Out : Natural;
    begin
@@ -83,13 +83,13 @@ package body CSV is
          return Item;
       end if;
 
-      Index_In  := Item'First+1;
-      Index_Out := Result'First-1;
-      while Index_In <= Item'Last-1 loop
+      Index_In  := Item'First + 1;
+      Index_Out := Result'First - 1;
+      while Index_In <= Item'Last - 1 loop
          if Item (Index_In) = '"' then
             Index_Out := Index_Out + 1;
             Result (Index_Out) := '"';
-            if Item (Index_In+1) ='"' then
+            if Item (Index_In + 1) = '"' then
                Index_In := Index_In + 1;
             end if;
          else
@@ -100,7 +100,7 @@ package body CSV is
       end loop;
 
       if Item (Item'Last) /= '"' then
-         raise End_Error;
+         raise End_Error with "Last character to unquote is not a "" in [" & Item & ']';
       end if;
 
       return Result (Result'First .. Index_Out);
