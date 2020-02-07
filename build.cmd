@@ -1,1 +1,1 @@
-gprbuild -p -P excel_out_gnat -XBuild_Mode=Fast
+gprbuild -p -P excel_out_gnat -XExcel_Build_Mode=Fast
