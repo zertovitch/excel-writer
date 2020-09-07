@@ -5,7 +5,7 @@
 --      Project page 1:  http://sf.net/projects/excel-writer/
 --      Project page 2:  https://github.com/zertovitch/excel-writer
 --
---  Build me with "gnatmake -p -P excel_out_gnat",  "gprbuild -p -P excel_out_gnat", or open me with GPS.
+--  Build me with "gnatmake -P excel_out_gnat",  "gprbuild -P excel_out_gnat", or open me with GPS.
 --
 project Excel_Out_Gnat is
 
@@ -15,6 +15,7 @@ project Excel_Out_Gnat is
    for Main use ("excel_out_demo.adb", "biff_dump.adb", "spreadsheet_references_demo.adb", "csv2tex.adb", "csv2html.adb", "csv2xls.adb", "ew_test.adb");
    for Source_Dirs use (".", "extras", "test");
    for Exec_Dir use ".";
+   for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
 
    case Excel_Build_Mode is
 
