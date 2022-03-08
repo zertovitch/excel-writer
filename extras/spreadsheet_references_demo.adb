@@ -9,7 +9,7 @@ begin
   for i in 1 .. 256 loop
     Put_Line (Reference (i, i));
   end loop;
-  -- Excel 2007 and later has 16384 = 2**16 instead of 256 = 2**8 columns
+  --  Excel 2007 and later has 16384 = 2**16 instead of 256 = 2**8 columns
   for i in 700 .. 710 loop -- ZZ=702, AAA=703
     Put_Line (Reference (i, i));
   end loop;
@@ -23,7 +23,7 @@ begin
     end loop;
   end loop;
   --
-  -- Consistency check on different rows, columns and on both styles
+  --  Consistency check on different rows, columns and on both styles
   --
   for i in 1 .. 123 loop
     for j in 1 .. 16389 loop

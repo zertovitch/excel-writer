@@ -1,4 +1,4 @@
--- Freeware, author: J-P. Rosen, http://www.adalog.fr/
+--  Freeware, author: J-P. Rosen, http://www.adalog.fr/
 
 package CSV is
 

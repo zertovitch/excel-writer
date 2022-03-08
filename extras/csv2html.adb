@@ -67,15 +67,15 @@ begin
   while not End_Of_File loop
     line_count := line_count + 1;
     declare
-      line : constant String := Get_Line;
-      bds  : constant CSV.Fields_Bounds := CSV.Get_Bounds (line, separator);
+      csv_line : constant String := Get_Line;
+      bds  : constant CSV.Fields_Bounds := CSV.Get_Bounds (csv_line, separator);
     begin
       for i in bds'Range loop
         Put ("<td>");
         --  Trim blanks on both sides (7-Dec-2003)
         Put (
           Windows8bit_to_HTML (
-            Ada.Strings.Fixed.Trim (CSV.Extract (line, bds, i), Both)
+            Ada.Strings.Fixed.Trim (CSV.Extract (csv_line, bds, i), Both)
           )
         );
         Put ("</td>");

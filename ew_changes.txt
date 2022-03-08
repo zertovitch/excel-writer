@@ -61,3 +61,6 @@ Release:
                  - added horizontal alignment and cell borders
 01: 13-Feb-2009: 1st release
 00: 11-Feb-2009: translation from original ExcelOut in Modula-2
+                   written by Frank Schoonjans.
+                   Modula-2 code has been translated to Ada
+                   via Pascal, with Mod2Pas and P2Ada.

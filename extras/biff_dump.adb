@@ -1,5 +1,5 @@
--- Dump the contents of a file in BIFF (Excel .xls) format.
--- The output is also an Excel file.
+--  Dump the contents of a file in BIFF (Excel .xls) format.
+--  The output is also an Excel file.
 
 with Excel_Out;                         use Excel_Out;
 
@@ -7,7 +7,7 @@ with Ada.Command_Line;                  use Ada.Command_Line;
 with Ada.Directories;
 with Ada.Sequential_IO;
 with Ada.Strings.Fixed;                 use Ada.Strings, Ada.Strings.Fixed;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
+with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
 with Interfaces;                        use Interfaces;
@@ -135,7 +135,7 @@ procedure BIFF_Dump is
     Put (xl, "num format=" & Unsigned_8'Image (b mod 16#40#));
     Put (xl, "font="       & Unsigned_8'Image (b / 16#40#));
     Read (f, b);
-  end;
+  end Cell_Attributes;
 
   package FIO is new Ada.Text_IO.Float_IO (Float);
 
@@ -164,19 +164,21 @@ procedure BIFF_Dump is
     for i in from .. length loop
       Read (f, b);
     end loop;
-  end;
+  end Ignore_from;
 
-  name : Unbounded_String;
+  use Ada.Strings.Unbounded;
+
+  excel_file_name : Unbounded_String;
 
 begin
   if Argument_Count = 0 then
-    name := To_Unbounded_String ("Big [BIFF3].xls");
+    excel_file_name := To_Unbounded_String ("Big [BIFF3].xls");
   else
-    name := To_Unbounded_String (Argument (1));
+    excel_file_name := To_Unbounded_String (Argument (1));
   end if;
-  Create (xl, "_Dump of " & Ada.Directories.Simple_Name (To_String (name)) & "");
-  -- Some page layout...
-  Header (xl, "&LBiff_dump of...&R" & Ada.Directories.Simple_Name (To_String (name)));
+  Create (xl, "_Dump of " & Ada.Directories.Simple_Name (To_String (excel_file_name)) & "");
+  --  Some page layout...
+  Header (xl, "&LBiff_dump of...&R" & Ada.Directories.Simple_Name (To_String (excel_file_name)));
   Footer (xl, "&L&D");
   Margins (xl, 0.7, 0.5, 1.0, 0.8);
   Print_Gridlines (xl);
@@ -194,7 +196,7 @@ begin
   --
   Define_format (xl, Default_font (xl), general, fmt_ul, border => bottom);
   --
-  Put_Line (xl, "Dump of the BIFF (Excel .xls) file: " & To_String (name));
+  Put_Line (xl, "Dump of the BIFF (Excel .xls) file: " & To_String (excel_file_name));
   New_Line (xl);
   --
   Use_format (xl, fmt_ul);
@@ -206,7 +208,7 @@ begin
   Freeze_Panes_at_cursor (xl);
   --
   Use_format (xl, Default_format (xl));
-  Open (f, In_File, To_String (name));
+  Open (f, In_File, To_String (excel_file_name));
   while not End_Of_File (f) loop
     code  := in16;
     length := in16;
@@ -275,7 +277,7 @@ begin
           fnt := 5; -- Excel anomaly (p.171)
         end if;
         Put (xl, "FONT" & Integer'Image (fnt));
-        -- 5.45, p.171
+        --  5.45, p.171
         fnt := fnt + 1;
       when fontcolor  => Put (xl, "FONTCOLOR");
       when blank2     => Put (xl, "BLANK (BIFF2)");  -- 5.7 p.137
@@ -313,7 +315,7 @@ begin
       when others      => Put (xl, "- ??? -");
     end case;
     --
-    -- Expand parameters
+    --  Expand parameters
     --
     case code is
       when bof_2 | bof_3 | bof_4 | bof_5_8 =>
@@ -350,12 +352,12 @@ begin
         else
           Put (xl, "unused1=" & Integer'Image (in16));   -- unused1 (2 bytes): Undefined and MUST be ignored.
           Put (xl, "flags=" & Integer'Image (in8));
-          -- A - iOutLevel (3 bits): An unsigned integer that specifies the outline level (1) of the row.
-          -- B - reserved2 (1 bit): MUST be zero, and MUST be ignored.
-          -- C - fCollapsed (1 bit): A bit that specifies whether the rows that are one level of outlining deeper than the current row are included in the collapsed outline state.
-          -- D - fDyZero (1 bit): A bit that specifies whether the row is hidden.
-          -- E - fUnsynced (1 bit): A bit that specifies whether the row height was manually set.
-          -- F - fGhostDirty (1 bit): A bit that specifies whether the row was formatted.
+          --  A - iOutLevel (3 bits): An unsigned integer that specifies the outline level (1) of the row.
+          --  B - reserved2 (1 bit): MUST be zero, and MUST be ignored.
+          --  C - fCollapsed (1 bit): A bit that specifies whether the rows that are one level of outlining deeper than the current row are included in the collapsed outline state.
+          --  D - fDyZero (1 bit): A bit that specifies whether the row is hidden.
+          --  E - fUnsynced (1 bit): A bit that specifies whether the row height was manually set.
+          --  F - fGhostDirty (1 bit): A bit that specifies whether the row was formatted.
           Put (xl, "reserved3=" & Integer'Image (in8)); -- MUST be 1, and MUST be ignored
           Put (xl, "ixfe_val_etc=" & Integer'Image (in16));   -- ixfe_val (12 bits) and 4 bits
         end if;
@@ -416,7 +418,7 @@ begin
           begin
             Put (xl, font_name);
             for i in 6 + font_name'Length .. length loop
-              -- Excel 2002 puts garbage, sometimes...
+              --  Excel 2002 puts garbage, sometimes...
               Read (f, b);
             end loop;
           end;
@@ -494,7 +496,7 @@ begin
           begin
             Put (xl, head_foot);
             for i in 2 + head_foot'Length .. length loop
-              -- garbage
+              --  garbage
               Read (f, b);
             end loop;
           end;
@@ -584,4 +586,4 @@ exception
       Close (xl);
     end if;
     raise;
-end;
+end BIFF_Dump;

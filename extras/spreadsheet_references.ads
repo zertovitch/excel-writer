@@ -1,4 +1,4 @@
--- Freeware, author: G. de Montmollin
+--  Freeware, author: G. de Montmollin
 
 package Spreadsheet_references is
 

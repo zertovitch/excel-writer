@@ -12,14 +12,14 @@ package body Spreadsheet_references is
   is
     rs : constant String := Positive'Image (row);
     cs : constant String := Positive'Image (column);
-    -- Skip the @#*$! leading space...
+    --  Skip the @#*$! leading space...
     r : constant String := rs (rs'First + 1 .. rs'Last);
     c : constant String := cs (cs'First + 1 .. cs'Last);
-    -- A bit tricky: 'A'..'Z' are not like digits,
-    -- or rather like digits without a zero (1..9)!
+    --  A bit tricky: 'A'..'Z' are not like digits,
+    --  or rather like digits without a zero (1..9)!
     --
-    -- You have exactly (26**n - 1) * 26 / 25 combinations
-    -- for a code with 1 to n letters!
+    --  You have exactly (26**n - 1) * 26 / 25 combinations
+    --  for a code with 1 to n letters!
 
     function Base_26 (n : Natural) return String is
     begin
@@ -89,7 +89,7 @@ package body Spreadsheet_references is
               null; -- already in a digit
             when 3 => -- We begin the column in R1C1 style
               if c /= 18 or cc /= 3 then
-                -- 1st letter code must be exactly "R" and 2nd must be "C"
+                --  1st letter code must be exactly "R" and 2nd must be "C"
                 raise Invalid_spreadsheet_reference;
               end if;
               c := 0;

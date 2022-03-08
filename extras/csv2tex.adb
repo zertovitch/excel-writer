@@ -15,12 +15,12 @@ procedure CSV2TeX is
   use Ada.Text_IO, Ada.Strings;
   first : Boolean := True;
   separator : constant Character := ';';
-  -- ';', ',' or ASCII.HT
+  --  ';', ',' or ASCII.HT
 begin
   while not End_Of_File loop
     declare
-      line : constant String := Get_Line;
-      bds : constant CSV.Fields_Bounds := CSV.Get_Bounds (line, separator);
+      csv_line : constant String := Get_Line;
+      bds : constant CSV.Fields_Bounds := CSV.Get_Bounds (csv_line, separator);
     begin
       if first then
         Put_Line ("% Array translated by CSV2TeX");
@@ -37,7 +37,7 @@ begin
         first := False;
       end if;
       for i in bds'Range loop
-        Put (Ada.Strings.Fixed.Trim (CSV.Extract (line, bds, i), Both));
+        Put (Ada.Strings.Fixed.Trim (CSV.Extract (csv_line, bds, i), Both));
         if i < bds'Last then
           Put ("&");
         end if;

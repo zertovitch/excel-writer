@@ -29,18 +29,18 @@ procedure CSV2XLS is
   xl : Excel_Out_File;
   first : Boolean := True;
   separator : Character := ',';
-  -- ';', ',' or ASCII.HT
+  --  ';', ',' or ASCII.HT
 begin
   if Argument_Count = 0 then
     Create (xl, "From_CSV.xls");
   else
     declare
-      name : constant String := Argument (Argument_Count);
-      ext : constant String := Extension (name);
+      csv_file_name : constant String := Argument (Argument_Count);
+      ext : constant String := Extension (csv_file_name);
     begin
-      Open (input, In_File, name);
+      Open (input, In_File, csv_file_name);
       Set_Input (input);
-      Create (xl, name (name'First .. name'Last - ext'Length) & "xls");
+      Create (xl, csv_file_name (csv_file_name'First .. csv_file_name'Last - ext'Length) & "xls");
     end;
   end if;
   --

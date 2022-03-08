@@ -1,10 +1,7 @@
--- Version 01 is derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
--- Modula-2 code has been translated with Mod2Pas and P2Ada.
+--  References to documentation are to: http://www.openoffice.org/sc/excelfileformat.pdf
 --
--- References to documentation are to: http://www.openoffice.org/sc/excelfileformat.pdf
---
--- To do:
--- =====
+--  To do:
+--  =====
 --  - Unicode (for binary Excel: requires BIFF8, but BIFF8 is pretty difficult)
 --  - border line styles (5.115 XF - Extended Format)
 --  - XML-based formats support
@@ -13,15 +10,15 @@
 with Ada.Unchecked_Deallocation, Ada.Unchecked_Conversion;
 with Ada.Strings.Fixed;
 
-with Interfaces;                        use Interfaces;
+with Interfaces;
 
--- Package IEEE_754 is from: Simple components for Ada by Dmitry A. Kazakov
--- http://www.dmitry-kazakov.de/ada/components.htm
+--  Package IEEE_754 is from: Simple components for Ada by Dmitry A. Kazakov
+--  http://www.dmitry-kazakov.de/ada/components.htm
 with IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
 
-  use Ada.Streams.Stream_IO, Ada.Streams;
+  use Ada.Streams.Stream_IO, Ada.Streams, Interfaces;
 
   --  Very low level part which deals with transferring data in an endian-neutral way,
   --  and floats in the IEEE format. This is needed for having Excel Writer
@@ -30,7 +27,7 @@ package body Excel_Out is
   type Byte_buffer is array (Integer range <>) of Unsigned_8;
   empty_buffer : constant Byte_buffer := (1 .. 0 => 0);
 
-  -- Put numbers with correct endianess as bytes:
+  --  Put numbers with correct endianess as bytes:
   generic
     type Number is mod <>;
     size : Positive;
@@ -101,10 +98,10 @@ package body Excel_Out is
   --      b;
   --  end To_buf_16_bit_length;
 
-  -- Gives a byte sequence of an IEEE 64-bit number as if taken
-  -- from an Intel machine (i.e. with the same endianess).
+  --  Gives a byte sequence of an IEEE 64-bit number as if taken
+  --  from an Intel machine (i.e. with the same endianess).
   --
-  -- http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
+  --  http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
 
    package IEEE_LF is new IEEE_754.Generic_Double_Precision (Long_Float);
@@ -118,12 +115,12 @@ package body Excel_Out is
     for i in d'Range loop
       d (i) := f64 (9 - i); -- Order is reversed
     end loop;
-    -- Fully tested in Test_IEEE.adb
+    --  Fully tested in Test_IEEE.adb
     return d;
   end IEEE_Double_Intel_Portable;
 
-  -- Just spit the bytes of the long float - fast way.
-  -- Of course this will work only on an Intel(-like) machine. We check this later.
+  --  Just spit the bytes of the long float - fast way.
+  --  Of course this will work only on an Intel(-like) machine. We check this later.
   subtype Byte_buffer_8 is Byte_buffer (0 .. 7);
   function IEEE_Double_Intel_Native is new
     Ada.Unchecked_Conversion (Long_Float, Byte_buffer_8);
@@ -142,10 +139,10 @@ package body Excel_Out is
     end if;
   end IEEE_Double_Intel;
 
-  -- Workaround for the severe xxx'Read xxx'Write performance
-  -- problems in the GNAT and ObjectAda compilers (as in 2009)
-  -- This is possible if and only if Byte = Stream_Element and
-  -- arrays types are both packed and aligned the same way.
+  --  Workaround for the severe xxx'Read xxx'Write performance
+  --  problems in the GNAT and ObjectAda compilers (as in 2009)
+  --  This is possible if and only if Byte = Stream_Element and
+  --  arrays types are both packed and aligned the same way.
   --
   subtype Size_test_a is Byte_buffer (1 .. 19);
   subtype Size_test_b is Ada.Streams.Stream_Element_Array (1 .. 19);
@@ -167,8 +164,8 @@ package body Excel_Out is
       Ada.Streams.Write (stream, SE_Buffer);
     else
       Byte_buffer'Write (stream'Access, buffer);
-      -- ^ This was 30x to 70x slower on GNAT 2009
-      --   Test in the Zip-Ada project.
+      --  ^ This was 30x to 70x slower on GNAT 2009
+      --    Test in the Zip-Ada project.
     end if;
   end Block_Write;
 
@@ -176,8 +173,8 @@ package body Excel_Out is
   -- Excel BIFF --
   ----------------
 
-  -- The original Modula-2 code counted on certain assumptions about
-  -- record packing & endianess. We write data without these assumptions.
+  --  The original Modula-2 code counted on certain assumptions about
+  --  record packing & endianess. We write data without these assumptions.
 
   procedure WriteBiff (
     xl     : Excel_Out_Stream'Class;
@@ -192,7 +189,7 @@ package body Excel_Out is
     Block_Write (xl.xl_stream.all, data);
   end WriteBiff;
 
-  -- 5.8  BOF: Beginning of File, p.135
+  --  5.8  BOF: Beginning of File, p.135
   procedure Write_BOF (xl : Excel_Out_Stream'Class) is
 
     function BOF_suffix return Byte_buffer is  --  5.8.1 Record BOF
@@ -234,7 +231,7 @@ package body Excel_Out is
     );
   end Write_BOF;
 
-  -- 5.49 FORMAT (number format)
+  --  5.49 FORMAT (number format)
   procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
   begin
     case xl.format is
@@ -248,15 +245,15 @@ package body Excel_Out is
     end case;
   end WriteFmtStr;
 
-  -- Write built-in number formats (internal)
+  --  Write built-in number formats (internal)
   procedure WriteFmtRecords (xl : Excel_Out_Stream'Class) is
     sep_1000 : constant Character := ','; -- US format
     sep_deci : constant Character := '.'; -- US format
-    -- ^ If there is any evidence of an issue with those built-in separators,
-    -- we may make them configurable. NB: MS Excel 2002 and 2007 use only
-    -- the index of built-in formats and discards the strings for BIFF2, but not for BIFF3...
+    --  ^ If there is any evidence of an issue with those built-in separators,
+    --  we may make them configurable. NB: MS Excel 2002 and 2007 use only
+    --  the index of built-in formats and discards the strings for BIFF2, but not for BIFF3...
   begin
-    -- 5.12 BUILTINFMTCOUNT
+    --  5.12 BUILTINFMTCOUNT
     case xl.format is
       when BIFF2 =>
         WriteBiff (xl, 16#001F#, Intel_16 (Unsigned_16 (last_built_in - 5)));
@@ -267,7 +264,7 @@ package body Excel_Out is
       --  when BIFF8 =>
       --    null;
     end case;
-    -- loop & case avoid omitting any choice
+    --  loop & case avoid omitting any choice
     for n in Number_format_type'First .. last_custom loop
       case n is
         when general    =>  WriteFmtStr (xl, "General");
@@ -284,7 +281,7 @@ package body Excel_Out is
         when no_currency_red_0   =>
           if xl.format >= BIFF4 then
             WriteFmtStr (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
-          -- [Red] doesn't go with non-English versions of Excel !!
+          --  [Red] doesn't go with non-English versions of Excel !!
           end if;
         when no_currency_2       =>
           if xl.format >= BIFF4 then
@@ -300,7 +297,7 @@ package body Excel_Out is
           WriteFmtStr (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
         when currency_red_0   =>
           WriteFmtStr (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
-          -- [Red] doesn't go with non-English versions of Excel !!
+          --  [Red] doesn't go with non-English versions of Excel !!
         when currency_2       =>
           WriteFmtStr (xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
                           "$ -#" & sep_1000 & "##0" & sep_deci & "00");
@@ -334,14 +331,14 @@ package body Excel_Out is
         when date_iso        => WriteFmtStr (xl, "yyyy\-mm\-dd");
         when date_h_m_iso    => WriteFmtStr (xl, "yyyy\-mm\-dd\ hh:mm");
         when date_h_m_s_iso  => WriteFmtStr (xl, "yyyy\-mm\-dd\ hh:mm:ss");
-          -- !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
+          --  !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
           --    understands it and translates it into aaaa, but is unable to
           --    understand *our* yyyy
-          -- Same issue as [Red] vs [Rot] above.
+          --  Same issue as [Red] vs [Rot] above.
       end case;
     end loop;
-    -- ^ Some formats in the original list caused problems, probably
-    --   because of regional placeholder symbols
+    --  ^ Some formats in the original list caused problems, probably
+    --    because of regional placeholder symbols
     case xl.format is
       when BIFF2 =>
         for i in 1 .. 6 loop
@@ -354,17 +351,17 @@ package body Excel_Out is
       when BIFF4 =>
         null;
     end case;
-    -- ^ Stuffing for having the same number of built-in and EW custom
+    --  ^ Stuffing for having the same number of built-in and EW custom
   end WriteFmtRecords;
 
-  -- 5.35 DIMENSION
+  --  5.35 DIMENSION
   procedure Write_Dimensions (xl : Excel_Out_Stream'Class) is
-    -- sheet bounds:   0 2 Index to first used row
-    --                 2 2 Index to last used row, increased by 1
-    --                 4 2 Index to first used column
-    --                 6 2 Index to last used column, increased by 1
+    --  sheet bounds:   0 2 Index to first used row
+    --                  2 2 Index to last used row, increased by 1
+    --                  4 2 Index to first used column
+    --                  6 2 Index to last used column, increased by 1
     --
-    -- Since our row / column counts are 1-based, no need to increase by 1.
+    --  Since our row / column counts are 1-based, no need to increase by 1.
     sheet_bounds : constant Byte_buffer :=
       Intel_16 (0) &
       Intel_16 (Unsigned_16 (xl.maxrow)) &
@@ -451,27 +448,27 @@ package body Excel_Out is
       when others =>
         WriteBiff (xl, 16#0042#, Intel_16 (Encoding_code));
     end case;
-    -- 5.14 CALCMODE
+    --  5.14 CALCMODE
     WriteBiff (xl, 16#000D#, Intel_16 (1)); --  1 => automatic
-    -- 5.85 REFMODE
+    --  5.85 REFMODE
     WriteBiff (xl, 16#000F#, Intel_16 (1)); --  1 => A1 mode
-    -- 5.28 DATEMODE
+    --  5.28 DATEMODE
     WriteBiff (xl, 16#0022#, Intel_16 (0)); --  0 => 1900; 1 => 1904 Date system
-    -- NB: the 1904 variant (Mac) is ignored by LibreOffice (<= 3.5), then wrong dates !
+    --  NB: the 1904 variant (Mac) is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
     Define_font (xl, "Arial",   10, xl.def_font);
     Define_font (xl, "Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
     Define_font (xl, "Calibri", 10, font_2); -- Defined in BIFF3 files written by Excel 2002
     Define_font (xl, "Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
     WriteFmtRecords (xl);
-    -- 5.111 WINDOWPROTECT
+    --  5.111 WINDOWPROTECT
     WriteBiff (xl, 16#0019#, Intel_16 (0));
-    -- Define default format
+    --  Define default format
     Define_format (xl, xl.def_font, general, xl.def_fmt);
     if xl.format >= BIFF3 then
-      -- Don't ask why we need the following useless formats, but it is as Excel 2002
-      -- write formats. Additionally, the default format is turned into decimal_2
-      -- when a file without those useless formats is opened in Excel (2002) !
+      --  Don't ask why we need the following useless formats, but it is as Excel 2002
+      --  write formats. Additionally, the default format is turned into decimal_2
+      --  when a file without those useless formats is opened in Excel (2002) !
       Define_format (xl, font_for_styles, general, xl.def_fmt);
       Define_format (xl, font_for_styles, general, xl.def_fmt);
       Define_format (xl, font_2, general, xl.def_fmt);
@@ -479,20 +476,20 @@ package body Excel_Out is
       for i in 5 .. 15 loop
         Define_format (xl, xl.def_font, general, xl.def_fmt);
       end loop;
-      -- Final default format index is the last changed xl.def_fmt
+      --  Final default format index is the last changed xl.def_fmt
     end if;
     Use_default_format (xl);
-    -- Define formats for the BIFF3+ "styles":
+    --  Define formats for the BIFF3+ "styles":
     Define_format (xl, font_for_styles, decimal_2, xl.cma_fmt);
     Define_format (xl, font_for_styles, currency_0, xl.ccy_fmt);
     Define_format (xl, font_for_styles, percent_0, xl.pct_fmt);
-    -- Define styles - 5.103 STYLE p. 212
-    -- NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
-    --     - these "styles" seem to be a zombie feature of Excel 3
-    --     - the whole purpose of including this is because format
-    --       buttons (%)(,) in Excel 95 through 2007 are using these styles;
-    --       if the styles are not defined, those buttons are not working
-    --       when an Excel Writer sheet is open in MS Excel.
+    --  Define styles - 5.103 STYLE p. 212
+    --  NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
+    --      - these "styles" seem to be a zombie feature of Excel 3
+    --      - the whole purpose of including this is because format
+    --        buttons (%)(,) in Excel 95 through 2007 are using these styles;
+    --        if the styles are not defined, those buttons are not working
+    --        when an Excel Writer sheet is open in MS Excel.
     Define_style (xl.cma_fmt, Comma_Style);
     Define_style (xl.ccy_fmt, Currency_Style);
     Define_style (xl.pct_fmt, Percent_Style);
@@ -542,9 +539,9 @@ package body Excel_Out is
         )
      );
 
-  -- *** Exported procedures **********************************************
+  --  *** Exported procedures **********************************************
 
-  -- 5.115 XF - Extended Format
+  --  5.115 XF - Extended Format
   procedure Define_format (
     xl               : in out Excel_Out_Stream;
     font             : in     Font_type;          -- Default_font(xl), or given by Define_font
@@ -562,7 +559,7 @@ package body Excel_Out is
   is
     actual_number_format : Number_format_type := number_format;
     cell_is_locked : constant := 1;
-    -- ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
+    --  ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
     procedure Define_BIFF2_XF is
       border_bits, mask : Unsigned_8;
     begin
@@ -574,20 +571,20 @@ package body Excel_Out is
         end if;
         mask := mask * 2;
       end loop;
-      -- 5.115.2 XF Record Contents, p. 221 for BIFF3
+      --  5.115.2 XF Record Contents, p. 221 for BIFF3
       WriteBiff (
         xl,
         16#0043#, -- XF code in BIFF2
         (Unsigned_8 (font),
-         -- ^ Index to FONT record
+         --  ^ Index to FONT record
          0,
-         -- ^ Not used
+         --  ^ Not used
          Number_format_type'Pos (actual_number_format) + 16#40# * cell_is_locked,
-         -- ^ Number format and cell flags
+         --  ^ Number format and cell flags
          Horizontal_alignment'Pos (horizontal_align) +
          border_bits +
          Boolean'Pos (shaded) * 128
-         -- ^ Horizontal alignment, border style, and background
+         --  ^ Horizontal alignment, border style, and background
         )
       );
     end Define_BIFF2_XF;
@@ -596,72 +593,72 @@ package body Excel_Out is
 
     procedure Define_BIFF3_XF is
     begin
-      -- 5.115.2 XF Record Contents, p. 221 for BIFF3
+      --  5.115.2 XF Record Contents, p. 221 for BIFF3
       WriteBiff (
         xl,
         16#0243#, -- XF code in BIFF3
         (Unsigned_8 (font),
-         -- ^ 0 - Index to FONT record
+         --  ^ 0 - Index to FONT record
          Number_format_type'Pos (actual_number_format),
-         -- ^ 1 - Number format and cell flags
+         --  ^ 1 - Number format and cell flags
          cell_is_locked,
-         -- ^ 2 - XF_TYPE_PROT (5.115.1)
+         --  ^ 2 - XF_TYPE_PROT (5.115.1)
          16#FF#
-         -- ^ 3 - XF_USED_ATTRIB
+         --  ^ 3 - XF_USED_ATTRIB
         ) &
         Intel_16 (
           Horizontal_alignment'Pos (horizontal_align) +
           Boolean'Pos (wrap_text) * 8
         ) &
-        -- ^ 4 - Horizontal alignment, text break, parent style XF
+        --  ^ 4 - Horizontal alignment, text break, parent style XF
         Intel_16 (area_code) &
-        -- ^ 6 - XF_AREA_34
+        --  ^ 6 - XF_AREA_34
         (Boolean'Pos (border (top_single)),
            Boolean'Pos (border (left_single)),
            Boolean'Pos (border (bottom_single)),
            Boolean'Pos (border (right_single))
         )
-        -- ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+        --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
         --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
       );
     end Define_BIFF3_XF;
 
     procedure Define_BIFF4_XF is
     begin
-      -- 5.115.2 XF Record Contents, p. 222 for BIFF4
+      --  5.115.2 XF Record Contents, p. 222 for BIFF4
       WriteBiff (
         xl,
         16#0443#, -- XF code in BIFF4
         (Unsigned_8 (font),
-         -- ^ 0 - Index to FONT record
+         --  ^ 0 - Index to FONT record
          Number_format_type'Pos (actual_number_format),
-         -- ^ 1 - Number format and cell flags
+         --  ^ 1 - Number format and cell flags
          cell_is_locked, 0,
-         -- ^ 2 - XF type, cell protection, and parent style XF
+         --  ^ 2 - XF type, cell protection, and parent style XF
          Horizontal_alignment'Pos (horizontal_align) +
          Boolean'Pos (wrap_text) * 8 +
          (Vertical_alignment'Pos (vertical_align) and 3) * 16 +
          Text_orientation'Pos (text_orient) * 64,
-         -- ^ 4 - Alignment (hor & ver), text break, and text orientation
+         --  ^ 4 - Alignment (hor & ver), text break, and text orientation
          16#FF#
-         -- ^ 3 - XF_USED_ATTRIB
+         --  ^ 3 - XF_USED_ATTRIB
         ) &
-        -- ^ 4 - Horizontal alignment, text break, parent style XF
+        --  ^ 4 - Horizontal alignment, text break, parent style XF
         Intel_16 (area_code) &
-        -- ^ 6 - XF_AREA_34
+        --  ^ 6 - XF_AREA_34
         (Boolean'Pos (border (top_single)),
            Boolean'Pos (border (left_single)),
            Boolean'Pos (border (bottom_single)),
            Boolean'Pos (border (right_single))
         )
-        -- ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
-        --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
+        --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+        --        Thin, Medium, Dashed, Dotted, Thick, Double, Hair
       );
     end Define_BIFF4_XF;
 
   begin
-    -- 2.5.12 Patterns for Cell and Chart Background Area
-    -- This is for BIFF3+
+    --  2.5.12 Patterns for Cell and Chart Background Area
+    --  This is for BIFF3+
     if shaded then
       area_code :=
         Boolean'Pos (shaded) * 17 +                        -- Sparse pattern, like BIFF2 "shade"
@@ -761,7 +758,7 @@ package body Excel_Out is
   )
   is
   begin
-    -- 5.73 PAGESETUP p.192 - this is BIFF4+ (cheat if xl.format below)!
+    --  5.73 PAGESETUP p.192 - this is BIFF4+ (cheat if xl.format below)!
     WriteBiff (xl,
       16#00A1#,
       Intel_16 (0) & -- paper type undefined
@@ -771,9 +768,9 @@ package body Excel_Out is
       Intel_16 (Unsigned_16 (fit_height_with_n_pages)) &
       Intel_16 (2 * Orientation_choice'Pos (orientation))
     );
-    -- 5.97 SHEETPR p.207 - this is BIFF3+ (cheat if xl.format below) !
-    -- NB: this field contains other informations, should be delayed
-    --       in case other preferences are to be set
+    --  5.97 SHEETPR p.207 - this is BIFF3+ (cheat if xl.format below) !
+    --  NB: this field contains other informations, should be delayed
+    --        in case other preferences are to be set
     WriteBiff (xl,
       16#0081#,
       Intel_16 (256 * Scale_or_fit_choice'Pos (scale_or_fit))
@@ -782,7 +779,7 @@ package body Excel_Out is
 
   y_scale : constant := 20; -- scaling to obtain character point (pt) units
 
-  -- 5.31 DEFAULTROWHEIGHT
+  --  5.31 DEFAULTROWHEIGHT
   procedure Write_default_row_height (
         xl     : Excel_Out_Stream;
         height : Positive
@@ -790,7 +787,7 @@ package body Excel_Out is
   is
     default_twips : constant Byte_buffer := Intel_16 (Unsigned_16 (height * y_scale));
     options_flags : constant Byte_buffer := (1, 0);
-    -- 1 = Row height and default font height do not match
+    --  1 = Row height and default font height do not match
   begin
     case xl.format is
       when BIFF2 =>
@@ -800,7 +797,7 @@ package body Excel_Out is
     end case;
   end Write_default_row_height;
 
-  -- 5.32 DEFCOLWIDTH
+  --  5.32 DEFCOLWIDTH
   procedure Write_default_column_width (
         xl : in out Excel_Out_Stream;
         width  : Positive)
@@ -829,13 +826,13 @@ package body Excel_Out is
   begin
     case xl.format is
       when BIFF2 =>
-        -- 5.20 COLWIDTH (BIFF2 only)
+        --  5.20 COLWIDTH (BIFF2 only)
         WriteBiff (xl, 16#0024#,
           Unsigned_8 (first_column - 1) &
           Unsigned_8 (last_column - 1) &
           Intel_16 (Unsigned_16 (width * 256)));
       when BIFF3 | BIFF4 =>
-        -- 5.18 COLINFO (BIFF3+)
+        --  5.18 COLINFO (BIFF3+)
         WriteBiff (xl, 16#007D#,
           Intel_16 (Unsigned_16 (first_column - 1)) &
           Intel_16 (Unsigned_16 (last_column - 1)) &
@@ -850,11 +847,11 @@ package body Excel_Out is
     end case;
   end Write_column_width;
 
-  -- 5.88 ROW
-  -- The OpenOffice documentation tells nice stories about row blocks,
-  -- but single ROW commands can also be put before in the data stream,
-  -- where the column widths are set. Excel saves with blocks of ROW
-  -- commands, most of them useless.
+  --  5.88 ROW
+  --  The OpenOffice documentation tells nice stories about row blocks,
+  --  but single ROW commands can also be put before in the data stream,
+  --  where the column widths are set. Excel saves with blocks of ROW
+  --  commands, most of them useless.
 
   procedure Write_row_height (
     xl     : Excel_Out_Stream;
@@ -884,7 +881,7 @@ package body Excel_Out is
         end if;
         WriteBiff (xl, 16#0208#,
           row_info_base &
-          -- http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
+          --  http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
           (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
            0, 0,  -- unused1 (2 bytes): Undefined and MUST be ignored.
            fDyZero *  32 +  -- D - fDyZero (1 bit): row is hidden
@@ -892,13 +889,13 @@ package body Excel_Out is
                  0 * 128,   -- F - fGhostDirty (1 bit): the row was formatted
            1) &   -- reserved3 (1 byte): MUST be 1, and MUST be ignored
            Intel_16 (15)
-           -- ^ ixfe_val, then 4 bits.
-           --   If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
+           --  ^ ixfe_val, then 4 bits.
+           --    If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
         );
     end case;
   end Write_row_height;
 
-  -- 5.45 FONT, p.171
+  --  5.45 FONT, p.171
   procedure Define_font (
     xl           : in out Excel_Out_Stream;
     font_name    :        String;
@@ -921,8 +918,8 @@ package body Excel_Out is
     xl.fonts := xl.fonts + 1;
     if xl.fonts = 4 then
       xl.fonts := 5;
-      -- Anomaly! The font with index 4 is omitted in all BIFF versions.
-      -- Numbering is 0, 1, 2, 3, *5*, 6,...
+      --  Anomaly! The font with index 4 is omitted in all BIFF versions.
+      --  Numbering is 0, 1, 2, 3, *5*, 6,...
     end if;
     case xl.format is
       when BIFF2 =>
@@ -932,7 +929,7 @@ package body Excel_Out is
           To_buf_8_bit_length (font_name)
         );
         if color /= automatic then
-          -- 5.47 FONTCOLOR
+          --  5.47 FONTCOLOR
           WriteBiff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
         end if;
       when BIFF3 | BIFF4 =>  --  BIFF8 has 16#0031#, p. 171
@@ -961,7 +958,7 @@ package body Excel_Out is
     end if;
   end Jump_to_and_store_max;
 
-  -- 2.5.13 Cell Attributes (BIFF2 only)
+  --  2.5.13 Cell Attributes (BIFF2 only)
   function Cell_attributes (xl : Excel_Out_Stream) return Byte_buffer is
   begin
     return
@@ -977,9 +974,9 @@ package body Excel_Out is
     return abs x <= Long_Float'Model_Small;
   end Almost_zero;
 
-  -- Internal
+  --  Internal
   --
-  -- 5.71 NUMBER
+  --  5.71 NUMBER
   procedure Write_as_double (
         xl     : in out Excel_Out_Stream;
         r,
@@ -1009,7 +1006,7 @@ package body Excel_Out is
     Jump_to (xl, r, c + 1); -- Store and check new position
   end Write_as_double;
 
-  -- Internal. This is BIFF2 only. BIFF format choice unchecked here.
+  --  Internal. This is BIFF2 only. BIFF format choice unchecked here.
   --
   procedure Write_as_16_bit_unsigned (
         xl : in out Excel_Out_Stream;
@@ -1020,7 +1017,7 @@ package body Excel_Out is
     pragma Inline (Write_as_16_bit_unsigned);
   begin
     Jump_to_and_store_max (xl, r, c);
-    -- 5.60 INTEGER
+    --  5.60 INTEGER
     WriteBiff (xl, 16#0002#,
       Intel_16 (Unsigned_16 (r - 1)) &
       Intel_16 (Unsigned_16 (c - 1)) &
@@ -1030,7 +1027,7 @@ package body Excel_Out is
     Jump_to (xl, r, c + 1); -- Store and check new position
   end Write_as_16_bit_unsigned;
 
-  -- Internal. This is BIFF3+. BIFF format choice unchecked here.
+  --  Internal. This is BIFF3+. BIFF format choice unchecked here.
   --
   procedure Write_as_30_bit_signed (
         xl : in out Excel_Out_Stream;
@@ -1048,7 +1045,7 @@ package body Excel_Out is
       RK_val := (-Unsigned_32 (-num)) * 4 + RK_code;
     end if;
     Jump_to_and_store_max (xl, r, c);
-    -- 5.87 RK
+    --  5.87 RK
     WriteBiff (xl, 16#027E#,
       Intel_16 (Unsigned_16 (r - 1)) &
       Intel_16 (Unsigned_16 (c - 1)) &
@@ -1059,7 +1056,7 @@ package body Excel_Out is
   end Write_as_30_bit_signed;
 
   --
-  -- Profile with floating-point number
+  --  Profile with floating-point number
   --
   procedure Write (
         xl     : in out Excel_Out_Stream;
@@ -1095,7 +1092,7 @@ package body Excel_Out is
   end Write;
 
   --
-  -- Profile with integer number
+  --  Profile with integer number
   --
   procedure Write (
         xl : in out Excel_Out_Stream;
@@ -1104,8 +1101,8 @@ package body Excel_Out is
         num    : Integer)
   is
   begin
-    -- We use an integer representation (and small storage) if possible;
-    -- we need to use a floating-point in all other cases
+    --  We use an integer representation (and small storage) if possible;
+    --  we need to use a floating-point in all other cases
     case xl.format is
       when BIFF2 =>
         if num in 0 .. 2**16 - 1 then
@@ -1133,7 +1130,7 @@ package body Excel_Out is
   --    return r;
   --  end ISO_8859_1_to_UTF_16;
 
-  -- 5.63 LABEL
+  --  5.63 LABEL
   procedure Write (
         xl : in out Excel_Out_Stream;
         r,
@@ -1250,7 +1247,7 @@ package body Excel_Out is
     Write (xl, r, c, To_Number (date));
   end Write;
 
-  -- Ada.Text_IO - like. No need to specify row & column each time
+  --  Ada.Text_IO - like. No need to specify row & column each time
   procedure Put (xl : in out Excel_Out_Stream; num : Long_Float) is
   begin
     Write (xl, xl.curr_row, xl.curr_col, num);
@@ -1269,7 +1266,7 @@ package body Excel_Out is
       declare
         use Ada.Strings.Fixed;
         s : String (1 .. 50 + 0 * width);
-        -- 0*width is just to skip a warning of width being unused
+        --  0*width is just to skip a warning of width being unused
         package IIO is new Ada.Text_IO.Integer_IO (Integer);
       begin
         IIO.Put (s, num, Base => base);
@@ -1295,13 +1292,13 @@ package body Excel_Out is
 
   procedure Merge (xl : in out Excel_Out_Stream; cells : Positive) is
 
-    -- 5.7 BLANK
+    --  5.7 BLANK
     procedure Blank (r, c : Positive) is
     begin
       Jump_to_and_store_max (xl, r, c);
       case xl.format is
-        -- NB: Only with BIFF4, and only OpenOffice
-        -- considers the cells really merged.
+        --  NB: Only with BIFF4, and only OpenOffice
+        --  considers the cells really merged.
         when BIFF2 =>
           WriteBiff (xl, 16#0001#,
             Intel_16 (Unsigned_16 (r - 1)) &
@@ -1328,7 +1325,7 @@ package body Excel_Out is
     if text'Length >= 2048 then
       raise Constraint_Error;
     end if;
-    -- 5.70 Note
+    --  5.70 Note
     case xl.format is
       --  when BIFF8 =>  --  https://msdn.microsoft.com/en-us/library/dd945371(v=office.12).aspx
       --    WriteBiff(xl, 16#001C#,
@@ -1399,7 +1396,7 @@ package body Excel_Out is
 
   function Row (xl : in Excel_Out_Stream) return Positive renames Line;
 
-  -- Relative / absolute jumps
+  --  Relative / absolute jumps
   procedure Jump (xl : in out Excel_Out_Stream; rows, columns : Natural) is
   begin
     Jump_to (xl, xl.curr_row + rows, xl.curr_col + columns);
@@ -1494,14 +1491,14 @@ package body Excel_Out is
   is
     dummy_xl_with_defaults : Excel_Out_Pre_Root_Type;
   begin
-    -- Check if we are trying to re-use a half-finished object (ouch!):
+    --  Check if we are trying to re-use a half-finished object (ouch!):
     if xl.is_created and not xl.is_closed then
       raise Excel_stream_not_closed;
     end if;
-    -- We will reset everything with defaults, except this:
+    --  We will reset everything with defaults, except this:
     dummy_xl_with_defaults.format   := excel_format;
     dummy_xl_with_defaults.encoding := encoding;
-    -- Now we reset xl:
+    --  Now we reset xl:
     Excel_Out_Pre_Root_Type (xl) := dummy_xl_with_defaults;
   end Reset;
 
@@ -1509,7 +1506,7 @@ package body Excel_Out is
 
     procedure Write_Window1 is
     begin
-      -- 5.109 WINDOW1, p. 215
+      --  5.109 WINDOW1, p. 215
       case xl.format is
         when BIFF2 | BIFF3 | BIFF4 =>  --  NB: more options in BIFF8
           WriteBiff (xl, 16#003D#,
@@ -1524,7 +1521,7 @@ package body Excel_Out is
 
     procedure Write_Window2 is
     begin
-      -- 5.110 WINDOW2
+      --  5.110 WINDOW2
       case xl.format is
         when BIFF2 =>
           WriteBiff (xl, 16#003E#,
@@ -1542,7 +1539,7 @@ package body Excel_Out is
           );
         when BIFF3 | BIFF4 =>  --  NB: more options in BIFF8
           WriteBiff (xl, 16#023E#,
-            -- http://msdn.microsoft.com/en-us/library/dd947893(v=office.12).aspx
+            --  http://msdn.microsoft.com/en-us/library/dd947893(v=office.12).aspx
             Intel_16 (   -- Option flags:
               0 *   1 + -- Display formulas, not results
               1 *   2 + -- Show grid lines
@@ -1578,7 +1575,7 @@ package body Excel_Out is
           active_pane := 0;
         end if;
       end if;
-      -- 5.75 PANE
+      --  5.75 PANE
       WriteBiff (xl, 16#0041#,
         Intel_16 (Unsigned_16 (xl.freeze_col) - 1) &
         Intel_16 (Unsigned_16 (xl.freeze_row) - 1) &
@@ -1592,9 +1589,9 @@ package body Excel_Out is
     byte_idx, bit_idx : Positive := 1;
 
   begin
-    -- Calling Window1 and Window2 is not necessary for default settings, but without these calls,
-    -- a Write_row_height call with a positive height results, on all MS Excel versions, in a
-    -- completely blank row, including the header letters - clearly an Excel bug !
+    --  Calling Window1 and Window2 is not necessary for default settings, but without these calls,
+    --  a Write_row_height call with a positive height results, on all MS Excel versions, in a
+    --  completely blank row, including the header letters - clearly an Excel bug !
     Write_Window1;
     Write_Window2;
     --  5.92 SCL = Zoom, Magnification. Defined for BIFF4+ only, but works with BIFF2, BIFF3.
@@ -1603,10 +1600,10 @@ package body Excel_Out is
       Intel_16 (Unsigned_16 (xl.zoom_den))
     );
     if xl.frz_panes and xl.format > BIFF2 then
-      -- Enabling PANE for BIFF2 causes a very strange behaviour on MS Excel 2002.
+      --  Enabling PANE for BIFF2 causes a very strange behaviour on MS Excel 2002.
       Write_Pane;
     end if;
-    -- 5.93 SELECTION here !!
+    --  5.93 SELECTION here !!
     if xl.format >= BIFF4 then
       for i in 1 .. 256 loop
         col_bits (byte_idx) := col_bits (byte_idx) +
@@ -1617,15 +1614,15 @@ package body Excel_Out is
           byte_idx := byte_idx + 1;
         end if;
       end loop;
-      -- 5.51 GCW: Global Column Width - trying to get a correct display by LibreOffice
-      -- Result: OK but useless on MS Excel, not working on LibreOffice :-(
+      --  5.51 GCW: Global Column Width - trying to get a correct display by LibreOffice
+      --  Result: OK but useless on MS Excel, not working on LibreOffice :-(
       WriteBiff (xl, 16#00AB#, Intel_16 (32) & col_bits);
-      -- if xl.defcolwdth > 0 then
-      --   -- 5.101 STANDARDWIDTH -- this confuses MS Excel...
-      --   WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
-      -- end if;
+      --  if xl.defcolwdth > 0 then
+      --    --  5.101 STANDARDWIDTH -- this confuses MS Excel...
+      --    WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
+      --  end if;
     end if;
-    -- 5.37 EOF: End of File:
+    --  5.37 EOF: End of File:
     WriteBiff (xl, 16#000A#, empty_buffer);
     Set_Index (xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data
     Write_Dimensions (xl);
@@ -1660,7 +1657,7 @@ package body Excel_Out is
     Dispose (xl.xl_file);
   end Close;
 
-  -- Set the index on the file
+  --  Set the index on the file
   procedure Set_Index (xl : in out Excel_Out_File;
                        To : Ada.Streams.Stream_IO.Positive_Count)
   is
@@ -1668,7 +1665,7 @@ package body Excel_Out is
     Ada.Streams.Stream_IO.Set_Index (xl.xl_file.all, To);
   end Set_Index;
 
-  -- Return the index of the file
+  --  Return the index of the file
   function Index (xl : Excel_Out_File) return Ada.Streams.Stream_IO.Count
   is
   begin
@@ -1686,23 +1683,23 @@ package body Excel_Out is
   ------------------------
   -- Output to a string --
   ------------------------
-  -- Code reused from Zip_Streams
+  --  Code reused from Zip_Streams
 
   procedure Read
     (Stream : in out Unbounded_Stream;
      Item   : out Stream_Element_Array;
      Last   : out Stream_Element_Offset) is
   begin
-    -- Item is read from the stream. If (and only if) the stream is
-    -- exhausted, Last will be < Item'Last. In that case, T'Read will
-    -- raise an End_Error exception.
+    --  Item is read from the stream. If (and only if) the stream is
+    --  exhausted, Last will be < Item'Last. In that case, T'Read will
+    --  raise an End_Error exception.
     --
-    -- Cf: RM 13.13.1(8), RM 13.13.1(11), RM 13.13.2(37) and
-    -- explanations by Tucker Taft
+    --  Cf: RM 13.13.1(8), RM 13.13.1(11), RM 13.13.2(37) and
+    --  explanations by Tucker Taft
     --
     Last := Item'First - 1;
-    -- if Item is empty, the following loop is skipped; if Stream.Loc
-    -- is already indexing out of Stream.Unb, that value is also appropriate
+    --  if Item is empty, the following loop is skipped; if Stream.Loc
+    --  is already indexing out of Stream.Unb, that value is also appropriate
     for i in Item'Range loop
       Item (i) := Character'Pos (Element (Stream.Unb, Stream.Loc));
       Stream.Loc := Stream.Loc + 1;
@@ -1772,7 +1769,7 @@ package body Excel_Out is
     return To_String (xl.xl_memory.Unb);
   end Contents;
 
-  -- Set the index on the Excel string stream
+  --  Set the index on the Excel string stream
   procedure Set_Index (xl : in out Excel_Out_String;
                        To : Ada.Streams.Stream_IO.Positive_Count)
   is
@@ -1780,7 +1777,7 @@ package body Excel_Out is
     Set_Index (xl.xl_memory, Integer (To));
   end Set_Index;
 
-  -- Return the index of the Excel string stream
+  --  Return the index of the Excel string stream
   function Index (xl : Excel_Out_String) return Ada.Streams.Stream_IO.Count
   is
   begin

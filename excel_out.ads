@@ -1,15 +1,15 @@
 -------------------------------------------------------------------------------------
 --
--- EXCEL_OUT - A low level package for writing Microsoft Excel (*) files
+--  EXCEL_OUT - A low level package for writing Microsoft Excel (*) files
 --
--- Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
+--  Pure Ada 95 code, 100% portable: OS-, CPU- and compiler- independent.
 --
--- Version / date / download info: see the version, reference, web strings
+--  Version / date / download info: see the version, reference, web strings
 --   defined at the end of the public part of this package.
 
--- Legal licensing note:
+--  Legal licensing note:
 
---  Copyright (c) 2009 .. 2018 Gautier de Montmollin
+--  Copyright (c) 2009 .. 2022 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,10 @@
 --  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 --  THE SOFTWARE.
 
--- NB: this is the MIT License, as found 12-Sep-2007 on the site
--- http://www.opensource.org/licenses/mit-license.php
+--  NB: this is the MIT License, as found 12-Sep-2007 on the site
+--  http://www.opensource.org/licenses/mit-license.php
 
--- Derived from ExcelOut by Frank Schoonjans in Modula-2 - thanks!
-
--- (*) All Trademarks mentioned are properties of their respective owners.
+--  (*) All Trademarks mentioned are properties of their respective owners.
 -------------------------------------------------------------------------------------
 --
 --  Follow these steps to create an Excel spreadsheet stream:
@@ -79,7 +77,7 @@ package Excel_Out is
   -- (2) Before any cell content: --
   ----------------------------------
 
-  -- * Page layout for printing
+  --  * Page layout for printing
   procedure Header (xl : Excel_Out_Stream; page_header_string : String);
   procedure Footer (xl : Excel_Out_Stream; page_footer_string : String);
   --
@@ -103,8 +101,8 @@ package Excel_Out is
     scale_or_fit           : Scale_or_fit_choice := scale
   );
 
-  -- * The column width unit is as it appears in Excel when you resize a column.
-  --     It is the width of a '0' in a standard font.
+  --  * The column width unit is as it appears in Excel when you resize a column.
+  --      It is the width of a '0' in a standard font.
   procedure Write_default_column_width (xl : in out Excel_Out_Stream; width : Positive);
   procedure Write_column_width (xl : in out Excel_Out_Stream; column : Positive; width : Natural);
   procedure Write_column_width (
@@ -114,31 +112,31 @@ package Excel_Out is
     width         : Natural
   );
 
-  -- * The row height unit is in font points, as appearing when you
-  --     resize a row in Excel. A zero height means the row is hidden.
+  --  * The row height unit is in font points, as appearing when you
+  --      resize a row in Excel. A zero height means the row is hidden.
   procedure Write_default_row_height (xl : Excel_Out_Stream; height : Positive);
   procedure Write_row_height (xl : Excel_Out_Stream; row : Positive; height : Natural);
 
   ----------------------
   -- Formatting cells --
   ----------------------
-  -- A cell format is, as you can see in the format dialog
-  -- in Excel, a combination of:
-  --   - a number format
-  --   - a set of alignements
-  --   - a font
-  --   - and other optional things to come here...
-  -- Formats are user-defined except one which is predefined: Default_format
+  --  A cell format is, as you can see in the format dialog
+  --  in Excel, a combination of:
+  --    - a number format
+  --    - a set of alignements
+  --    - a font
+  --    - and other optional things to come here...
+  --  Formats are user-defined except one which is predefined: Default_format
 
   type Format_type is private;
 
   function Default_format (xl : Excel_Out_Stream) return Format_type;
-  -- What you get when creating a new sheet in Excel: Default_font,...
+  --  What you get when creating a new sheet in Excel: Default_font,...
 
-  -- * Number format
+  --  * Number format
   type Number_format_type is private;
 
-  -- Built-in number formats
+  --  Built-in number formats
   general          : constant Number_format_type;
   decimal_0        : constant Number_format_type;
   decimal_2        : constant Number_format_type;
@@ -160,11 +158,11 @@ package Excel_Out is
     format_string : in     String
   );
 
-  -- * Fonts are user-defined, one is predefined: Default_font
+  --  * Fonts are user-defined, one is predefined: Default_font
   type Font_type is private;
 
   function Default_font (xl : Excel_Out_Stream) return Font_type;
-  -- Arial 10, regular, "automatic" color
+  --  Arial 10, regular, "automatic" color
 
   type Color_type is
     (automatic,
@@ -173,7 +171,7 @@ package Excel_Out is
 
   type Font_style is private;
 
-  -- For combining font styles (e.g.: bold & underlined):
+  --  For combining font styles (e.g.: bold & underlined):
   function "&"(a, b : Font_style) return Font_style;
 
   regular     : constant Font_style;
@@ -191,7 +189,7 @@ package Excel_Out is
     font_name    :        String;
     height       :        Positive;
     font         :    out Font_type;
-    -- optional:
+    --  Optional:
     style        :        Font_style := regular;
     color        :        Color_type := automatic
   );
@@ -217,7 +215,7 @@ package Excel_Out is
 
   type Cell_border is private;
 
-  -- Operator for combining borders (e.g.: left & top):
+  --  Operator for combining borders (e.g.: left & top):
   function "&"(a, b : Cell_border) return Cell_border;
 
   no_border : constant Cell_border;
@@ -246,8 +244,8 @@ package Excel_Out is
   -- (3) Cell contents: --
   ------------------------
 
-  -- NB: you need to write with ascending row index and with ascending
-  --     column index within a row; otherwise Excel issues a protest
+  --  NB: you need to write with ascending row index and with ascending
+  --      column index within a row; otherwise Excel issues a protest
 
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Long_Float);
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Integer);
@@ -255,10 +253,10 @@ package Excel_Out is
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Unbounded_String);
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Time);
 
-  -- "Ada.Text_IO" - like output.
-  -- No need to specify row & column each time.
-  -- Write 'Put(x, content)' where x is an Excel_Out_Stream just
-  -- as if x was a File_Type, and vice-versa.
+  --  "Ada.Text_IO" - like output.
+  --  No need to specify row & column each time.
+  --  Write 'Put(x, content)' where x is an Excel_Out_Stream just
+  --  as if x was a File_Type, and vice-versa.
   --
   procedure Put (xl : in out Excel_Out_Stream; num : Long_Float);
   procedure Put (xl    : in out Excel_Out_Stream;
@@ -278,35 +276,35 @@ package Excel_Out is
   --
   procedure New_Line (xl : in out Excel_Out_Stream; Spacing : Positive := 1);
 
-  -- Get current column and row. The next Put will put contents in that cell.
+  --  Get current column and row. The next Put will put contents in that cell.
   --
   function Col (xl : in Excel_Out_Stream) return Positive;    -- Text_IO naming
   function Column (xl : in Excel_Out_Stream) return Positive; -- Excel naming
   function Line (xl : in Excel_Out_Stream) return Positive;   -- Text_IO naming
   function Row (xl : in Excel_Out_Stream) return Positive;    -- Excel naming
 
-  -- Relative / absolute jumps
+  --  Relative / absolute jumps
   procedure Jump (xl : in out Excel_Out_Stream; rows, columns : Natural);
   procedure Jump_to (xl : in out Excel_Out_Stream; row, column : Positive);
   procedure Next (xl : in out Excel_Out_Stream; columns : Natural := 1);  -- Jump 0 or more cells right
   procedure Next_Row (xl : in out Excel_Out_Stream; rows : Natural := 1); -- Jump 0 or more cells down
   --
-  -- Merge a certain amount of cells with the last one,
-  -- right to that cell, on the same row.
+  --  Merge a certain amount of cells with the last one,
+  --  right to that cell, on the same row.
   procedure Merge (xl : in out Excel_Out_Stream; cells : Positive);
 
   procedure Write_cell_comment (xl : Excel_Out_Stream; row, column : Positive; text : String);
   procedure Write_cell_comment_at_cursor (xl : Excel_Out_Stream; text : String);
 
-  -- Cells written after Use_format will be using the given format,
-  -- defined by Define_format.
+  --  Cells written after Use_format will be using the given format,
+  --  defined by Define_format.
   procedure Use_format (
     xl           : in out Excel_Out_Stream;
     format       : in     Format_type
   );
   procedure Use_default_format (xl : in out Excel_Out_Stream);
 
-  -- The Freeze Pane methods can be called anytime before Close
+  --  The Freeze Pane methods can be called anytime before Close
   procedure Freeze_Panes (xl : in out Excel_Out_Stream; row, column : Positive);
   procedure Freeze_Panes_at_cursor (xl : in out Excel_Out_Stream);
   procedure Freeze_Top_Row (xl : in out Excel_Out_Stream);
@@ -318,12 +316,12 @@ package Excel_Out is
   --  Set_Index and Index are not directly useful for Excel_Out users.
   --  They are private indeed, but they must be visible (RM 3.9.3(10)).
 
-  -- Set the index on the stream
+  --  Set the index on the stream
   procedure Set_Index (xl : in out Excel_Out_Stream;
                        to : Ada.Streams.Stream_IO.Positive_Count)
   is abstract;
 
-  -- Return the index of the stream
+  --  Return the index of the stream
   function Index (xl : Excel_Out_Stream) return Ada.Streams.Stream_IO.Count
   is abstract;
 
@@ -367,10 +365,10 @@ package Excel_Out is
 
   Default_encoding : constant Encoding_type := Windows_CP_1252;
 
-  -----------------------------------------------------------------
-  -- Here, the derived stream types pre-defined in this package. --
-  -----------------------------------------------------------------
-  -- * Output to a file:
+  -------------------------------------------------------------------
+  --  Here, the derived stream types pre-defined in this package.  --
+  -------------------------------------------------------------------
+  --  * Output to a file:
 
   type Excel_Out_File is new Excel_Out_Stream with private;
 
@@ -385,7 +383,7 @@ package Excel_Out is
 
   function Is_Open (xl : in Excel_Out_File) return Boolean;
 
-  -- * Output to a string (to be compressed, packaged, transmitted, ... ):
+  --  * Output to a string (to be compressed, packaged, transmitted, ... ):
 
   type Excel_Out_String is new Excel_Out_Stream with private;
 
@@ -404,7 +402,7 @@ package Excel_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "17";
-  reference : constant String := "18-Oct-2018";
+  reference : constant String := "08-Mar-2022";
   web       : constant String := "http://excel-writer.sf.net/";
   --  hopefully the latest version is at that URL...  -----^
 
@@ -424,10 +422,10 @@ private
   max_font  : constant := 62;
   max_format : constant := 62;
 
-  -- Theoretically, we would not need to memorize the XF informations
-  -- and just give the XF identifier given with Format_type, but some
-  -- versions of Excel with some locales mix up the font and numerical format
-  -- when giving 0 for the cell attributes (see Cell_attributes, 2.5.13)
+  --  Theoretically, we would not need to memorize the XF informations
+  --  and just give the XF identifier given with Format_type, but some
+  --  versions of Excel with some locales mix up the font and numerical format
+  --  when giving 0 for the cell attributes (see Cell_attributes, 2.5.13)
   --   Added Mar-2011.
 
   type XF_Info is record
@@ -437,7 +435,7 @@ private
 
   type XF_Definition is array (XF_Range) of XF_Info;
 
-  -- Built-in number formats
+  --  Built-in number formats
   general          : constant Number_format_type := 0;
   decimal_0        : constant Number_format_type := 1;
   decimal_2        : constant Number_format_type := 2;
@@ -465,7 +463,7 @@ private
   hh_mm            : constant Number_format_type := 24;
   hh_mm_ss         : constant Number_format_type := 25;
   dd_mm_yyyy_hh_mm : constant Number_format_type := 26;
-  -- End of Excel built-in formats
+  --  End of Excel built-in formats
   last_built_in : constant Number_format_type := dd_mm_yyyy_hh_mm;
 
   percent_0_plus   : constant Number_format_type := 27; -- +3%, 0%, -4%
@@ -473,17 +471,17 @@ private
   date_iso         : constant Number_format_type := 29; -- ISO 8601 format: 2014-03-16
   date_h_m_iso     : constant Number_format_type := 30; -- date, hour, minutes
   date_h_m_s_iso   : constant Number_format_type := 31; -- date, hour, minutes, seconds
-  -- End of our custom formats
+  --  End of our custom formats
   last_custom   : constant Number_format_type := date_h_m_s_iso;
 
   type Col_width_set is array (1 .. 256) of Boolean;
 
-  -- We have a concrete type as hidden ancestor of the Excel_Out_Stream root
-  -- type. A variable of that type is initialized with default values and
-  -- can help re-initialize a Excel_Out_Stream when re-used several times.
-  -- See the Reset procedure in body.
-  -- The abstract Excel_Out_Stream could have default values, but using a
-  -- variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
+  --  We have a concrete type as hidden ancestor of the Excel_Out_Stream root
+  --  type. A variable of that type is initialized with default values and
+  --  can help re-initialize a Excel_Out_Stream when re-used several times.
+  --  See the Reset procedure in body.
+  --  The abstract Excel_Out_Stream could have default values, but using a
+  --  variable of this type to reset values is not Ada compliant (LRM:3.9.3(8))
   --
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
@@ -565,17 +563,17 @@ private
     xl_file   : XL_file_acc := null; -- access to the "physical" Excel file
   end record;
 
-  -- Set the index on the file
+  --  Set the index on the file
   procedure Set_Index (xl : in out Excel_Out_File;
                        To : Ada.Streams.Stream_IO.Positive_Count);
 
-  -- Return the index of the file
+  --  Return the index of the file
   function Index (xl : Excel_Out_File) return Ada.Streams.Stream_IO.Count;
 
   ------------------------
   -- Output to a string --
   ------------------------
-  -- Code reused from Zip_Streams
+  --  Code reused from Zip_Streams
 
   --- *** We define here a complete in-memory stream:
   type Unbounded_Stream is new Ada.Streams.Root_Stream_Type with
@@ -584,22 +582,22 @@ private
       Loc : Integer := 1;
     end record;
 
-  -- Read data from the stream.
+  --  Read data from the stream.
   procedure Read
     (Stream : in out Unbounded_Stream;
      Item   : out Ada.Streams.Stream_Element_Array;
      Last   : out Ada.Streams.Stream_Element_Offset);
 
-  -- write data to the stream, starting from the current index.
-  -- Data will be overwritten from index is already available.
+  --  Write data to the stream, starting from the current index.
+  --  Data will be overwritten from index is already available.
   procedure Write
     (Stream : in out Unbounded_Stream;
      Item   : Ada.Streams.Stream_Element_Array);
 
-  -- Set the index on the stream
+  --  Set the index on the stream
   procedure Set_Index (S : access Unbounded_Stream; To : Positive);
 
-  -- returns the index of the stream
+  --  returns the index of the stream
   function Index (S : access Unbounded_Stream) return Integer;
 
   --- ***
@@ -610,11 +608,11 @@ private
     xl_memory : Unbounded_Stream_Acc;
   end record;
 
-  -- Set the index on the Excel string stream
+  --  Set the index on the Excel string stream
   procedure Set_Index (xl : in out Excel_Out_String;
                        To : Ada.Streams.Stream_IO.Positive_Count);
 
-  -- Return the index of the Excel string stream
+  --  Return the index of the Excel string stream
   function Index (xl : Excel_Out_String) return Ada.Streams.Stream_IO.Count;
 
 end Excel_Out;
