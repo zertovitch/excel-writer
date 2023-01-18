@@ -43,7 +43,10 @@ procedure EW_Test is
     xl.Put ("-2**x");
     xl.Put  ("2**x - 1");
     xl.Next;
-    xl.Put_Line ("Formulas for checking (all results should be 0)");
+    xl.Put_Line
+      ("Formulas for checking (all results should be 0). " &
+       " NB: the formulas are written as text." &
+       " Edit cells to convert them into real formulas.");
     for power in 0 .. 66 loop
       xl.Put (power);
       xl.Next;
