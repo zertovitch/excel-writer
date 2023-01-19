@@ -1,7 +1,7 @@
 Intro to Excel Writer 
 =====================
 
-The Excel Writer consists of a package, Excel_Out,
+The Excel Writer consists of an Ada package, Excel_Out,
 which produces Excel files - as physical files, or as
 other types of data streams.
 

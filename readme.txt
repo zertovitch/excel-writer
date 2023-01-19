@@ -1,12 +1,12 @@
 Excel Writer 
 ============
 
-The Excel Writer consists of a package, Excel_Out,
+The Excel Writer consists of an Ada package, Excel_Out,
 which produces Excel files - as physical files, or as
 other types of data streams.
+
 The creation of an Excel file is as simple as this
 small procedure:
-
 
   with Excel_Out;
    
@@ -17,6 +17,11 @@ small procedure:
     xl.Put_Line ("Hello world !");
     xl.Close;
   end;
+
+
+License
+=======
+Excel Writer is licensed under the MIT License.
 
 
 ====
