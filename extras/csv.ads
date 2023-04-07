@@ -10,12 +10,11 @@ package CSV is
    type Fields_Bounds is array (Positive range <>) of Bounds;
    function Get_Bounds (Item : String; Separator : Character := ',') return Fields_Bounds;
 
-   function Extract (
-      Item    : String;
-      Fields  : Fields_Bounds;
-      Column  : Positive;
-      Unquote : Boolean := True
-   )
+   function Extract
+     (Item       : String;
+      Fields     : Fields_Bounds;
+      Column     : Positive;
+      Do_Unquote : Boolean := True)
    return String;
 
    function Quote   (Item : String) return String;

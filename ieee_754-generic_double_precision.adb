@@ -33,18 +33,18 @@ package body IEEE_754.Generic_Double_Precision is
    Fraction_Bits  : constant := 52;
    Mantissa_Bits  : constant := 53;
 
-   function Exponent (Value : Float_64) return Integer is
-      pragma Inline (Exponent);
+   function Extract_Exponent (Value : Float_64) return Integer is
+      pragma Inline (Extract_Exponent);
    begin
       return
          Integer
          (Shift_Left  (Unsigned_16 (Value (1)) and 16#7F#, 4)
          or Shift_Right (Unsigned_16 (Value (2)), 4)
          );
-   end Exponent;
+   end Extract_Exponent;
 
-   function Mantissa (Value : Float_64) return Unsigned_64 is
-      pragma Inline (Mantissa);
+   function Extract_Mantissa (Value : Float_64) return Unsigned_64 is
+      pragma Inline (Extract_Mantissa);
    begin
       return
       (Unsigned_64 (Value (8))
@@ -56,7 +56,7 @@ package body IEEE_754.Generic_Double_Precision is
       or Shift_Left (Unsigned_64 (Value (2)) and 16#0F#, 6 * 8)
       or 2 ** Fraction_Bits
       );
-   end Mantissa;
+   end Extract_Mantissa;
 
    procedure Normalize
              (Value    : Number;
@@ -131,8 +131,8 @@ package body IEEE_754.Generic_Double_Precision is
          return 0.0;
       end if;
       declare
-         Power    : Integer := Exponent (Value);
-         Fraction : Unsigned_64 := Mantissa (Value);
+         Power    : Integer := Extract_Exponent (Value);
+         Fraction : Unsigned_64 := Extract_Mantissa (Value);
          Result   : Number;
       begin
          if Power = Exponent_Last then
@@ -177,9 +177,9 @@ package body IEEE_754.Generic_Double_Precision is
    function Is_NaN (Value : Float_64) return Boolean is
    begin
       return
-      (Exponent (Value) = Exponent_Last
+      (Extract_Exponent (Value) = Exponent_Last
       and then
-         Mantissa (Value) /= 2 ** Fraction_Bits
+         Extract_Mantissa (Value) /= 2 ** Fraction_Bits
       );
    end Is_NaN;
 
@@ -190,7 +190,7 @@ package body IEEE_754.Generic_Double_Precision is
 
    function Is_Real (Value : Float_64) return Boolean is
    begin
-      return Exponent (Value) < Exponent_Last;
+      return Extract_Exponent (Value) < Exponent_Last;
    end Is_Real;
 
    function To_IEEE (Value : Number) return Float_64 is

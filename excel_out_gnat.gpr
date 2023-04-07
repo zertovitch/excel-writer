@@ -25,7 +25,7 @@ project Excel_Out_Gnat is
 
    Common_Options := (
      "-gnatwa",                        --  Warnings switches (a:turn on all info/warnings marked with +)
-     --  "-gnatwh",                        --  Warnings switches (h:turn on warnings for hiding declarations)
+     "-gnatwh",                        --  Warnings switches (h:turn on warnings for hiding declarations)
      "-gnatwcijkmopruvz.c.n.p.t.w.x",  --  Warnings switches (run "gnatmake" for full list)
      "-gnatf",  --  Full errors. Verbose details, all undefined references
      "-gnatq",  --  Don't quit, try semantics, even if parse errors

@@ -85,7 +85,12 @@ package Excel_Out is
   procedure Right_Margin (xl : Excel_Out_Stream; inches : Long_Float);
   procedure Top_Margin (xl : Excel_Out_Stream; inches : Long_Float);
   procedure Bottom_Margin (xl : Excel_Out_Stream; inches : Long_Float);
-  procedure Margins (xl : Excel_Out_Stream; left, right, top, bottom : Long_Float);
+  procedure Margins
+    (xl : Excel_Out_Stream;
+     left_inches,
+     right_inches,
+     top_inches,
+     bottom_inches : Long_Float);
   --
   procedure Print_Row_Column_Headers (xl : Excel_Out_Stream);
   procedure Print_Gridlines (xl : Excel_Out_Stream);
@@ -282,7 +287,7 @@ package Excel_Out is
 
   --  Relative / absolute jumps
   procedure Jump (xl : in out Excel_Out_Stream; rows, columns : Natural);
-  procedure Jump_to (xl : in out Excel_Out_Stream; row, column : Positive);
+  procedure Jump_to (xl : in out Excel_Out_Stream; to_row, to_column : Positive);
   procedure Next (xl : in out Excel_Out_Stream; columns : Natural := 1);  -- Jump 0 or more cells right
   procedure Next_Row (xl : in out Excel_Out_Stream; rows : Natural := 1); -- Jump 0 or more cells down
   --
@@ -290,7 +295,7 @@ package Excel_Out is
   --  right to that cell, on the same row.
   procedure Merge (xl : in out Excel_Out_Stream; cells : Positive);
 
-  procedure Write_cell_comment (xl : Excel_Out_Stream; row, column : Positive; text : String);
+  procedure Write_cell_comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String);
   procedure Write_cell_comment_at_cursor (xl : Excel_Out_Stream; text : String);
 
   --  Cells written after Use_format will be using the given format,
@@ -302,7 +307,7 @@ package Excel_Out is
   procedure Use_default_format (xl : in out Excel_Out_Stream);
 
   --  The Freeze Pane methods can be called anytime before Close
-  procedure Freeze_Panes (xl : in out Excel_Out_Stream; row, column : Positive);
+  procedure Freeze_Panes (xl : in out Excel_Out_Stream; at_row, at_column : Positive);
   procedure Freeze_Panes_at_cursor (xl : in out Excel_Out_Stream);
   procedure Freeze_Top_Row (xl : in out Excel_Out_Stream);
   procedure Freeze_First_Column (xl : in out Excel_Out_Stream);

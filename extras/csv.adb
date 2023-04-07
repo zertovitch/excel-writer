@@ -26,18 +26,17 @@ package body CSV is
    -- Extract --
    -------------
 
-   function Extract (
-      Item    : String;
-      Fields  : Fields_Bounds;
-      Column  : Positive;
-      Unquote : Boolean := True
-   )
+   function Extract
+     (Item       : String;
+      Fields     : Fields_Bounds;
+      Column     : Positive;
+      Do_Unquote : Boolean := True)
    return String
    is
       Extracted : constant String :=
          Item (Fields (Column).Start .. Fields (Column).Stop);
    begin
-      if Unquote then
+      if Do_Unquote then
          return CSV.Unquote (Extracted);
       else
          return Extracted;
@@ -50,18 +49,18 @@ package body CSV is
 
    function Quote (Item : String) return String is
       Result : String (Item'First .. Item'Last + Count (Item, """") + 2);
-      Index  : Positive;
+      Current_Index  : Positive;
    begin
-      Index := Result'First;
-      Result (Index) := '"';
+      Current_Index := Result'First;
+      Result (Current_Index) := '"';
 
       for I in Item'Range loop
          if Item (I) = '"' then
-            Index := Index + 1;
-            Result (Index) := '"';
+            Current_Index := Current_Index + 1;
+            Result (Current_Index) := '"';
          end if;
-         Index := Index + 1;
-         Result (Index) := Item (I);
+         Current_Index := Current_Index + 1;
+         Result (Current_Index) := Item (I);
       end loop;
       Result (Result'Last) := '"';
 

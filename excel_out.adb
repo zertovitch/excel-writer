@@ -401,7 +401,7 @@ package body Excel_Out is
       when BIFF3 .. BIFF4 =>
         if xl.number_fmt > 255 then
           raise Number_format_out_of_range
-            with "Only 256 number formats are allowed in the BIFF3, BIFF42 formats";
+            with "Only 256 number formats are allowed in the BIFF3, BIFF4 formats";
         end if;
     end case;
     format := xl.number_fmt;
@@ -752,22 +752,28 @@ package body Excel_Out is
     WriteBiff (xl, 16#0029#, IEEE_Double_Intel (inches));
   end Bottom_Margin;
 
-  procedure Margins (xl : Excel_Out_Stream; left, right, top, bottom : Long_Float) is
+  procedure Margins
+    (xl : Excel_Out_Stream;
+     left_inches,
+     right_inches,
+     top_inches,
+     bottom_inches : Long_Float)
+  is
   begin
-    Left_Margin (xl, left);
-    Right_Margin (xl, right);
-    Top_Margin (xl, top);
-    Bottom_Margin (xl, bottom);
+    Left_Margin (xl, left_inches);
+    Right_Margin (xl, right_inches);
+    Top_Margin (xl, top_inches);
+    Bottom_Margin (xl, bottom_inches);
   end Margins;
 
   procedure Print_Row_Column_Headers (xl : Excel_Out_Stream) is
   begin
-    WriteBiff (xl, 16#002A#, Intel_16 (1)); -- 5.81 PRINTHEADERS p.199
+    WriteBiff (xl, 16#002A#, Intel_16 (1));  --  5.81 PRINTHEADERS p.199
   end  Print_Row_Column_Headers;
 
   procedure Print_Gridlines (xl : Excel_Out_Stream) is
   begin
-    WriteBiff (xl, 16#002B#, Intel_16 (1)); -- 5.80 PRINTGRIDLINES p.199
+    WriteBiff (xl, 16#002B#, Intel_16 (1));  --  5.80 PRINTGRIDLINES p.199
   end Print_Gridlines;
 
   procedure Page_Setup (
@@ -1349,7 +1355,7 @@ package body Excel_Out is
     end loop;
   end Merge;
 
-  procedure Write_cell_comment (xl : Excel_Out_Stream; row, column : Positive; text : String) is
+  procedure Write_cell_comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String) is
   begin
     if text'Length >= 2048 then
       raise Constraint_Error;
@@ -1365,8 +1371,8 @@ package body Excel_Out is
       --    );
       when others =>
         WriteBiff (xl, 16#001C#,
-          Intel_16 (Unsigned_16 (row - 1)) &
-          Intel_16 (Unsigned_16 (column - 1)) &
+          Intel_16 (Unsigned_16 (at_row - 1)) &
+          Intel_16 (Unsigned_16 (at_column - 1)) &
           To_buf_16_bit_length (text)
         );
     end case;
@@ -1431,23 +1437,23 @@ package body Excel_Out is
     Jump_to (xl, xl.curr_row + rows, xl.curr_col + columns);
   end Jump;
 
-  procedure Jump_to (xl : in out Excel_Out_Stream; row, column : Positive) is
+  procedure Jump_to (xl : in out Excel_Out_Stream; to_row, to_column : Positive) is
   begin
-    if row < xl.curr_row then -- trying to overwrite cells ?...
+    if to_row < xl.curr_row then -- trying to overwrite cells ?...
       raise Decreasing_row_index;
     end if;
-    if row = xl.curr_row and then
-      column < xl.curr_col
+    if to_row = xl.curr_row and then
+      to_column < xl.curr_col
     then -- trying to overwrite cells on same row ?...
       raise Decreasing_column_index;
     end if;
-    if row > 65536 then
+    if to_row > 65536 then
       raise Row_out_of_range;
-    elsif column > 256 then
+    elsif to_column > 256 then
       raise Column_out_of_range;
     end if;
-    xl.curr_row := row;
-    xl.curr_col := column;
+    xl.curr_row := to_row;
+    xl.curr_col := to_column;
   end Jump_to;
 
   procedure Next (xl : in out Excel_Out_Stream; columns : Natural := 1) is
@@ -1489,11 +1495,11 @@ package body Excel_Out is
     return xl.def_fmt;
   end Default_format;
 
-  procedure Freeze_Panes (xl : in out Excel_Out_Stream; row, column : Positive) is
+  procedure Freeze_Panes (xl : in out Excel_Out_Stream; at_row, at_column : Positive) is
   begin
     xl.frz_panes := True;
-    xl.freeze_row := row;
-    xl.freeze_col := column;
+    xl.freeze_row := at_row;
+    xl.freeze_col := at_column;
   end Freeze_Panes;
 
   procedure Freeze_Panes_at_cursor (xl : in out Excel_Out_Stream) is
