@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2009 .. 2022 Gautier de Montmollin
+--  Copyright (c) 2009 .. 2023 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -330,7 +330,8 @@ package Excel_Out is
   Decreasing_row_index,
   Decreasing_column_index,
   Row_out_of_range,
-  Column_out_of_range : exception;
+  Column_out_of_range,
+  Format_out_of_range : exception;
 
   type Excel_type is (
     BIFF2,    --  Excel 2.1, 2,2
@@ -401,8 +402,8 @@ package Excel_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "17";
-  reference : constant String := "08-Mar-2022";
+  version   : constant String := "18, preview 1";
+  reference : constant String := "07-Apr-2023";
   web       : constant String := "http://excel-writer.sf.net/";
   --  hopefully the latest version is at that URL...  -----^
 
@@ -418,9 +419,8 @@ private
   type Number_format_type is new Natural;
   type Format_type is new Natural;
 
-  subtype XF_Range is Integer range 0 .. 62; -- after 62 we'd need to use an IXFE (5.62)
-  max_font  : constant := 62;
-  max_format : constant := 62;
+  subtype XF_Range is Integer range 0 .. 62;
+  --  ^ After 62 we would need to use an IXFE (5.62)
 
   --  Theoretically, we would not need to memorize the XF informations
   --  and just give the XF identifier given with Format_type, but some

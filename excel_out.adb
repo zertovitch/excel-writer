@@ -571,7 +571,7 @@ package body Excel_Out is
         end if;
         mask := mask * 2;
       end loop;
-      --  5.115.2 XF Record Contents, p. 221 for BIFF3
+      --  5.115.2 XF Record Contents, p. 221 for BIFF2
       WriteBiff (
         xl,
         16#0043#, -- XF code in BIFF2
@@ -695,7 +695,17 @@ package body Excel_Out is
       --  when BIFF8 =>
       --    Define_BIFF8_XF;  --  BIFF8: 16#00E0#, p. 224
     end case;
+    --
+    --  Now we will store the newly defined format.
+    --
     xl.xfs := xl.xfs + 1;
+    if xl.xfs not in XF_Range then
+      raise Format_out_of_range
+        with
+          "Too many formats defined, maximum number of formats " &
+          "(including a few pre-defined) is" &
+          Integer'Image (XF_Range'Last + 1);
+    end if;
     cell_format := Format_type (xl.xfs);
     xl.xf_def (xl.xfs) := (font => font, numb => number_format);
   end Define_format;
@@ -918,7 +928,7 @@ package body Excel_Out is
     xl.fonts := xl.fonts + 1;
     if xl.fonts = 4 then
       xl.fonts := 5;
-      --  Anomaly! The font with index 4 is omitted in all BIFF versions.
+      --  Anomaly! The font with index 4 is omitted in all BIFF versions (5.45).
       --  Numbering is 0, 1, 2, 3, *5*, 6,...
     end if;
     case xl.format is
@@ -1437,7 +1447,12 @@ package body Excel_Out is
   )
   is
   begin
-    xl.xf_in_use := XF_Range (format);
+    if Integer (format) in XF_Range'Range then
+      xl.xf_in_use := XF_Range (format);
+    else
+      raise Format_out_of_range;
+      --  ^ Raised only if `format` was hacked using Unchecked_Conversion.
+    end if;
   end Use_format;
 
   procedure Use_default_format (xl : in out Excel_Out_Stream) is
