@@ -232,8 +232,8 @@ package body Excel_Out is
     );
   end Write_BOF;
 
-  --  5.49 FORMAT (number format)
-  procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
+  --  5.49 FORMAT (actually, a number format; the full format is called XF (extended format))
+  procedure Write_Number_Format_String (xl : Excel_Out_Stream'Class; s : String) is
   begin
     case xl.xl_format is
       when BIFF2 | BIFF3 =>
@@ -244,10 +244,10 @@ package body Excel_Out is
      --     WriteBiff(xl, 16#041E#, (0, 0) &  --  should be: format index used in other records
      --       To_buf_8_bit_length(s));
     end case;
-  end WriteFmtStr;
+  end Write_Number_Format_String;
 
   --  Write built-in number formats (internal)
-  procedure WriteFmtRecords (xl : Excel_Out_Stream'Class) is
+  procedure Write_Default_Number_Formats (xl : Excel_Out_Stream'Class) is
     sep_1000 : constant Character := ','; -- US format
     sep_deci : constant Character := '.'; -- US format
     --  ^ If there is any evidence of an issue with those built-in separators,
@@ -266,72 +266,72 @@ package body Excel_Out is
       --    null;
     end case;
     --  loop & case avoid omitting any choice
-    for n in Number_format_type'First .. last_custom loop
+    for n in Number_format_type'First .. last_custom_number_format loop
       case n is
-        when general    =>  WriteFmtStr (xl, "General");
-        when decimal_0  =>  WriteFmtStr (xl, "0");
-        when decimal_2  =>  WriteFmtStr (xl, "0" & sep_deci & "00"); -- 'Comma' built-in style
+        when general    =>  Write_Number_Format_String (xl, "General");
+        when decimal_0  =>  Write_Number_Format_String (xl, "0");
+        when decimal_2  =>  Write_Number_Format_String (xl, "0" & sep_deci & "00"); -- 'Comma' built-in style
         when decimal_0_thousands_separator =>
-          WriteFmtStr (xl, "#" & sep_1000 & "##0");
+          Write_Number_Format_String (xl, "#" & sep_1000 & "##0");
         when decimal_2_thousands_separator =>
-          WriteFmtStr (xl, "#" & sep_1000 & "##0" & sep_deci & "00");
+          Write_Number_Format_String (xl, "#" & sep_1000 & "##0" & sep_deci & "00");
         when no_currency_0       =>
           if xl.xl_format >= BIFF4 then
-            WriteFmtStr (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
+            Write_Number_Format_String (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
           end if;
         when no_currency_red_0   =>
           if xl.xl_format >= BIFF4 then
-            WriteFmtStr (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
+            Write_Number_Format_String (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
           --  [Red] doesn't go with non-English versions of Excel !!
           end if;
         when no_currency_2       =>
           if xl.xl_format >= BIFF4 then
-            WriteFmtStr (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
+            Write_Number_Format_String (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
                           "-#" & sep_1000 & "##0" & sep_deci & "00");
           end if;
         when no_currency_red_2   =>
           if xl.xl_format >= BIFF4 then
-            WriteFmtStr (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
+            Write_Number_Format_String (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
                           "-#" & sep_1000 & "##0" & sep_deci & "00");
           end if;
         when currency_0       =>
-          WriteFmtStr (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
+          Write_Number_Format_String (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
         when currency_red_0   =>
-          WriteFmtStr (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
+          Write_Number_Format_String (xl, "$ #" & sep_1000 & "##0;$ -#" & sep_1000 & "##0");
           --  [Red] doesn't go with non-English versions of Excel !!
         when currency_2       =>
-          WriteFmtStr (xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
+          Write_Number_Format_String (xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
                           "$ -#" & sep_1000 & "##0" & sep_deci & "00");
         when currency_red_2   =>
-          WriteFmtStr (xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
+          Write_Number_Format_String (xl,  "$ #" & sep_1000 & "##0" & sep_deci & "00;" &
                           "$ -#" & sep_1000 & "##0" & sep_deci & "00");
-        when percent_0        =>  WriteFmtStr (xl, "0%");   -- 'Percent' built-in style
-        when percent_2        =>  WriteFmtStr (xl, "0" & sep_deci & "00%");
-        when scientific       =>  WriteFmtStr (xl, "0" & sep_deci & "00E+00");
+        when percent_0        =>  Write_Number_Format_String (xl, "0%");   -- 'Percent' built-in style
+        when percent_2        =>  Write_Number_Format_String (xl, "0" & sep_deci & "00%");
+        when scientific       =>  Write_Number_Format_String (xl, "0" & sep_deci & "00E+00");
         when fraction_1       =>
           if xl.xl_format >= BIFF3 then
-            WriteFmtStr (xl, "#\ ?/?");
+            Write_Number_Format_String (xl, "#\ ?/?");
           end if;
         when fraction_2       =>
           if xl.xl_format >= BIFF3 then
-            WriteFmtStr (xl, "#\ ??/??");
+            Write_Number_Format_String (xl, "#\ ??/??");
           end if;
-        when dd_mm_yyyy       =>  WriteFmtStr (xl, "dd/mm/yyyy");
-        when dd_mmm_yy        =>  WriteFmtStr (xl, "dd/mmm/yy");
-        when dd_mmm           =>  WriteFmtStr (xl, "dd/mmm");
-        when mmm_yy           =>  WriteFmtStr (xl, "mmm/yy");
-        when h_mm_AM_PM       =>  WriteFmtStr (xl, "h:mm\ AM/PM");
-        when h_mm_ss_AM_PM    =>  WriteFmtStr (xl, "h:mm:ss\ AM/PM");
-        when hh_mm            =>  WriteFmtStr (xl, "hh:mm");
-        when hh_mm_ss         =>  WriteFmtStr (xl, "hh:mm:ss");
-        when dd_mm_yyyy_hh_mm =>  WriteFmtStr (xl, "dd/mm/yyyy\ hh:mm");
+        when dd_mm_yyyy       =>  Write_Number_Format_String (xl, "dd/mm/yyyy");
+        when dd_mmm_yy        =>  Write_Number_Format_String (xl, "dd/mmm/yy");
+        when dd_mmm           =>  Write_Number_Format_String (xl, "dd/mmm");
+        when mmm_yy           =>  Write_Number_Format_String (xl, "mmm/yy");
+        when h_mm_AM_PM       =>  Write_Number_Format_String (xl, "h:mm\ AM/PM");
+        when h_mm_ss_AM_PM    =>  Write_Number_Format_String (xl, "h:mm:ss\ AM/PM");
+        when hh_mm            =>  Write_Number_Format_String (xl, "hh:mm");
+        when hh_mm_ss         =>  Write_Number_Format_String (xl, "hh:mm:ss");
+        when dd_mm_yyyy_hh_mm =>  Write_Number_Format_String (xl, "dd/mm/yyyy\ hh:mm");
         when percent_0_plus  =>
-          WriteFmtStr (xl, "+0%;-0%;0%");
+          Write_Number_Format_String (xl, "+0%;-0%;0%");
         when percent_2_plus  =>
-          WriteFmtStr (xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
-        when date_iso        => WriteFmtStr (xl, "yyyy\-mm\-dd");
-        when date_h_m_iso    => WriteFmtStr (xl, "yyyy\-mm\-dd\ hh:mm");
-        when date_h_m_s_iso  => WriteFmtStr (xl, "yyyy\-mm\-dd\ hh:mm:ss");
+          Write_Number_Format_String (xl, "+0" & sep_deci & "00%;-0" & sep_deci & "00%;0" & sep_deci & "00%");
+        when date_iso        => Write_Number_Format_String (xl, "yyyy\-mm\-dd");
+        when date_h_m_iso    => Write_Number_Format_String (xl, "yyyy\-mm\-dd\ hh:mm");
+        when date_h_m_s_iso  => Write_Number_Format_String (xl, "yyyy\-mm\-dd\ hh:mm:ss");
           --  !! Trouble: Excel (German Excel/French locale) writes yyyy, reads it,
           --    understands it and translates it into aaaa, but is unable to
           --    understand *our* yyyy
@@ -343,17 +343,17 @@ package body Excel_Out is
     case xl.xl_format is
       when BIFF2 =>
         for i in 1 .. 6 loop
-          WriteFmtStr (xl, "@");
+          Write_Number_Format_String (xl, "@");
         end loop;
       when BIFF3 =>
         for i in 1 .. 4 loop
-          WriteFmtStr (xl, "@");
+          Write_Number_Format_String (xl, "@");
         end loop;
       when BIFF4 =>
         null;
     end case;
     --  ^ Stuffing for having the same number of built-in and EW custom
-  end WriteFmtRecords;
+  end Write_Default_Number_Formats;
 
   --  5.35 DIMENSION
   procedure Write_Dimensions (xl : Excel_Out_Stream'Class) is
@@ -384,17 +384,29 @@ package body Excel_Out is
     end case;
   end Write_Dimensions;
 
-  procedure Define_number_format (
-    xl           : in out Excel_Out_Stream;
-    format       :    out Number_format_type;
-    format_string : in     String
-  )
+  procedure Define_Number_Format
+    (xl            : in out Excel_Out_Stream;
+     format        :    out Number_format_type;
+     format_string : in     String)
   is
   begin
     xl.number_fmt := xl.number_fmt + 1;
+    case xl.xl_format is
+      when BIFF2 =>
+        if xl.number_fmt > 63 then
+          raise Number_format_out_of_range
+            with "Only 64 number formats are allowed in the BIFF2 format";
+            --  Reason: see encoding in the Cell Attributes (2.5.13).
+        end if;
+      when BIFF3 .. BIFF4 =>
+        if xl.number_fmt > 255 then
+          raise Number_format_out_of_range
+            with "Only 256 number formats are allowed in the BIFF3, BIFF42 formats";
+        end if;
+    end case;
     format := xl.number_fmt;
-    WriteFmtStr (xl, format_string);
-  end Define_number_format;
+    Write_Number_Format_String (xl, format_string);
+  end Define_Number_Format;
 
   procedure Write_Worksheet_header (xl : in out Excel_Out_Stream'Class) is
 
@@ -461,7 +473,7 @@ package body Excel_Out is
     Define_Font (xl, "Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
     Define_Font (xl, "Calibri", 10, font_2); -- Defined in BIFF3 files written by Excel 2002
     Define_Font (xl, "Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
-    WriteFmtRecords (xl);
+    Write_Default_Number_Formats (xl);
     --  5.111 WINDOWPROTECT
     WriteBiff (xl, 16#0019#, Intel_16 (0));
     --  Define default format
@@ -679,14 +691,14 @@ package body Excel_Out is
             null;
           when currency_0 .. fraction_2 =>
             actual_number_format := actual_number_format - 4;
-          when dd_mm_yyyy .. last_custom =>
+          when dd_mm_yyyy .. last_custom_number_format =>
             actual_number_format := actual_number_format - 6;
           when others =>
             null;
         end case;
         Define_BIFF2_XF;
       when BIFF3 =>
-        if actual_number_format in currency_0 .. last_custom then
+        if actual_number_format in currency_0 .. last_custom_number_format then
           actual_number_format := actual_number_format - 4;
         end if;
         Define_BIFF3_XF;

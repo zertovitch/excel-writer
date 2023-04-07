@@ -23,8 +23,8 @@ procedure Excel_Out_Demo is
 
   procedure Big_demo (ef : Excel_type) is
     xl : Excel_Out_File;
-    font_1, font_2, font_3, font_title, font_5, font_6 : Font_type;
-    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
+    font_1, font_2, font_3, font_for_title, font_5, font_6 : Font_type;
+    fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_for_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
     fmt_date_1, fmt_date_2, fmt_date_3, fmt_vertical : Format_type;
     custom_num, custom_date_num : Number_format_type;
     --  We test the output of some date (here: 2014-03-16 11:55:17)
@@ -57,18 +57,20 @@ procedure Excel_Out_Demo is
     xl.Define_Font ("Arial", 9, font_1, regular, blue);
     xl.Define_Font ("Courier New", 11, font_2, bold & italic, red);
     xl.Define_Font ("Times New Roman", 13, font_3, bold, teal);
-    xl.Define_Font ("Arial Narrow", 15, font_title, bold);
+    xl.Define_Font ("Arial Narrow", 15, font_for_title, bold);
     xl.Define_Font ("Calibri", 15, font_5, bold, dark_red);
     xl.Define_Font ("Calibri", 9, font_6);
     --
-    xl.Define_number_format (custom_num, "0.000000");  --  6 decimals
-    xl.Define_number_format (custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss");  --  ISO date
+    xl.Define_Number_Format (custom_num, "0.000000");  --  6 decimals
+    xl.Define_Number_Format (custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss");  --  ISO date
     --
-    xl.Define_Format (
-      font_title, general,
-      fmt_title,
-      border => top & bottom, vertical_align => centred
-    );
+    xl.Define_Format
+      (font           => font_for_title,
+       number_format  => general,
+       cell_format    => fmt_for_title,
+       border         => top & bottom,
+       vertical_align => centred);
+    --
     xl.Define_Format (font_1, percent_0, fmt_1, centred, right);
     xl.Define_Format (font_2, decimal_2, fmt_decimal_2);
     xl.Define_Format (font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
@@ -81,7 +83,7 @@ procedure Excel_Out_Demo is
     xl.Define_Format (font_6, hh_mm_ss,         fmt_date_3, shaded => True);  --  custom_date_num
     xl.Define_Format (font_6, general, fmt_vertical, wrap_text => True, text_orient => rotated_90);
     --
-    xl.Use_format (fmt_title);
+    xl.Use_format (fmt_for_title);
     xl.Put ("This is a big demo for Excel Writer / Excel_Out");
     xl.Merge (6);
     xl.Next;
@@ -111,7 +113,7 @@ procedure Excel_Out_Demo is
     xl.Use_format (fmt_8);
     xl.Put ("  <- = row * (1000 or 10) + column");
 
-    xl.Use_format (fmt_title);
+    xl.Use_format (fmt_for_title);
     for column in 1 .. 20 loop
       xl.Write (9, column, Character'Val (64 + column) & "");
     end loop;

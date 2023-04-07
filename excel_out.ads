@@ -152,11 +152,10 @@ package Excel_Out is
   hh_mm            : constant Number_format_type;
   hh_mm_ss         : constant Number_format_type;
 
-  procedure Define_number_format (
-    xl           : in out Excel_Out_Stream;
-    format       :    out Number_format_type;
-    format_string : in     String
-  );
+  procedure Define_Number_Format
+    (xl            : in out Excel_Out_Stream;
+     format        :    out Number_format_type;
+     format_string : in     String);
 
   --  * Fonts are user-defined, one is predefined: Default_font
   type Font_type is private;
@@ -330,7 +329,8 @@ package Excel_Out is
   Row_out_of_range,
   Column_out_of_range,
   Format_out_of_range,
-  Font_out_of_range : exception;
+  Font_out_of_range,
+  Number_format_out_of_range : exception;
 
   type Excel_type is (
     BIFF2,    --  Excel 2.1, 2,2
@@ -471,7 +471,7 @@ private
   date_h_m_iso     : constant Number_format_type := 30; -- date, hour, minutes
   date_h_m_s_iso   : constant Number_format_type := 31; -- date, hour, minutes, seconds
   --  End of our custom formats
-  last_custom   : constant Number_format_type := date_h_m_s_iso;
+  last_custom_number_format : constant Number_format_type := date_h_m_s_iso;
 
   type Col_width_set is array (1 .. 256) of Boolean;
 
@@ -493,7 +493,7 @@ private
     xfs        : Integer := -1; -- [-1..XF_Range'Last]
     xf_in_use  : XF_Range := 0;
     xf_def     : XF_Definition;
-    number_fmt : Number_format_type := last_custom;
+    number_fmt : Number_format_type := last_custom_number_format;
     def_font   : Font_type;
     def_fmt    : Format_type; -- Default format; used for "Normal" style
     cma_fmt    : Format_type; -- Format used for defining "Comma" style
