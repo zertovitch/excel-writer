@@ -934,6 +934,10 @@ package body Excel_Out is
     end if;
     case xl.xl_format is
       when BIFF2 =>
+        if xl.fonts > 3 then
+          raise Font_out_of_range with "Only 4 fonts are allowed in the BIFF2 format";
+          --  Reason: in the Cell Attributes (2.5.13), font index is encoded on 2 bits!
+        end if;
         WriteBiff (xl, 16#0031#,
           Intel_16 (Unsigned_16 (height * y_scale)) &
           Intel_16 (style_bits) &
@@ -944,6 +948,9 @@ package body Excel_Out is
           WriteBiff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
         end if;
       when BIFF3 | BIFF4 =>  --  BIFF8 has 16#0031#, p. 171
+        if xl.fonts > 255 then
+          raise Font_out_of_range with "Only 256 fonts are allowed in the BIFF3, BIFF4 formats";
+        end if;
         WriteBiff (xl, 16#0231#,
           Intel_16 (Unsigned_16 (height * y_scale)) &
           Intel_16 (style_bits) &

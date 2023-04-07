@@ -194,7 +194,7 @@ begin
   Write_column_width (xl, 3, 3);
   Write_column_width (xl, 4, 20);
   --
-  Define_format (xl, Default_font (xl), general, fmt_ul, border => bottom);
+  Define_Format (xl, Default_font (xl), general, fmt_ul, border => bottom);
   --
   Put_Line (xl, "Dump of the BIFF (Excel .xls) file: " & To_String (excel_file_name));
   New_Line (xl);

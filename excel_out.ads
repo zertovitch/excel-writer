@@ -331,7 +331,8 @@ package Excel_Out is
   Decreasing_column_index,
   Row_out_of_range,
   Column_out_of_range,
-  Format_out_of_range : exception;
+  Format_out_of_range,
+  Font_out_of_range : exception;
 
   type Excel_type is (
     BIFF2,    --  Excel 2.1, 2,2

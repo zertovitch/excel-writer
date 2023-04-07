@@ -54,32 +54,32 @@ procedure Excel_Out_Demo is
     xl.Write_row_height (11, 43);
     xl.Write_row_height (13, 0);   --  hide this row
     --
-    xl.Define_font ("Arial", 9, font_1, regular, blue);
-    xl.Define_font ("Courier New", 11, font_2, bold & italic, red);
-    xl.Define_font ("Times New Roman", 13, font_3, bold, teal);
-    xl.Define_font ("Arial Narrow", 15, font_title, bold);
-    xl.Define_font ("Calibri", 15, font_5, bold, dark_red);
-    xl.Define_font ("Calibri", 9, font_6);
+    xl.Define_Font ("Arial", 9, font_1, regular, blue);
+    xl.Define_Font ("Courier New", 11, font_2, bold & italic, red);
+    xl.Define_Font ("Times New Roman", 13, font_3, bold, teal);
+    xl.Define_Font ("Arial Narrow", 15, font_title, bold);
+    xl.Define_Font ("Calibri", 15, font_5, bold, dark_red);
+    xl.Define_Font ("Calibri", 9, font_6);
     --
     xl.Define_number_format (custom_num, "0.000000");  --  6 decimals
     xl.Define_number_format (custom_date_num, "yyyy\-mm\-dd\ hh:mm:ss");  --  ISO date
     --
-    xl.Define_format (
+    xl.Define_Format (
       font_title, general,
       fmt_title,
       border => top & bottom, vertical_align => centred
     );
-    xl.Define_format (font_1, percent_0, fmt_1, centred, right);
-    xl.Define_format (font_2, decimal_2, fmt_decimal_2);
-    xl.Define_format (font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
-    xl.Define_format (font_1, percent_2_plus, fmt_5, centred, right);
-    xl.Define_format (font_5, general,   fmt_boxed, border => box, vertical_align => centred);
-    xl.Define_format (font_1, custom_num,  fmt_cust_num, centred);
-    xl.Define_format (font_6, general, fmt_8);
-    xl.Define_format (font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
-    xl.Define_format (font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
-    xl.Define_format (font_6, hh_mm_ss,         fmt_date_3, shaded => True);  --  custom_date_num
-    xl.Define_format (font_6, general, fmt_vertical, wrap_text => True, text_orient => rotated_90);
+    xl.Define_Format (font_1, percent_0, fmt_1, centred, right);
+    xl.Define_Format (font_2, decimal_2, fmt_decimal_2);
+    xl.Define_Format (font_3, decimal_0_thousands_separator, fmt_decimal_0, centred);
+    xl.Define_Format (font_1, percent_2_plus, fmt_5, centred, right);
+    xl.Define_Format (font_5, general,   fmt_boxed, border => box, vertical_align => centred);
+    xl.Define_Format (font_1, custom_num,  fmt_cust_num, centred);
+    xl.Define_Format (font_6, general, fmt_8);
+    xl.Define_Format (font_6, dd_mm_yyyy,       fmt_date_1, shaded => True, background_color => yellow);
+    xl.Define_Format (font_6, dd_mm_yyyy_hh_mm, fmt_date_2, background_color => yellow);
+    xl.Define_Format (font_6, hh_mm_ss,         fmt_date_3, shaded => True);  --  custom_date_num
+    xl.Define_Format (font_6, general, fmt_vertical, wrap_text => True, text_orient => rotated_90);
     --
     xl.Use_format (fmt_title);
     xl.Put ("This is a big demo for Excel Writer / Excel_Out");
@@ -175,17 +175,17 @@ procedure Excel_Out_Demo is
     --
     xl.Write_column_width (1, 15);  --  set to width of n times '0'
     xl.Write_column_width (3, 10);  --  set to width of n times '0'
-    xl.Define_font ("Calibri", 15, font_title, bold, white);
-    xl.Define_font ("Calibri", 10, font_normal);
-    xl.Define_font ("Calibri", 10, font_normal_grey, color => grey);
-    xl.Define_format (font_title, general, fmt_title,
+    xl.Define_Font ("Calibri", 15, font_title, bold, white);
+    xl.Define_Font ("Calibri", 10, font_normal);
+    xl.Define_Font ("Calibri", 10, font_normal_grey, color => grey);
+    xl.Define_Format (font_title, general, fmt_title,
       border => bottom, background_color => dark_blue,
       vertical_align => centred
     );
-    xl.Define_format (font_normal, general, fmt_subtitle, border => bottom);
-    xl.Define_format (font_normal, dd_mm_yyyy, fmt_date, background_color => silver);
-    xl.Define_format (font_normal, decimal_0_thousands_separator, fmt_amount);
-    xl.Define_format (font_normal_grey, percent_2_plus, fmt_percent);
+    xl.Define_Format (font_normal, general, fmt_subtitle, border => bottom);
+    xl.Define_Format (font_normal, dd_mm_yyyy, fmt_date, background_color => silver);
+    xl.Define_Format (font_normal, decimal_0_thousands_separator, fmt_amount);
+    xl.Define_Format (font_normal_grey, percent_2_plus, fmt_percent);
     xl.Use_format (fmt_title);
     xl.Write_row_height (1, 25);
     xl.Put ("Daily Excel Writer stock prices");
