@@ -19,7 +19,7 @@ with IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
 
-  use Ada.Streams, Ada.Streams.Stream_IO, Ada.Strings.Unbounded, Interfaces;
+  use Ada.Strings.Unbounded, Interfaces;
 
   --  Very low level part which deals with transferring data in an endian-neutral way,
   --  and floats in the IEEE format. This is needed for having Excel Writer
@@ -157,7 +157,7 @@ package body Excel_Out is
   )
   is
     pragma Inline (Block_Write);
-    SE_Buffer   : Stream_Element_Array (1 .. buffer'Length);
+    SE_Buffer   : Ada.Streams.Stream_Element_Array (1 .. buffer'Length);
     for SE_Buffer'Address use buffer'Address;
     pragma Import (Ada, SE_Buffer);
   begin
@@ -457,33 +457,33 @@ package body Excel_Out is
     WriteBiff (xl, 16#0022#, Intel_16 (0)); --  0 => 1900; 1 => 1904 Date system
     --  NB: the 1904 variant (Mac) is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
-    Define_font (xl, "Arial",   10, xl.def_font);
-    Define_font (xl, "Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
-    Define_font (xl, "Calibri", 10, font_2); -- Defined in BIFF3 files written by Excel 2002
-    Define_font (xl, "Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
+    Define_Font (xl, "Arial",   10, xl.def_font);
+    Define_Font (xl, "Arial",   10, font_for_styles); -- Used by BIFF3+'s styles
+    Define_Font (xl, "Calibri", 10, font_2); -- Defined in BIFF3 files written by Excel 2002
+    Define_Font (xl, "Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
     WriteFmtRecords (xl);
     --  5.111 WINDOWPROTECT
     WriteBiff (xl, 16#0019#, Intel_16 (0));
     --  Define default format
-    Define_format (xl, xl.def_font, general, xl.def_fmt);
+    Define_Format (xl, xl.def_font, general, xl.def_fmt);
     if xl.xl_format >= BIFF3 then
       --  Don't ask why we need the following useless formats, but it is as Excel 2002
       --  write formats. Additionally, the default format is turned into decimal_2
       --  when a file without those useless formats is opened in Excel (2002) !
-      Define_format (xl, font_for_styles, general, xl.def_fmt);
-      Define_format (xl, font_for_styles, general, xl.def_fmt);
-      Define_format (xl, font_2, general, xl.def_fmt);
-      Define_format (xl, font_2, general, xl.def_fmt);
+      Define_Format (xl, font_for_styles, general, xl.def_fmt);
+      Define_Format (xl, font_for_styles, general, xl.def_fmt);
+      Define_Format (xl, font_2, general, xl.def_fmt);
+      Define_Format (xl, font_2, general, xl.def_fmt);
       for i in 5 .. 15 loop
-        Define_format (xl, xl.def_font, general, xl.def_fmt);
+        Define_Format (xl, xl.def_font, general, xl.def_fmt);
       end loop;
       --  Final default format index is the last changed xl.def_fmt
     end if;
     Use_default_format (xl);
     --  Define formats for the BIFF3+ "styles":
-    Define_format (xl, font_for_styles, decimal_2, xl.cma_fmt);
-    Define_format (xl, font_for_styles, currency_0, xl.ccy_fmt);
-    Define_format (xl, font_for_styles, percent_0, xl.pct_fmt);
+    Define_Format (xl, font_for_styles, decimal_2, xl.cma_fmt);
+    Define_Format (xl, font_for_styles, currency_0, xl.ccy_fmt);
+    Define_Format (xl, font_for_styles, percent_0, xl.pct_fmt);
     --  Define styles - 5.103 STYLE p. 212
     --  NB: - it is BIFF3+ (we cheat a bit if selected format is BIFF2).
     --      - these "styles" seem to be a zombie feature of Excel 3
@@ -543,20 +543,19 @@ package body Excel_Out is
   --  *** Exported procedures **********************************************
 
   --  5.115 XF - Extended Format
-  procedure Define_format (
-    xl               : in out Excel_Out_Stream;
-    font             : in     Font_type;          -- Default_font(xl), or given by Define_font
-    number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
-    cell_format      :    out Format_type;
-    -- Optional parameters --
-    horizontal_align : in     Horizontal_alignment := general_alignment;
-    border           : in     Cell_border := no_border;
-    shaded           : in     Boolean := False;    -- Add a dotted background pattern
-    background_color : in     Color_type := automatic;
-    wrap_text        : in     Boolean := False;
-    vertical_align   : in     Vertical_alignment := bottom_alignment;
-    text_orient      : in     Text_orientation := normal
-  )
+  procedure Define_Format
+    (xl               : in out Excel_Out_Stream;
+     font             : in     Font_type;          -- Default_font(xl), or given by Define_font
+     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
+     cell_format      :    out Format_type;
+     -- Optional parameters --
+     horizontal_align : in     Horizontal_alignment := general_alignment;
+     border           : in     Cell_border := no_border;
+     shaded           : in     Boolean := False;    -- Add a dotted background pattern
+     background_color : in     Color_type := automatic;
+     wrap_text        : in     Boolean := False;
+     vertical_align   : in     Vertical_alignment := bottom_alignment;
+     text_orient      : in     Text_orientation := normal)
   is
     actual_number_format : Number_format_type := number_format;
     cell_is_locked : constant := 1;
@@ -709,7 +708,7 @@ package body Excel_Out is
     end if;
     cell_format := Format_type (xl.xfs);
     xl.xf_def (xl.xfs) := (font => font, numb => number_format);
-  end Define_format;
+  end Define_Format;
 
   procedure Header (xl : Excel_Out_Stream; page_header_string : String) is
   begin
@@ -907,14 +906,13 @@ package body Excel_Out is
   end Write_row_height;
 
   --  5.45 FONT, p.171
-  procedure Define_font (
-    xl           : in out Excel_Out_Stream;
-    font_name    :        String;
-    height       :        Positive;
-    font         :    out Font_type;
-    style        :        Font_style := regular;
-    color        :        Color_type := automatic
-  )
+  procedure Define_Font
+    (xl           : in out Excel_Out_Stream;
+     font_name    :        String;
+     height       :        Positive;
+     font         :    out Font_type;
+     style        :        Font_style := regular;
+     color        :        Color_type := automatic)
   is
     style_bits, mask : Unsigned_16;
   begin
@@ -959,7 +957,7 @@ package body Excel_Out is
         );
     end case;
     font := Font_type (xl.fonts);
-  end Define_font;
+  end Define_Font;
 
   procedure Jump_to_and_store_max (xl : in out Excel_Out_Stream; r, c : Integer) is
     pragma Inline (Jump_to_and_store_max);
@@ -1664,6 +1662,7 @@ package body Excel_Out is
     encoding     :        Encoding_type := Default_encoding
   )
   is
+    use Ada.Streams, Ada.Streams.Stream_IO;
   begin
     Reset (xl, excel_format, encoding);
     xl.xl_file := new Ada.Streams.Stream_IO.File_Type;
@@ -1677,7 +1676,7 @@ package body Excel_Out is
       Ada.Unchecked_Deallocation (Ada.Streams.Stream_IO.File_Type, XL_file_acc);
   begin
     Finish (xl);
-    Close (xl.xl_file.all);
+    Ada.Streams.Stream_IO.Close (xl.xl_file.all);
     Dispose (xl.xl_file);
   end Close;
 
@@ -1711,9 +1710,10 @@ package body Excel_Out is
 
   procedure Read
     (Stream : in out Unbounded_Stream;
-     Item   : out Stream_Element_Array;
-     Last   : out Stream_Element_Offset)
+     Item   :    out Ada.Streams.Stream_Element_Array;
+     Last   :    out Ada.Streams.Stream_Element_Offset)
   is
+    use Ada.Streams;
   begin
     --  Item is read from the stream. If (and only if) the stream is
     --  exhausted, Last will be < Item'Last. In that case, T'Read will
@@ -1737,7 +1737,7 @@ package body Excel_Out is
 
   procedure Write
     (Stream : in out Unbounded_Stream;
-     Item   : Stream_Element_Array)
+     Item   : Ada.Streams.Stream_Element_Array)
   is
   begin
     for I in Item'Range loop

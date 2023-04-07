@@ -277,7 +277,7 @@ begin
   Put_Line ("Small demo -> Small.xls");
   Small_demo;
   Put_Line ("Big demo -> Big [...].xls");
-  for ef in Excel_type loop
+  for ef in BIFF3 .. BIFF4 loop
     Big_demo (ef);
   end loop;
   Put_Line ("Fancy sheet -> Fancy.xls");

@@ -44,7 +44,7 @@
 --     | Write_column_width for specific columns
 --     | Write_default_row_height
 --     | Write_row_height for specific rows
---     | Define_font, then Define_format
+--     | Define_Font, then Define_Format
 --
 --  3. | Write(xl, row, column, data): row by row, column by column
 --     | Put(xl, data)               : same, but column is auto-incremented
@@ -172,7 +172,7 @@ package Excel_Out is
   type Font_style is private;
 
   --  For combining font styles (e.g.: bold & underlined):
-  function "&"(a, b : Font_style) return Font_style;
+  function "&" (a, b : Font_style) return Font_style;
 
   regular     : constant Font_style;
   italic      : constant Font_style;
@@ -184,15 +184,14 @@ package Excel_Out is
   condensed   : constant Font_style;
   extended    : constant Font_style;
 
-  procedure Define_font (
-    xl           : in out Excel_Out_Stream;
-    font_name    :        String;
-    height       :        Positive;
-    font         :    out Font_type;
-    --  Optional:
-    style        :        Font_style := regular;
-    color        :        Color_type := automatic
-  );
+  procedure Define_Font
+    (xl           : in out Excel_Out_Stream;
+     font_name    :        String;
+     height       :        Positive;
+     font         :    out Font_type;
+     --  Optional:
+     style        :        Font_style := regular;
+     color        :        Color_type := automatic);
 
   type Horizontal_alignment is (
     general_alignment, to_left, centred, to_right, filled,
@@ -216,7 +215,7 @@ package Excel_Out is
   type Cell_border is private;
 
   --  Operator for combining borders (e.g.: left & top):
-  function "&"(a, b : Cell_border) return Cell_border;
+  function "&" (a, b : Cell_border) return Cell_border;
 
   no_border : constant Cell_border;
   left      : constant Cell_border;
@@ -225,20 +224,19 @@ package Excel_Out is
   bottom    : constant Cell_border;
   box       : constant Cell_border;
 
-  procedure Define_format (
-    xl               : in out Excel_Out_Stream;
-    font             : in     Font_type;          -- Default_font(xl), or given by Define_font
-    number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
-    cell_format      :    out Format_type;
-    -- Optional parameters --
-    horizontal_align : in     Horizontal_alignment := general_alignment;
-    border           : in     Cell_border := no_border;
-    shaded           : in     Boolean := False;    -- Add a dotted background pattern
-    background_color : in     Color_type := automatic;
-    wrap_text        : in     Boolean := False;
-    vertical_align   : in     Vertical_alignment := bottom_alignment;
-    text_orient      : in     Text_orientation := normal
-  );
+  procedure Define_Format
+    (xl               : in out Excel_Out_Stream;
+     font             : in     Font_type;          -- Default_font(xl), or given by Define_font
+     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
+     cell_format      :    out Format_type;
+     -- Optional parameters --
+     horizontal_align : in     Horizontal_alignment := general_alignment;
+     border           : in     Cell_border := no_border;
+     shaded           : in     Boolean := False;    -- Add a dotted background pattern
+     background_color : in     Color_type := automatic;
+     wrap_text        : in     Boolean := False;
+     vertical_align   : in     Vertical_alignment := bottom_alignment;
+     text_orient      : in     Text_orientation := normal);
 
   ------------------------
   -- (3) Cell contents: --
