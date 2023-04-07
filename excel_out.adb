@@ -7,8 +7,9 @@
 --  - XML-based formats support
 --  - ...
 
-with Ada.Unchecked_Deallocation, Ada.Unchecked_Conversion;
-with Ada.Strings.Fixed;
+with Ada.Unchecked_Conversion,
+     Ada.Unchecked_Deallocation,
+     Ada.Strings.Fixed;
 
 with Interfaces;
 
@@ -18,7 +19,7 @@ with IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
 
-  use Ada.Streams.Stream_IO, Ada.Streams, Interfaces;
+  use Ada.Streams, Ada.Streams.Stream_IO, Ada.Strings.Unbounded, Interfaces;
 
   --  Very low level part which deals with transferring data in an endian-neutral way,
   --  and floats in the IEEE format. This is needed for having Excel Writer
@@ -194,7 +195,7 @@ package body Excel_Out is
 
     function BOF_suffix return Byte_buffer is  --  5.8.1 Record BOF
     begin
-      case xl.format is
+      case xl.xl_format is
         when BIFF2 =>
           return empty_buffer;
         when BIFF3 | BIFF4 =>
@@ -224,8 +225,8 @@ package body Excel_Out is
       );
   begin
     WriteBiff (xl,
-      biff_record_identifier (xl.format),
-      Intel_16 (biff_version (xl.format)) &
+      biff_record_identifier (xl.xl_format),
+      Intel_16 (biff_version (xl.xl_format)) &
       Intel_16 (Sheet_or_dialogue) &
       BOF_suffix
     );
@@ -234,7 +235,7 @@ package body Excel_Out is
   --  5.49 FORMAT (number format)
   procedure WriteFmtStr (xl : Excel_Out_Stream'Class; s : String) is
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 | BIFF3 =>
         WriteBiff (xl, 16#001E#, To_buf_8_bit_length (s));
       when BIFF4 =>
@@ -254,7 +255,7 @@ package body Excel_Out is
     --  the index of built-in formats and discards the strings for BIFF2, but not for BIFF3...
   begin
     --  5.12 BUILTINFMTCOUNT
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#001F#, Intel_16 (Unsigned_16 (last_built_in - 5)));
       when BIFF3 =>
@@ -275,21 +276,21 @@ package body Excel_Out is
         when decimal_2_thousands_separator =>
           WriteFmtStr (xl, "#" & sep_1000 & "##0" & sep_deci & "00");
         when no_currency_0       =>
-          if xl.format >= BIFF4 then
+          if xl.xl_format >= BIFF4 then
             WriteFmtStr (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
           end if;
         when no_currency_red_0   =>
-          if xl.format >= BIFF4 then
+          if xl.xl_format >= BIFF4 then
             WriteFmtStr (xl, "#" & sep_1000 & "##0;-#" & sep_1000 & "##0");
           --  [Red] doesn't go with non-English versions of Excel !!
           end if;
         when no_currency_2       =>
-          if xl.format >= BIFF4 then
+          if xl.xl_format >= BIFF4 then
             WriteFmtStr (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
                           "-#" & sep_1000 & "##0" & sep_deci & "00");
           end if;
         when no_currency_red_2   =>
-          if xl.format >= BIFF4 then
+          if xl.xl_format >= BIFF4 then
             WriteFmtStr (xl,  "#" & sep_1000 & "##0" & sep_deci & "00;" &
                           "-#" & sep_1000 & "##0" & sep_deci & "00");
           end if;
@@ -308,11 +309,11 @@ package body Excel_Out is
         when percent_2        =>  WriteFmtStr (xl, "0" & sep_deci & "00%");
         when scientific       =>  WriteFmtStr (xl, "0" & sep_deci & "00E+00");
         when fraction_1       =>
-          if xl.format >= BIFF3 then
+          if xl.xl_format >= BIFF3 then
             WriteFmtStr (xl, "#\ ?/?");
           end if;
         when fraction_2       =>
-          if xl.format >= BIFF3 then
+          if xl.xl_format >= BIFF3 then
             WriteFmtStr (xl, "#\ ??/??");
           end if;
         when dd_mm_yyyy       =>  WriteFmtStr (xl, "dd/mm/yyyy");
@@ -339,7 +340,7 @@ package body Excel_Out is
     end loop;
     --  ^ Some formats in the original list caused problems, probably
     --    because of regional placeholder symbols
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         for i in 1 .. 6 loop
           WriteFmtStr (xl, "@");
@@ -373,7 +374,7 @@ package body Excel_Out is
     --    Intel_16(0) &
     --    Intel_16(Unsigned_16(xl.maxcolumn));
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#0000#, sheet_bounds);
       when BIFF3 | BIFF4 =>
@@ -422,7 +423,7 @@ package body Excel_Out is
         when Windows_CP_1250 => return 1250;
         when Windows_CP_1251 => return 1251;
         when Windows_CP_1252 =>
-          case xl.format is
+          case xl.xl_format is
             when BIFF2 .. BIFF3 =>
               return 16#8001#;
             when BIFF4 =>
@@ -442,7 +443,7 @@ package body Excel_Out is
   begin
     Write_BOF (xl);
     --  5.17 CODEPAGE, p. 145
-    case xl.format is
+    case xl.xl_format is
       --  when BIFF8 =>   --  UTF-16
       --    WriteBiff(xl, 16#0042#, Intel_16(16#04B0#));
       when others =>
@@ -465,7 +466,7 @@ package body Excel_Out is
     WriteBiff (xl, 16#0019#, Intel_16 (0));
     --  Define default format
     Define_format (xl, xl.def_font, general, xl.def_fmt);
-    if xl.format >= BIFF3 then
+    if xl.xl_format >= BIFF3 then
       --  Don't ask why we need the following useless formats, but it is as Excel 2002
       --  write formats. Additionally, the default format is turned into decimal_2
       --  when a file without those useless formats is opened in Excel (2002) !
@@ -672,7 +673,7 @@ package body Excel_Out is
         16#40#  * color_code (BIFF3, background_color)(for_background) +  -- pattern colour
         16#800# * color_code (BIFF3, background_color)(for_background);   -- pattern background
     end if;
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         case actual_number_format is
           when general .. no_currency_2 =>
@@ -799,7 +800,7 @@ package body Excel_Out is
     options_flags : constant Byte_buffer := (1, 0);
     --  1 = Row height and default font height do not match
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#0025#, default_twips);
       when BIFF3 | BIFF4 =>
@@ -834,7 +835,7 @@ package body Excel_Out is
   )
   is
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         --  5.20 COLWIDTH (BIFF2 only)
         WriteBiff (xl, 16#0024#,
@@ -876,7 +877,7 @@ package body Excel_Out is
       Intel_16 (Unsigned_16 (height * y_scale));
     fDyZero : Unsigned_8 := 0;
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#0008#,
           row_info_base &
@@ -931,7 +932,7 @@ package body Excel_Out is
       --  Anomaly! The font with index 4 is omitted in all BIFF versions (5.45).
       --  Numbering is 0, 1, 2, 3, *5*, 6,...
     end if;
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#0031#,
           Intel_16 (Unsigned_16 (height * y_scale)) &
@@ -997,7 +998,7 @@ package body Excel_Out is
     pragma Inline (Write_as_double);
   begin
     Jump_to_and_store_max (xl, r, c);
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         WriteBiff (xl, 16#0003#,
           Intel_16 (Unsigned_16 (r - 1)) &
@@ -1079,7 +1080,7 @@ package body Excel_Out is
     min_30_s : constant := -(2.0 ** 29);
     max_30_s : constant := 2.0 ** 29 - 1.0;
   begin
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         if num >= 0.0 and then
            num <= max_16_u and then
@@ -1113,7 +1114,7 @@ package body Excel_Out is
   begin
     --  We use an integer representation (and small storage) if possible;
     --  we need to use a floating-point in all other cases
-    case xl.format is
+    case xl.xl_format is
       when BIFF2 =>
         if num in 0 .. 2**16 - 1 then
           Write_as_16_bit_unsigned (xl, r, c, Unsigned_16 (num));
@@ -1150,7 +1151,7 @@ package body Excel_Out is
   begin
     Jump_to_and_store_max (xl, r, c);
     if str'Length > 0 then
-      case xl.format is
+      case xl.xl_format is
         when BIFF2 =>
           WriteBiff (xl, 16#0004#,
             Intel_16 (Unsigned_16 (r - 1)) &
@@ -1177,7 +1178,7 @@ package body Excel_Out is
     Jump_to (xl, r, c + 1); -- Store and check new position
   end Write;
 
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Unbounded_String)
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Ada.Strings.Unbounded.Unbounded_String)
   is
   begin
     Write (xl, r, c, To_String (str));
@@ -1185,7 +1186,7 @@ package body Excel_Out is
 
   --  Excel uses a floating-point type for time - ouch!
   --
-  function To_Number (date : Time) return Long_Float is
+  function To_Number (date : Ada.Calendar.Time) return Long_Float is
     --  1901 is the lowest year supported by Ada.Calendar.
     --  1900 is not a leap year, but Lotus 1-2-3, then Excel, consider it
     --  as a leap year. So, with 1901, we skip that issue anyway...
@@ -1239,6 +1240,7 @@ package body Excel_Out is
       return days_of_previous_years + days_of_previous_months + d - 1;
     end Days_since_1901;
     --
+    use Ada.Calendar;
     sec : constant Day_Duration := Seconds (date);
   begin
     --  With GNAT and perhaps other systems, Duration's range allows the following:
@@ -1251,7 +1253,7 @@ package body Excel_Out is
       --  Lotus 1-2-3, then Excel, are based on 1899-12-31 (and believe it is 1900-01-01).
   end To_Number;
 
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Time)
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Ada.Calendar.Time)
   is
   begin
     Write (xl, r, c, To_Number (date));
@@ -1290,12 +1292,12 @@ package body Excel_Out is
     Write (xl, xl.curr_row, xl.curr_col, str);
   end Put;
 
-  procedure Put (xl : in out Excel_Out_Stream; str : Unbounded_String) is
+  procedure Put (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String) is
   begin
     Put (xl, To_String (str));
   end Put;
 
-  procedure Put (xl : in out Excel_Out_Stream; date : Time) is
+  procedure Put (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time) is
   begin
     Put (xl, To_Number (date));
   end Put;
@@ -1306,7 +1308,7 @@ package body Excel_Out is
     procedure Blank (r, c : Positive) is
     begin
       Jump_to_and_store_max (xl, r, c);
-      case xl.format is
+      case xl.xl_format is
         --  NB: Only with BIFF4, and only OpenOffice
         --  considers the cells really merged.
         when BIFF2 =>
@@ -1336,7 +1338,7 @@ package body Excel_Out is
       raise Constraint_Error;
     end if;
     --  5.70 Note
-    case xl.format is
+    case xl.xl_format is
       --  when BIFF8 =>  --  https://msdn.microsoft.com/en-us/library/dd945371(v=office.12).aspx
       --    WriteBiff(xl, 16#001C#,
       --      Intel_16(Unsigned_16(row-1)) &
@@ -1376,12 +1378,12 @@ package body Excel_Out is
     New_Line (xl);
   end Put_Line;
 
-  procedure Put_Line (xl : in out Excel_Out_Stream; str : Unbounded_String) is
+  procedure Put_Line (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String) is
   begin
     Put_Line (xl, To_String (str));
   end Put_Line;
 
-  procedure Put_Line (xl : in out Excel_Out_Stream; date : Time) is
+  procedure Put_Line (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time) is
   begin
     Put (xl, date);
     New_Line (xl);
@@ -1511,8 +1513,8 @@ package body Excel_Out is
       raise Excel_stream_not_closed;
     end if;
     --  We will reset everything with defaults, except this:
-    dummy_xl_with_defaults.format   := excel_format;
-    dummy_xl_with_defaults.encoding := encoding;
+    dummy_xl_with_defaults.xl_format := excel_format;
+    dummy_xl_with_defaults.encoding  := encoding;
     --  Now we reset xl:
     Excel_Out_Pre_Root_Type (xl) := dummy_xl_with_defaults;
   end Reset;
@@ -1522,7 +1524,7 @@ package body Excel_Out is
     procedure Write_Window1 is
     begin
       --  5.109 WINDOW1, p. 215
-      case xl.format is
+      case xl.xl_format is
         when BIFF2 | BIFF3 | BIFF4 =>  --  NB: more options in BIFF8
           WriteBiff (xl, 16#003D#,
             Intel_16 (120)   & -- Window x
@@ -1537,7 +1539,7 @@ package body Excel_Out is
     procedure Write_Window2 is
     begin
       --  5.110 WINDOW2
-      case xl.format is
+      case xl.xl_format is
         when BIFF2 =>
           WriteBiff (xl, 16#003E#,
             (0, -- Display formulas, not results
@@ -1614,12 +1616,12 @@ package body Excel_Out is
       Intel_16 (Unsigned_16 (xl.zoom_num)) &
       Intel_16 (Unsigned_16 (xl.zoom_den))
     );
-    if xl.frz_panes and xl.format > BIFF2 then
+    if xl.frz_panes and xl.xl_format > BIFF2 then
       --  Enabling PANE for BIFF2 causes a very strange behaviour on MS Excel 2002.
       Write_Pane;
     end if;
     --  5.93 SELECTION here !!
-    if xl.format >= BIFF4 then
+    if xl.xl_format >= BIFF4 then
       for i in 1 .. 256 loop
         col_bits (byte_idx) := col_bits (byte_idx) +
           Boolean'Pos (xl.std_col_width (i)) * (2**(bit_idx - 1));
@@ -1703,7 +1705,8 @@ package body Excel_Out is
   procedure Read
     (Stream : in out Unbounded_Stream;
      Item   : out Stream_Element_Array;
-     Last   : out Stream_Element_Offset) is
+     Last   : out Stream_Element_Offset)
+  is
   begin
     --  Item is read from the stream. If (and only if) the stream is
     --  exhausted, Last will be < Item'Last. In that case, T'Read will
@@ -1727,7 +1730,8 @@ package body Excel_Out is
 
   procedure Write
     (Stream : in out Unbounded_Stream;
-     Item   : Stream_Element_Array) is
+     Item   : Stream_Element_Array)
+  is
   begin
     for I in Item'Range loop
       if Length (Stream.Unb) < Stream.Loc then

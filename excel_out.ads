@@ -56,10 +56,10 @@
 --  5. (Excel_Out_String only) function Contents returns the full .xls
 --------------------------------------------------------------------------
 
-with Ada.Calendar;                      use Ada.Calendar;
-with Ada.Streams.Stream_IO;
-with Ada.Strings.Unbounded;             use Ada.Strings.Unbounded;
-with Ada.Text_IO;
+with Ada.Calendar,
+     Ada.Streams.Stream_IO,
+     Ada.Strings.Unbounded,
+     Ada.Text_IO;
 
 package Excel_Out is
 
@@ -250,8 +250,8 @@ package Excel_Out is
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Long_Float);
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Integer);
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : String);
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Unbounded_String);
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Time);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Ada.Strings.Unbounded.Unbounded_String);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Ada.Calendar.Time);
 
   --  "Ada.Text_IO" - like output.
   --  No need to specify row & column each time.
@@ -265,14 +265,14 @@ package Excel_Out is
                 base  : in Ada.Text_IO.Number_Base := 10
             );
   procedure Put (xl : in out Excel_Out_Stream; str : String);
-  procedure Put (xl : in out Excel_Out_Stream; str : Unbounded_String);
-  procedure Put (xl : in out Excel_Out_Stream; date : Time);
+  procedure Put (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String);
+  procedure Put (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time);
   --
   procedure Put_Line (xl : in out Excel_Out_Stream; num : Long_Float);
   procedure Put_Line (xl : in out Excel_Out_Stream; num : Integer);
   procedure Put_Line (xl : in out Excel_Out_Stream; str : String);
-  procedure Put_Line (xl : in out Excel_Out_Stream; str : Unbounded_String);
-  procedure Put_Line (xl : in out Excel_Out_Stream; date : Time);
+  procedure Put_Line (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String);
+  procedure Put_Line (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time);
   --
   procedure New_Line (xl : in out Excel_Out_Stream; Spacing : Positive := 1);
 
@@ -485,7 +485,7 @@ private
   --
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
-    format     : Excel_type    := Default_Excel_type;
+    xl_format  : Excel_type    := Default_Excel_type;
     encoding   : Encoding_type := Default_encoding;
     dimrecpos  : Ada.Streams.Stream_IO.Positive_Count;
     maxcolumn  : Positive := 1;

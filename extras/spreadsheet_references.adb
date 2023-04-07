@@ -1,13 +1,8 @@
-package body Spreadsheet_references is
+package body Spreadsheet_References is
 
-  ---------------
-  -- Reference --
-  ---------------
-
-  function Reference (
-    row, column : Positive;
-    style      : Reference_style := A1
-  )
+  function Encode_Reference
+    (row, column : Positive;
+     style       : Reference_Style := A1)
   return String
   is
     rs : constant String := Positive'Image (row);
@@ -36,33 +31,21 @@ package body Spreadsheet_references is
       when R1C1 =>
         return 'R' & r & 'C' & c;
     end case;
-  end Reference;
+  end Encode_Reference;
 
-  ---------
-  -- Row --
-  ---------
-
-  function Row (reference : String) return Positive is
+  function Decode_Row (reference : String) return Positive is
     r, c : Positive;
   begin
     Split (reference, r, c);
     return r;
-  end Row;
+  end Decode_Row;
 
-  ------------
-  -- Column --
-  ------------
-
-  function Column (reference : String) return Positive is
+  function Decode_Column (reference : String) return Positive is
     r, c : Positive;
   begin
     Split (reference, r, c);
     return c;
-  end Column;
-
-  -----------
-  -- Split --
-  -----------
+  end Decode_Column;
 
   procedure Split (reference : String; row, column : out Positive) is
     phase : Positive range 1 .. 4 := 1;
@@ -130,4 +113,4 @@ package body Spreadsheet_references is
     column := c;
   end Split;
 
-end Spreadsheet_references;
+end Spreadsheet_References;

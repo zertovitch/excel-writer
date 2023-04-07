@@ -19,12 +19,8 @@ project Excel_Out_Gnat is
    for Create_Missing_Dirs use "True";  --  Flips by default the "-p" switch
 
    case Excel_Build_Mode is
-
-      when "Debug" =>
-         for Object_Dir use "obj_debug";
-
-      when "Fast" =>
-         for Object_Dir use "obj_fast";
+      when "Debug" => for Object_Dir use "obj_debug";
+      when "Fast"  => for Object_Dir use "obj_fast";
    end case;
 
    Common_Options := (
