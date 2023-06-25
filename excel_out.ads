@@ -406,10 +406,13 @@ package Excel_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "18, preview 1";
-  reference : constant String := "07-Apr-2023";
+  version   : constant String := "18";
+  reference : constant String := "25-Jun-2023";
+  --  Hopefully the latest version is at one of those URLs:
   web       : constant String := "http://excel-writer.sf.net/";
-  --  hopefully the latest version is at that URL...  -----^
+  web2 : constant String := "https://sourceforge.net/projects/excel-writer/";
+  web3 : constant String := "https://github.com/zertovitch/excel-writer";
+  web4 : constant String := "https://alire.ada.dev/crates/excel_writer";
 
 private
 

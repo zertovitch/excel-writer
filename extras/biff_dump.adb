@@ -19,7 +19,7 @@ procedure BIFF_Dump is
 
   f : BIO.File_Type;
 
-  code, length, x : Integer;
+  code, record_length, x : Integer;
 
   function in8 return Integer is
     b : Unsigned_8;
@@ -161,7 +161,7 @@ procedure BIFF_Dump is
 
   procedure Ignore_from (from : Positive) is
   begin
-    for i in from .. length loop
+    for i in from .. record_length loop
       Read (f, b);
     end loop;
   end Ignore_from;
@@ -211,9 +211,9 @@ begin
   Open (f, In_File, To_String (excel_file_name));
   while not End_Of_File (f) loop
     code  := in16;
-    length := in16;
+    record_length := in16;
     Put (xl, code, base => 16);
-    Put (xl, length);
+    Put (xl, record_length);
     Put (xl, "    ");
     case code is
       --
@@ -322,10 +322,10 @@ begin
         Next (xl);
         Put (xl, "BIFF=" & Integer'Image (in16));
         Put (xl, "Type=" & Integer'Image (in16));
-        for i in 5 .. length loop
+        for i in 5 .. record_length loop
           Read (f, b);
         end loop;
-      when row_2 | row_3 => -- 5.88 p.202
+      when row_2 | row_3 =>  --  5.88 p.202
         Put (xl, "row=" & Integer'Image (in16 + 1));
         Put (xl, "col1=" & Integer'Image (in16 + 1));
         Put (xl, "col2+1=" & Integer'Image (in16 + 1));
@@ -346,7 +346,7 @@ begin
             Put (xl, "default row format");
           end if;
           Put (xl, "offset to contents = " & Integer'Image (in16));
-          for i in 14 .. length loop
+          for i in 14 .. record_length loop
             Put (xl, in8);
           end loop;
         else
@@ -376,12 +376,12 @@ begin
         Put (xl, "col=" & Integer'Image (in16 + 1));
         Put (xl, "xf="  & Integer'Image (in16));
         Ignore_from (7);
-      when note => -- 5.70 NOTE p. 190
+      when note =>  --  5.70 NOTE p. 190
         Put (xl, "row=" & Integer'Image (in16 + 1));
         Put (xl, "col=" & Integer'Image (in16 + 1));
         Put (xl, "total length=" & Integer'Image (in16 + 1));
         declare
-          chunk : String (7 .. length);
+          chunk : String (7 .. record_length);
         begin
           for i in chunk'Range loop
             Read (f, b);
@@ -389,17 +389,17 @@ begin
           end loop;
           Put (xl, chunk);
         end;
-      when label2 => -- 5.63 LABEL p.187
+      when label2 =>  --  5.63 LABEL p.187
         Put (xl, "row=" & Integer'Image (in16 + 1));
         Put (xl, "col=" & Integer'Image (in16 + 1));
         Cell_Attributes;
         Put (xl, str8);
-      when label3 => -- 5.63 LABEL p.187
+      when label3 =>  --  5.63 LABEL p.187
         Put (xl, "row=" & Integer'Image (in16 + 1));
         Put (xl, "col=" & Integer'Image (in16 + 1));
         Put (xl, "xf="  & Integer'Image (in16));
         Put (xl, str8len16);
-      when labelsst => -- SST = shared string table
+      when labelsst =>  --  SST = shared string table
         Put (xl, "row=" & Integer'Image (in16 + 1));
         Put (xl, "col=" & Integer'Image (in16 + 1));
         Ignore_from (5);
@@ -417,13 +417,13 @@ begin
             font_name : constant String := str8;
           begin
             Put (xl, font_name);
-            for i in 6 + font_name'Length .. length loop
+            for i in 6 + font_name'Length .. record_length loop
               --  Excel 2002 puts garbage, sometimes...
               Read (f, b);
             end loop;
           end;
         else -- BIFF 5-8
-          for i in 5 .. length loop -- just skip the contents
+          for i in 5 .. record_length loop -- just skip the contents
             Read (f, b);
           end loop;
         end if;
@@ -490,12 +490,12 @@ begin
       when defcolwidth =>
         Put (xl, "Width:" & Integer'Image (in16) & " zeros");
       when header_x | footer_x =>
-        if length > 0 then
+        if record_length > 0 then
           declare
             head_foot : constant String := str8;
           begin
             Put (xl, head_foot);
-            for i in 2 + head_foot'Length .. length loop
+            for i in 2 + head_foot'Length .. record_length loop
               --  garbage
               Read (f, b);
             end loop;
@@ -514,36 +514,36 @@ begin
         Put (xl, "row_max+1="  & Integer'Image (in16));
         Put (xl, "col_min="    & Integer'Image (in16));
         Put (xl, "col_max+1="  & Integer'Image (in16));
-        Ignore_from (9); -- remaining contents (BIFF3+)
+        Ignore_from (9);  --  remaining contents (BIFF3+)
       when writeaccess =>
         declare
           r : constant String := str8;
         begin
           Put (xl, "User name=" & r);
-          for i in r'Length + 2 .. length loop -- remaining characters (spaces)
+          for i in r'Length + 2 .. record_length loop  --  remaining characters (spaces)
             Read (f, b);
           end loop;
         end;
-      when pane => -- 5.75 PANE p.197
-        Put (xl, "split_px="        & Integer'Image (in16)); -- vertical split
-        Put (xl, "split_py="        & Integer'Image (in16)); -- horizontal split
-        Put (xl, "row_1="           & Integer'Image (in16)); -- 1st visible row in bottom pane
-        Put (xl, "col_1="           & Integer'Image (in16)); -- 1st visible column in right pane
-        Put (xl, "active_pane_id="  & Integer'Image (in8));  -- identifier of pane with active cell cursor
+      when pane =>  --  5.75 PANE p.197
+        Put (xl, "split_px="        & Integer'Image (in16));  --  vertical split
+        Put (xl, "split_py="        & Integer'Image (in16));  --  horizontal split
+        Put (xl, "row_1="           & Integer'Image (in16));  --  1st visible row in bottom pane
+        Put (xl, "col_1="           & Integer'Image (in16));  --  1st visible column in right pane
+        Put (xl, "active_pane_id="  & Integer'Image (in8));   --  identifier of pane with active cell cursor
         Ignore_from (10);
-      when selection => -- 5.93 SELECTION p.205
+      when selection =>  --  5.93 SELECTION p.205
         Put (xl, "pane_id="         & Integer'Image (in8));
         Put (xl, "active_cell_row=" & Integer'Image (in16));
         Put (xl, "active_cell_col=" & Integer'Image (in16));
         Put (xl, "selected_idx="    & Integer'Image (in16));
-        Ignore_from (8); -- cell range list - 2.5.15 p.27
+        Ignore_from (8);  --  cell range list - 2.5.15 p.27
       when window1 =>
         Put (xl, "w_x=" & Img (Float (in16) / 20.0, 2));
         Put (xl, "w_y=" & Img (Float (in16) / 20.0, 2));
         Put (xl, "w_w=" & Img (Float (in16) / 20.0, 2));
         Put (xl, "w_h=" & Img (Float (in16) / 20.0, 2));
         Put (xl, "w_hidden=" & Integer'Image (in8));
-        Ignore_from (10); -- Excel v.2002 puts an extra byte there, some other versions not...
+        Ignore_from (10);  --  Excel v.2002 puts an extra byte there, some other versions not...
       when window2_b2 =>
         Put (xl, "form_results="  & Integer'Image (in8));
         Put (xl, "grid_lines="    & Integer'Image (in8));
@@ -553,7 +553,7 @@ begin
         Put (xl, "first_row="     & Integer'Image (in16));
         Put (xl, "first_column="  & Integer'Image (in16));
         Put (xl, "use_auto_grid_colour=" & Integer'Image (in8));
-        for i in 1 .. 4 loop -- RGB
+        for i in 1 .. 4 loop  --  RGB
           Read (f, b);
         end loop;
       when window2_b3 =>
@@ -565,7 +565,7 @@ begin
         --  if length > 0 then
         --    Put(xl, "skipping contents");
         --  end if;
-        for i in 1 .. length loop -- just skip the contents, show some
+        for i in 1 .. record_length loop  --  just skip the contents, show some
           if i <= 10 then
             Put (xl, in8);
           else
