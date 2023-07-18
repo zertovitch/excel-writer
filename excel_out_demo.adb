@@ -1,17 +1,19 @@
 with Excel_Out;
 
 with Ada.Calendar,
+     Ada.Characters.Handling,
      Ada.Numerics.Float_Random,
-     Ada.Streams.Stream_IO, Ada.Text_IO;
+     Ada.Streams.Stream_IO,
+     Ada.Text_IO;
 
 procedure Excel_Out_Demo is
 
   use Excel_Out, Ada.Calendar;
 
-  procedure Small_demo is
+  procedure Small_Demo is
     xl : Excel_Out.Excel_Out_File;
   begin
-    xl.Create ("Small.xls");
+    xl.Create ("small.xls");
     xl.Put_Line ("This is a small demo for Excel_Out");
     for row in 3 .. 8 loop
       for column in 1 .. 8 loop
@@ -19,9 +21,9 @@ procedure Excel_Out_Demo is
       end loop;
     end loop;
     xl.Close;
-  end Small_demo;
+  end Small_Demo;
 
-  procedure Big_demo (ef : Excel_type) is
+  procedure Big_Demo (ef : Excel_type) is
     xl : Excel_Out_File;
     font_1, font_2, font_3, font_for_title, font_5, font_6 : Font_type;
     fmt_1, fmt_decimal_2, fmt_decimal_0, fmt_for_title, fmt_5, fmt_boxed, fmt_cust_num, fmt_8,
@@ -30,8 +32,9 @@ procedure Excel_Out_Demo is
     --  We test the output of some date (here: 2014-03-16 11:55:17)
     some_time : constant Time := Time_Of (2014, 03, 16, Duration ((11.0 * 60.0 + 55.0) * 60.0 + 17.0));
     damier : Natural;
+    use Ada.Characters.Handling;
   begin
-    xl.Create ("Big [" & Excel_type'Image (ef) & "].xls", ef, Windows_CP_1253);
+    xl.Create ("big [" & To_Lower (ef'Image) & "].xls", ef, Windows_CP_1253);
     xl.Zoom_level (85, 100);  --  Zoom level 85% (Excel: Ctrl + one bump down with the mouse wheel)
     --  Some page layout for printing...
     xl.Header ("Big demo");
@@ -87,7 +90,7 @@ procedure Excel_Out_Demo is
     xl.Put ("This is a big demo for Excel Writer / Excel_Out");
     xl.Merge (6);
     xl.Next;
-    xl.Put ("Excel format: " & Excel_type'Image (ef));
+    xl.Put ("Excel format: " & ef'Image);
     xl.Merge (1);
     xl.New_Line;
     xl.Freeze_Top_Row;
@@ -156,18 +159,18 @@ procedure Excel_Out_Demo is
       xl.Put (Long_Float (row - 15) + 0.123456);
     end loop;
     xl.Close;
-  end Big_demo;
+  end Big_Demo;
 
   procedure Fancy is
     xl : Excel_Out_File;
     font_title, font_normal, font_normal_grey : Font_type;
     fmt_title, fmt_subtitle, fmt_date, fmt_percent, fmt_amount : Format_type;
-    quotation_day : Time := Time_Of (2014, 03, 28, 9.0 * 3600.0);
+    quotation_day : Time := Time_Of (2023, 03, 28, 9.0 * 3600.0);
     price, last_price : Long_Float;
     use Ada.Numerics.Float_Random;
     gen : Generator;
   begin
-    xl.Create ("Fancy.xls");
+    xl.Create ("fancy.xls");
     --  Some page layout for printing...
     xl.Header ("Fancy sheet");
     xl.Footer ("&D");
@@ -232,16 +235,16 @@ procedure Excel_Out_Demo is
     return xl.Contents;
   end My_nice_sheet;
 
-  procedure String_demo is
+  procedure String_Demo is
     use Ada.Streams.Stream_IO;
     f : File_Type;
   begin
-    Create (f, Out_File, "From_string.xls");
+    Create (f, Out_File, "from_string.xls");
     String'Write (Stream (f), My_nice_sheet (200));
     Close (f);
-  end String_demo;
+  end String_Demo;
 
-  procedure Speed_test is
+  procedure Speed_Test is
     xl : Excel_Out_File;
     t0, t1 : Time;
     iter : constant := 1000;
@@ -249,7 +252,7 @@ procedure Excel_Out_Demo is
     secs : Long_Float;
     dummy_int : Integer := 0;
   begin
-    xl.Create ("Speed_test.xls");
+    xl.Create ("speed_test.xls");
     t0 := Clock;
     for i in 1 .. iter loop
       declare
@@ -262,30 +265,30 @@ procedure Excel_Out_Demo is
     secs := Long_Float (t1 - t0);
     xl.Put_Line (
       "Time (seconds) for creating" &
-      Integer'Image (iter) & " sheets with" &
-      Integer'Image (size) & " x" &
-      Integer'Image (size) & " =" &
+      iter'Image & " sheets with" &
+      size'Image & " x" &
+      size'Image & " =" &
       Integer'Image (size**2) & " cells"
     );
     xl.Put_Line (secs);
     xl.Put_Line ("Sheets per second");
     xl.Put_Line (Long_Float (iter) / secs);
     xl.Close;
-  end Speed_test;
+  end Speed_Test;
 
   use Ada.Text_IO;
 
 begin
-  Put_Line ("Small demo -> Small.xls");
-  Small_demo;
+  Put_Line ("Small demo -> small.xls");
+  Small_Demo;
   Put_Line ("Big demo -> Big [...].xls");
   for ef in BIFF3 .. BIFF4 loop
-    Big_demo (ef);
+    Big_Demo (ef);
   end loop;
-  Put_Line ("Fancy sheet -> Fancy.xls");
+  Put_Line ("Fancy sheet -> sancy.xls");
   Fancy;
-  Put_Line ("Excel sheet in a string demo -> From_string.xls");
-  String_demo;
-  Put_Line ("Speed test -> Speed_test.xls");
-  Speed_test;
+  Put_Line ("Excel sheet in a string demo -> from_string.xls");
+  String_Demo;
+  Put_Line ("Speed test -> speed_test.xls");
+  Speed_Test;
 end Excel_Out_Demo;
