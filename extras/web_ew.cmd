@@ -1,17 +1,17 @@
-echo with Excel_Out; use Excel_Out;>small_demo.adb
+echo with Excel_Out;>small_demo.adb
 echo.>>small_demo.adb
-echo procedure Small_demo is>>small_demo.adb
-echo   xl: Excel_Out_File;>>small_demo.adb
+echo procedure Small_Demo is>>small_demo.adb
+echo   xl: Excel_Out.Excel_Out_File;>>small_demo.adb
 echo begin>>small_demo.adb
-echo   xl.Create("Small.xls");>>small_demo.adb
-echo   xl.Put_Line("This is a small demo for Excel_Out");>>small_demo.adb
+echo   xl.Create ("small.xls");>>small_demo.adb
+echo   xl.Put_Line ("This is a small demo for Excel_Out");>>small_demo.adb
 echo   for row in 3 .. 8 loop>>small_demo.adb
 echo     for column in 1 .. 8 loop>>small_demo.adb
-echo       xl.Write(row, column, row * 1000 + column);>>small_demo.adb
+echo       xl.Write (row, column, row * 1000 + column);>>small_demo.adb
 echo     end loop;>>small_demo.adb
 echo   end loop;>>small_demo.adb
 echo   xl.Close;>>small_demo.adb
-echo end Small_demo;>>small_demo.adb
+echo end Small_Demo;>>small_demo.adb
 
 rem Call GNATMake without project file: we want the .ali here.
 
