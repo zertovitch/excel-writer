@@ -173,7 +173,7 @@ procedure Excel_Out_Demo is
     xl.Create ("fancy.xls");
     --  Some page layout for printing...
     xl.Header ("Fancy sheet");
-    xl.Footer ("&D");
+    xl.Footer ("&D");  --  Current date
     xl.Margins (1.2, 1.1, 0.9, 0.8);
     xl.Print_Gridlines;
     xl.Page_Setup (fit_height_with_n_pages => 0, orientation => portrait, scale_or_fit => fit);
