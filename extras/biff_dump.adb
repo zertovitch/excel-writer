@@ -126,7 +126,7 @@ procedure BIFF_Dump is
   defaults : Boolean;
 
   xl : Excel_Out_File;
-  fmt_ul : Format_type;
+  fmt_ul : Format_Type;
 
   procedure Cell_Attributes is
   begin
@@ -189,25 +189,25 @@ begin
     fit_height_with_n_pages => 0
   );
   --
-  Write_default_column_width (xl, 18);
-  Write_column_width (xl, 1, 11);
-  Write_column_width (xl, 3, 3);
-  Write_column_width (xl, 4, 20);
+  Write_Default_Column_Width (xl, 18);
+  Write_Column_Width (xl, 1, 11);
+  Write_Column_Width (xl, 3, 3);
+  Write_Column_Width (xl, 4, 20);
   --
-  Define_Format (xl, Default_font (xl), general, fmt_ul, border => bottom);
+  Define_Format (xl, Default_Font (xl), general, fmt_ul, border => bottom);
   --
   Put_Line (xl, "Dump of the BIFF (Excel .xls) file: " & To_String (excel_file_name));
   New_Line (xl);
   --
-  Use_format (xl, fmt_ul);
+  Use_Format (xl, fmt_ul);
   Put (xl, "BIFF Code");
   Put (xl, "Bytes");
   Put (xl, " ");
   Put (xl, "BIFF Topic");
   Put_Line (xl, "Comments");
-  Freeze_Panes_at_cursor (xl);
+  Freeze_Panes_at_Cursor (xl);
   --
-  Use_format (xl, Default_format (xl));
+  Use_Format (xl, Default_Format (xl));
   Open (f, In_File, To_String (excel_file_name));
   while not End_Of_File (f) loop
     code  := in16;

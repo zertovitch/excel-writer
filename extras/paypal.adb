@@ -41,11 +41,11 @@ procedure PayPal is
 
     currency_set : String_Ordered_Sets.Set;
 
-    fmt_title, fmt_subtitle, fmt_header, fmt_money, fmt_normal : Format_type;
+    fmt_title, fmt_subtitle, fmt_header, fmt_money, fmt_normal : Format_Type;
 
     procedure Put_Header is
     begin
-      xl.Use_format (fmt_header);
+      xl.Use_Format (fmt_header);
       xl.Put ("Date");
       xl.Put ("Time");
       xl.Put ("TimeZone");
@@ -64,7 +64,7 @@ procedure PayPal is
     prefix : constant String :=
       csv_file_name (csv_file_name'First .. csv_file_name'Last - ext'Length - 1);
 
-    font_title, font_subtitle, font_normal : Font_type;
+    font_title, font_subtitle, font_normal : Font_Type;
   begin
     xl.Create (prefix & ".xls");
     xl.Header ("PayPal activity report");
@@ -76,7 +76,7 @@ procedure PayPal is
        scale_or_fit            => fit);
 
     for ct in Col_Type loop
-      xl.Write_column_width
+      xl.Write_Column_Width
         (1 + Col_Type'Pos (ct),
          (case ct is
             when Date             => 10,
@@ -99,7 +99,7 @@ procedure PayPal is
     xl.Define_Format (font_title,    general, fmt_title);
     xl.Define_Format (font_normal,   general, fmt_header, border => bottom);
     xl.Define_Format (font_normal,   decimal_2_thousands_separator, fmt_money);
-    xl.Use_format (fmt_normal);
+    xl.Use_Format (fmt_normal);
 
     --
     --  Map the currencies
@@ -120,11 +120,11 @@ procedure PayPal is
     --
     --  Output the report, grouped by currency
     --
-    xl.Use_format (fmt_title);
+    xl.Use_Format (fmt_title);
     xl.Put_Line ("PayPal activity report: " & csv_file_name);
     xl.New_Line;
     for ccy of currency_set loop
-      xl.Use_format (fmt_subtitle);
+      xl.Use_Format (fmt_subtitle);
       xl.Put_Line ("Currency: " & ccy);
       xl.New_Line;
       Put_Header;
@@ -146,10 +146,10 @@ procedure PayPal is
                   for c of cell loop
                     if c = ',' then c := '.'; end if;
                   end loop;
-                  xl.Use_format (fmt_money);
+                  xl.Use_Format (fmt_money);
                   xl.Put (Long_Float'Value (cell));
                 else
-                  xl.Use_format (fmt_normal);
+                  xl.Use_Format (fmt_normal);
                   xl.Put (cell);
                 end if;
               end;

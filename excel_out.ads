@@ -9,7 +9,7 @@
 
 --  Legal licensing note:
 
---  Copyright (c) 2009 .. 2023 Gautier de Montmollin
+--  Copyright (c) 2009 .. 2024 Gautier de Montmollin
 
 --  Permission is hereby granted, free of charge, to any person obtaining a copy
 --  of this software and associated documentation files (the "Software"), to deal
@@ -95,32 +95,30 @@ package Excel_Out is
   procedure Print_Row_Column_Headers (xl : Excel_Out_Stream);
   procedure Print_Gridlines (xl : Excel_Out_Stream);
   --
-  type Orientation_choice is (landscape, portrait);
-  type Scale_or_fit_choice is (scale, fit);
-  procedure Page_Setup (
-    xl                     : Excel_Out_Stream;
-    scaling_percents       : Positive := 100;
-    fit_width_with_n_pages : Natural := 1; -- 0: as many as possible
-    fit_height_with_n_pages : Natural := 1; -- 0: as many as possible
-    orientation            : Orientation_choice := portrait;
-    scale_or_fit           : Scale_or_fit_choice := scale
-  );
+  type Orientation_Choice is (landscape, portrait);
+  type Scale_or_Fit_Choice is (scale, fit);
+  procedure Page_Setup
+    (xl                      : Excel_Out_Stream;
+     scaling_percents        : Positive := 100;
+     fit_width_with_n_pages  : Natural  := 1;  --  0: as many as possible
+     fit_height_with_n_pages : Natural  := 1;  --  0: as many as possible
+     orientation             : Orientation_Choice  := portrait;
+     scale_or_fit            : Scale_or_Fit_Choice := scale);
 
   --  * The column width unit is as it appears in Excel when you resize a column.
   --      It is the width of a '0' in a standard font.
-  procedure Write_default_column_width (xl : in out Excel_Out_Stream; width : Positive);
-  procedure Write_column_width (xl : in out Excel_Out_Stream; column : Positive; width : Natural);
-  procedure Write_column_width (
-    xl            : in out Excel_Out_Stream;
-    first_column,
-    last_column   : Positive;
-    width         : Natural
-  );
+  procedure Write_Default_Column_Width (xl : in out Excel_Out_Stream; width : Positive);
+  procedure Write_Column_Width (xl : in out Excel_Out_Stream; column : Positive; width : Natural);
+  procedure Write_Column_Width
+    (xl            : in out Excel_Out_Stream;
+     first_column,
+     last_column   : Positive;
+     width         : Natural);
 
   --  * The row height unit is in font points, as appearing when you
   --      resize a row in Excel. A zero height means the row is hidden.
-  procedure Write_default_row_height (xl : Excel_Out_Stream; height : Positive);
-  procedure Write_row_height (xl : Excel_Out_Stream; row : Positive; height : Natural);
+  procedure Write_Default_Row_Height (xl : Excel_Out_Stream; height : Positive);
+  procedure Write_Row_Height (xl : Excel_Out_Stream; row : Positive; height : Natural);
 
   ----------------------
   -- Formatting cells --
@@ -133,114 +131,111 @@ package Excel_Out is
   --    - and other optional things to come here...
   --  Formats are user-defined except one which is predefined: Default_format
 
-  type Format_type is private;
+  type Format_Type is private;
 
-  function Default_format (xl : Excel_Out_Stream) return Format_type;
+  function Default_Format (xl : Excel_Out_Stream) return Format_Type;
   --  What you get when creating a new sheet in Excel: Default_font,...
 
   --  * Number format
-  type Number_format_type is private;
+  type Number_Format_Type is private;
 
   --  Built-in number formats
-  general          : constant Number_format_type;
-  decimal_0        : constant Number_format_type;
-  decimal_2        : constant Number_format_type;
-  decimal_0_thousands_separator : constant Number_format_type;  -- 1'234'000
-  decimal_2_thousands_separator : constant Number_format_type;  -- 1'234'000.00
-  percent_0        : constant Number_format_type;   --  3%, 0%, -4%
-  percent_2        : constant Number_format_type;
-  percent_0_plus   : constant Number_format_type;   -- +3%, 0%, -4%
-  percent_2_plus   : constant Number_format_type;
-  scientific       : constant Number_format_type;
-  dd_mm_yyyy       : constant Number_format_type;
-  dd_mm_yyyy_hh_mm : constant Number_format_type;
-  hh_mm            : constant Number_format_type;
-  hh_mm_ss         : constant Number_format_type;
+  general                       : constant Number_Format_Type;
+  decimal_0                     : constant Number_Format_Type;
+  decimal_2                     : constant Number_Format_Type;
+  decimal_0_thousands_separator : constant Number_Format_Type;  --  1'234'000
+  decimal_2_thousands_separator : constant Number_Format_Type;  --  1'234'000.00
+  percent_0                     : constant Number_Format_Type;  --   3%, 0%, -4%
+  percent_2                     : constant Number_Format_Type;
+  percent_0_plus                : constant Number_Format_Type;  --  +3%, 0%, -4%
+  percent_2_plus                : constant Number_Format_Type;
+  scientific                    : constant Number_Format_Type;
+  dd_mm_yyyy                    : constant Number_Format_Type;
+  dd_mm_yyyy_hh_mm              : constant Number_Format_Type;
+  hh_mm                         : constant Number_Format_Type;
+  hh_mm_ss                      : constant Number_Format_Type;
 
   procedure Define_Number_Format
     (xl            : in out Excel_Out_Stream;
-     format        :    out Number_format_type;
+     format        :    out Number_Format_Type;
      format_string : in     String);
 
   --  * Fonts are user-defined, one is predefined: Default_font
-  type Font_type is private;
+  type Font_Type is private;
 
-  function Default_font (xl : Excel_Out_Stream) return Font_type;
+  function Default_Font (xl : Excel_Out_Stream) return Font_Type;
   --  Arial 10, regular, "automatic" color
 
-  type Color_type is
+  type Color_Type is
     (automatic,
      black, white, red, green, blue, yellow, magenta, cyan,
      dark_red, dark_green, dark_blue, olive, purple, teal, silver, grey);
 
-  type Font_style is private;
+  type Font_Style is private;
 
   --  For combining font styles (e.g.: bold & underlined):
-  function "&" (a, b : Font_style) return Font_style;
+  function "&" (a, b : Font_Style) return Font_Style;
 
-  regular     : constant Font_style;
-  italic      : constant Font_style;
-  bold        : constant Font_style;
-  bold_italic : constant Font_style;
-  underlined  : constant Font_style;
-  struck_out  : constant Font_style;
-  shadowed    : constant Font_style;
-  condensed   : constant Font_style;
-  extended    : constant Font_style;
+  regular     : constant Font_Style;
+  italic      : constant Font_Style;
+  bold        : constant Font_Style;
+  bold_italic : constant Font_Style;
+  underlined  : constant Font_Style;
+  struck_out  : constant Font_Style;
+  shadowed    : constant Font_Style;
+  condensed   : constant Font_Style;
+  extended    : constant Font_Style;
 
   procedure Define_Font
     (xl           : in out Excel_Out_Stream;
      font_name    :        String;
      height       :        Positive;
-     font         :    out Font_type;
+     font         :    out Font_Type;
      --  Optional:
-     style        :        Font_style := regular;
-     color        :        Color_type := automatic);
+     style        :        Font_Style := regular;
+     color        :        Color_Type := automatic);
 
-  type Horizontal_alignment is (
-    general_alignment, to_left, centred, to_right, filled,
-    justified, centred_across_selection, -- (BIFF4-BIFF8)
-    distributed -- (BIFF8, Excel 10.0 ("XP") and later only)
-  );
+  type Horizontal_Alignment is
+    (general_alignment, to_left, centred, to_right, filled,
+     justified, centred_across_selection, -- (BIFF4-BIFF8)
+     distributed);  --  (BIFF8, Excel 10.0 ("XP") and later only)
 
-  type Vertical_alignment is (
-    top_alignment, centred, bottom_alignment,
-    justified, -- (BIFF5-BIFF8)
-    distributed -- (BIFF8, Excel 10.0 ("XP") and later only)
-  );
+  type Vertical_Alignment is
+    (top_alignment, centred, bottom_alignment,
+     justified,     --  (BIFF5-BIFF8)
+     distributed);  --  (BIFF8, Excel 10.0 ("XP") and later only)
 
-  type Text_orientation is (
-    normal,
-    stacked,     -- vertical, top to bottom
-    rotated_90,  -- vertical, rotated 90 degrees counterclockwise
-    rotated_270  -- vertical, rotated 90 degrees clockwise
-  );
+  type Text_Orientation is
+    (normal,
+     stacked,       --  vertical, top to bottom
+     rotated_90,    --  vertical, rotated 90 degrees counterclockwise
+     rotated_270);  --  vertical, rotated 90 degrees clockwise
 
-  type Cell_border is private;
+  type Cell_Border is private;
 
   --  Operator for combining borders (e.g.: left & top):
-  function "&" (a, b : Cell_border) return Cell_border;
+  function "&" (a, b : Cell_Border) return Cell_Border;
 
-  no_border : constant Cell_border;
-  left      : constant Cell_border;
-  right     : constant Cell_border;
-  top       : constant Cell_border;
-  bottom    : constant Cell_border;
-  box       : constant Cell_border;
+  no_border : constant Cell_Border;
+  left      : constant Cell_Border;
+  right     : constant Cell_Border;
+  top       : constant Cell_Border;
+  bottom    : constant Cell_Border;
+  box       : constant Cell_Border;
 
   procedure Define_Format
     (xl               : in out Excel_Out_Stream;
-     font             : in     Font_type;          -- Default_font(xl), or given by Define_font
-     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
-     cell_format      :    out Format_type;
+     font             : in     Font_Type;           --  Default_font(xl), or given by Define_font
+     number_format    : in     Number_Format_Type;  --  built-in, or given by Define_number_format
+     cell_format      :    out Format_Type;
      -- Optional parameters --
-     horizontal_align : in     Horizontal_alignment := general_alignment;
-     border           : in     Cell_border := no_border;
-     shaded           : in     Boolean := False;    -- Add a dotted background pattern
-     background_color : in     Color_type := automatic;
-     wrap_text        : in     Boolean := False;
-     vertical_align   : in     Vertical_alignment := bottom_alignment;
-     text_orient      : in     Text_orientation := normal);
+     horizontal_align : in     Horizontal_Alignment := general_alignment;
+     border           : in     Cell_Border          := no_border;
+     shaded           : in     Boolean              := False;    --  Add a dotted background pattern
+     background_color : in     Color_Type           := automatic;
+     wrap_text        : in     Boolean              := False;
+     vertical_align   : in     Vertical_Alignment   := bottom_alignment;
+     text_orient      : in     Text_Orientation     := normal);
 
   ------------------------
   -- (3) Cell contents: --
@@ -280,40 +275,39 @@ package Excel_Out is
 
   --  Get current column and row. The next Put will put contents in that cell.
   --
-  function Col (xl : in Excel_Out_Stream) return Positive;    -- Text_IO naming
-  function Column (xl : in Excel_Out_Stream) return Positive; -- Excel naming
-  function Line (xl : in Excel_Out_Stream) return Positive;   -- Text_IO naming
-  function Row (xl : in Excel_Out_Stream) return Positive;    -- Excel naming
+  function Col (xl : in Excel_Out_Stream) return Positive;     --  Text_IO naming
+  function Column (xl : in Excel_Out_Stream) return Positive;  --  Excel naming
+  function Line (xl : in Excel_Out_Stream) return Positive;    --  Text_IO naming
+  function Row (xl : in Excel_Out_Stream) return Positive;     --  Excel naming
 
   --  Relative / absolute jumps
   procedure Jump (xl : in out Excel_Out_Stream; rows, columns : Natural);
   procedure Jump_to (xl : in out Excel_Out_Stream; to_row, to_column : Positive);
-  procedure Next (xl : in out Excel_Out_Stream; columns : Natural := 1);  -- Jump 0 or more cells right
-  procedure Next_Row (xl : in out Excel_Out_Stream; rows : Natural := 1); -- Jump 0 or more cells down
+  procedure Next (xl : in out Excel_Out_Stream; columns : Natural := 1);   --  Jump 0 or more cells right
+  procedure Next_Row (xl : in out Excel_Out_Stream; rows : Natural := 1);  --  Jump 0 or more cells down
   --
   --  Merge a certain amount of cells with the last one,
   --  right to that cell, on the same row.
   procedure Merge (xl : in out Excel_Out_Stream; cells : Positive);
 
-  procedure Write_cell_comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String);
-  procedure Write_cell_comment_at_cursor (xl : Excel_Out_Stream; text : String);
+  procedure Write_Cell_Comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String);
+  procedure Write_Cell_Comment_at_Cursor (xl : Excel_Out_Stream; text : String);
 
-  --  Cells written after Use_format will be using the given format,
-  --  defined by Define_format.
-  procedure Use_format (
-    xl           : in out Excel_Out_Stream;
-    format       : in     Format_type
-  );
-  procedure Use_default_format (xl : in out Excel_Out_Stream);
+  --  Cells written after Use_Format will be using the given format,
+  --  defined by Define_Format.
+  procedure Use_Format
+    (xl           : in out Excel_Out_Stream;
+     format       : in     Format_Type);
+  procedure Use_Default_Format (xl : in out Excel_Out_Stream);
 
   --  The Freeze Pane methods can be called anytime before Close
   procedure Freeze_Panes (xl : in out Excel_Out_Stream; at_row, at_column : Positive);
-  procedure Freeze_Panes_at_cursor (xl : in out Excel_Out_Stream);
+  procedure Freeze_Panes_at_Cursor (xl : in out Excel_Out_Stream);
   procedure Freeze_Top_Row (xl : in out Excel_Out_Stream);
   procedure Freeze_First_Column (xl : in out Excel_Out_Stream);
 
   --  Zoom level. Example: for 85%, call with parameters 85, 100.
-  procedure Zoom_level (xl : in out Excel_Out_Stream; numerator, denominator : Positive);
+  procedure Zoom_Level (xl : in out Excel_Out_Stream; numerator, denominator : Positive);
 
   --  Set_Index and Index are not directly useful for Excel_Out users.
   --  They are private indeed, but they must be visible (RM 3.9.3(10)).
@@ -337,38 +331,36 @@ package Excel_Out is
   Font_out_of_range,
   Number_format_out_of_range : exception;
 
-  type Excel_type is (
-    BIFF2,    --  Excel 2.1, 2,2
-    BIFF3,    --  Excel 3.0
-    BIFF4     --  Excel 4.0
-    --  BIFF5,    --  Excel 5.0 to 7.0
-    --  BIFF8     --  Excel 8.0 (97) to 11.0 (2003) - UTF-16 support
-  );
+  type Excel_Type is
+    (BIFF2,    --  Excel 2.1, 2,2
+     BIFF3,    --  Excel 3.0
+     BIFF4);   --  Excel 4.0
+     --  BIFF5,    --  Excel 5.0 to 7.0
+     --  BIFF8);   --  Excel 8.0 (97) to 11.0 (2003) - UTF-16 support
 
-  Default_Excel_type : constant Excel_type := BIFF4;
+  Default_Excel_Type : constant Excel_Type := BIFF4;
 
   --  Assumed encoding for types Character and String (8-bit):
 
-  type Encoding_type is (
-    Windows_CP_874,  --  Thai
-    Windows_CP_932,  --  Japanese Shift-JIS
-    Windows_CP_936,  --  Chinese Simplified GBK
-    Windows_CP_949,  --  Korean (Wansung)
-    Windows_CP_950,  --  Chinese Traditional BIG5
-    Windows_CP_1250, --  Latin II (Central European)
-    Windows_CP_1251, --  Cyrillic
-    Windows_CP_1252, --  Latin I, superset of ISO 8859-1
-    Windows_CP_1253, --  Greek
-    Windows_CP_1254, --  Turkish
-    Windows_CP_1255, --  Hebrew
-    Windows_CP_1256, --  Arabic
-    Windows_CP_1257, --  Baltic
-    Windows_CP_1258, --  Vietnamese
-    Windows_CP_1361, --  Korean (Johab)
-    Apple_Roman
-  );
+  type Encoding_Type is
+    (Windows_CP_874,  --  Thai
+     Windows_CP_932,  --  Japanese Shift-JIS
+     Windows_CP_936,  --  Chinese Simplified GBK
+     Windows_CP_949,  --  Korean (Wansung)
+     Windows_CP_950,  --  Chinese Traditional BIG5
+     Windows_CP_1250, --  Latin II (Central European)
+     Windows_CP_1251, --  Cyrillic
+     Windows_CP_1252, --  Latin I, superset of ISO 8859-1
+     Windows_CP_1253, --  Greek
+     Windows_CP_1254, --  Turkish
+     Windows_CP_1255, --  Hebrew
+     Windows_CP_1256, --  Arabic
+     Windows_CP_1257, --  Baltic
+     Windows_CP_1258, --  Vietnamese
+     Windows_CP_1361, --  Korean (Johab)
+     Apple_Roman);
 
-  Default_encoding : constant Encoding_type := Windows_CP_1252;
+  Default_Encoding : constant Encoding_Type := Windows_CP_1252;
 
   -------------------------------------------------------------------
   --  Here, the derived stream types pre-defined in this package.  --
@@ -377,12 +369,11 @@ package Excel_Out is
 
   type Excel_Out_File is new Excel_Out_Stream with private;
 
-  procedure Create (
-    xl           : in out Excel_Out_File;
-    file_name    :        String;
-    excel_format :        Excel_type    := Default_Excel_type;
-    encoding     :        Encoding_type := Default_encoding
-  );
+  procedure Create
+    (xl           : in out Excel_Out_File;
+     file_name    :        String;
+     excel_format :        Excel_Type    := Default_Excel_Type;
+     encoding     :        Encoding_Type := Default_Encoding);
 
   procedure Close (xl : in out Excel_Out_File);
 
@@ -392,11 +383,10 @@ package Excel_Out is
 
   type Excel_Out_String is new Excel_Out_Stream with private;
 
-  procedure Create (
-    xl           : in out Excel_Out_String;
-    excel_format :        Excel_type    := Default_Excel_type;
-    encoding     :        Encoding_type := Default_encoding
-  );
+  procedure Create
+    (xl           : in out Excel_Out_String;
+     excel_format :        Excel_Type    := Default_Excel_Type;
+     encoding     :        Encoding_Type := Default_Encoding);
 
   procedure Close (xl : in out Excel_Out_String);
 
@@ -407,7 +397,7 @@ package Excel_Out is
   ----------------------------------------------------------------
 
   version   : constant String := "18";
-  reference : constant String := "25-Jun-2023";
+  reference : constant String := "07-Jan-2024";
   --  Hopefully the latest version is at one of those URLs:
   web       : constant String := "http://excel-writer.sf.net/";
   web2 : constant String := "https://sourceforge.net/projects/excel-writer/";
@@ -422,9 +412,9 @@ private
 
   type XL_Raw_Stream_Class is access all Ada.Streams.Root_Stream_Type'Class;
 
-  type Font_type is new Natural;
-  type Number_format_type is new Natural;
-  type Format_type is new Natural;
+  type Font_Type is new Natural;
+  type Number_Format_Type is new Natural;
+  type Format_Type is new Natural;
 
   subtype XF_Range is Integer range 0 .. 62;
   --  ^ After 62 we would need to use an IXFE (5.62)
@@ -436,52 +426,52 @@ private
   --   Added Mar-2011.
 
   type XF_Info is record
-    font : Font_type;
-    numb : Number_format_type;
+    font : Font_Type;
+    numb : Number_Format_Type;
   end record;
 
   type XF_Definition is array (XF_Range) of XF_Info;
 
   --  Built-in number formats
-  general          : constant Number_format_type := 0;
-  decimal_0        : constant Number_format_type := 1;
-  decimal_2        : constant Number_format_type := 2;
-  decimal_0_thousands_separator : constant Number_format_type := 3;  -- 1'234'000
-  decimal_2_thousands_separator : constant Number_format_type := 4;  -- 1'234'000.00
-  no_currency_0       : constant Number_format_type := 5;
-  no_currency_red_0   : constant Number_format_type := 6;
-  no_currency_2       : constant Number_format_type := 7;
-  no_currency_red_2   : constant Number_format_type := 8;
-  currency_0       : constant Number_format_type :=  9; -- 5 in BIFF2, BIFF3 (sob!)
-  currency_red_0   : constant Number_format_type := 10; -- 6 in BIFF2, BIFF3...
-  currency_2       : constant Number_format_type := 11;
-  currency_red_2   : constant Number_format_type := 12;
-  percent_0        : constant Number_format_type := 13;  --  3%, 0%, -4%
-  percent_2        : constant Number_format_type := 14;
-  scientific       : constant Number_format_type := 15;
-  fraction_1       : constant Number_format_type := 16;
-  fraction_2       : constant Number_format_type := 17;
-  dd_mm_yyyy       : constant Number_format_type := 18; -- 14 in BIFF3, 12 in BIFF2 (re-sob!)
-  dd_mmm_yy        : constant Number_format_type := 19; -- 15 in BIFF3, 13 in BIFF2...
-  dd_mmm           : constant Number_format_type := 20;
-  mmm_yy           : constant Number_format_type := 21;
-  h_mm_AM_PM       : constant Number_format_type := 22;
-  h_mm_ss_AM_PM    : constant Number_format_type := 23;
-  hh_mm            : constant Number_format_type := 24;
-  hh_mm_ss         : constant Number_format_type := 25;
-  dd_mm_yyyy_hh_mm : constant Number_format_type := 26;
+  general          : constant Number_Format_Type := 0;
+  decimal_0        : constant Number_Format_Type := 1;
+  decimal_2        : constant Number_Format_Type := 2;
+  decimal_0_thousands_separator : constant Number_Format_Type := 3;  -- 1'234'000
+  decimal_2_thousands_separator : constant Number_Format_Type := 4;  -- 1'234'000.00
+  no_currency_0       : constant Number_Format_Type := 5;
+  no_currency_red_0   : constant Number_Format_Type := 6;
+  no_currency_2       : constant Number_Format_Type := 7;
+  no_currency_red_2   : constant Number_Format_Type := 8;
+  currency_0       : constant Number_Format_Type :=  9; -- 5 in BIFF2, BIFF3 (sob!)
+  currency_red_0   : constant Number_Format_Type := 10; -- 6 in BIFF2, BIFF3...
+  currency_2       : constant Number_Format_Type := 11;
+  currency_red_2   : constant Number_Format_Type := 12;
+  percent_0        : constant Number_Format_Type := 13;  --  3%, 0%, -4%
+  percent_2        : constant Number_Format_Type := 14;
+  scientific       : constant Number_Format_Type := 15;
+  fraction_1       : constant Number_Format_Type := 16;
+  fraction_2       : constant Number_Format_Type := 17;
+  dd_mm_yyyy       : constant Number_Format_Type := 18; -- 14 in BIFF3, 12 in BIFF2 (re-sob!)
+  dd_mmm_yy        : constant Number_Format_Type := 19; -- 15 in BIFF3, 13 in BIFF2...
+  dd_mmm           : constant Number_Format_Type := 20;
+  mmm_yy           : constant Number_Format_Type := 21;
+  h_mm_AM_PM       : constant Number_Format_Type := 22;
+  h_mm_ss_AM_PM    : constant Number_Format_Type := 23;
+  hh_mm            : constant Number_Format_Type := 24;
+  hh_mm_ss         : constant Number_Format_Type := 25;
+  dd_mm_yyyy_hh_mm : constant Number_Format_Type := 26;
   --  End of Excel built-in formats
-  last_built_in : constant Number_format_type := dd_mm_yyyy_hh_mm;
+  last_built_in : constant Number_Format_Type := dd_mm_yyyy_hh_mm;
 
-  percent_0_plus   : constant Number_format_type := 27; -- +3%, 0%, -4%
-  percent_2_plus   : constant Number_format_type := 28;
-  date_iso         : constant Number_format_type := 29; -- ISO 8601 format: 2014-03-16
-  date_h_m_iso     : constant Number_format_type := 30; -- date, hour, minutes
-  date_h_m_s_iso   : constant Number_format_type := 31; -- date, hour, minutes, seconds
+  percent_0_plus   : constant Number_Format_Type := 27;  --  +3%, 0%, -4%
+  percent_2_plus   : constant Number_Format_Type := 28;
+  date_iso         : constant Number_Format_Type := 29;  --  ISO 8601 format: 2014-03-16
+  date_h_m_iso     : constant Number_Format_Type := 30;  --  date, hour, minutes
+  date_h_m_s_iso   : constant Number_Format_Type := 31;  --  date, hour, minutes, seconds
   --  End of our custom formats
-  last_custom_number_format : constant Number_format_type := date_h_m_s_iso;
+  last_custom_number_format : constant Number_Format_Type := date_h_m_s_iso;
 
-  type Col_width_set is array (1 .. 256) of Boolean;
+  type Col_Width_Set is array (1 .. 256) of Boolean;
 
   --  We have a concrete type as hidden ancestor of the Excel_Out_Stream root
   --  type. A variable of that type is initialized with default values and
@@ -492,21 +482,21 @@ private
   --
   type Excel_Out_Pre_Root_Type is tagged record
     xl_stream  : XL_Raw_Stream_Class;
-    xl_format  : Excel_type    := Default_Excel_type;
-    encoding   : Encoding_type := Default_encoding;
+    xl_format  : Excel_Type    := Default_Excel_Type;
+    encoding   : Encoding_Type := Default_Encoding;
     dimrecpos  : Ada.Streams.Stream_IO.Positive_Count;
-    maxcolumn  : Positive := 1;
-    maxrow     : Positive := 1;
-    fonts      : Integer := -1; -- [-1..max_font]
-    xfs        : Integer := -1; -- [-1..XF_Range'Last]
-    xf_in_use  : XF_Range := 0;
+    maxcolumn  : Positive :=  1;
+    maxrow     : Positive :=  1;
+    fonts      : Integer  := -1;  --  [-1..max_font]
+    xfs        : Integer  := -1;  --  [-1..XF_Range'Last]
+    xf_in_use  : XF_Range :=  0;
     xf_def     : XF_Definition;
-    number_fmt : Number_format_type := last_custom_number_format;
-    def_font   : Font_type;
-    def_fmt    : Format_type; -- Default format; used for "Normal" style
-    cma_fmt    : Format_type; -- Format used for defining "Comma" style
-    ccy_fmt    : Format_type; -- Format used for defining "Currency" style
-    pct_fmt    : Format_type; -- Format used for defining "Percent" style
+    number_fmt : Number_Format_Type := last_custom_number_format;
+    def_font   : Font_Type;
+    def_fmt    : Format_Type;  --  Default format; used for "Normal" style
+    cma_fmt    : Format_Type;  --  Format used for defining "Comma" style
+    ccy_fmt    : Format_Type;  --  Format used for defining "Currency" style
+    pct_fmt    : Format_Type;  --  Format used for defining "Percent" style
     is_created : Boolean := False;
     is_closed  : Boolean := False;
     curr_row   : Positive := 1;
@@ -516,13 +506,13 @@ private
     freeze_col : Positive;
     zoom_num   : Positive := 100;
     zoom_den   : Positive := 100;
-    defcolwdth : Natural := 0; -- 0 = not set; 1/256 of the width of the zero character
-    std_col_width : Col_width_set := (others => True);
+    defcolwdth : Natural := 0;  --  0 = not set; 1/256 of the width of the zero character
+    std_col_width : Col_Width_Set := (others => True);
   end record;
 
   type Excel_Out_Stream is abstract new Excel_Out_Pre_Root_Type with null record;
 
-  type Font_style_single is
+  type Font_Style_Single is
     (bold_single,
      italic_single,
      underlined_single,
@@ -532,42 +522,42 @@ private
      condensed_single,
      extended_single);
 
-  type Font_style is array (Font_style_single) of Boolean;
+  type Font_Style is array (Font_Style_Single) of Boolean;  --  This type is a set.
 
-  regular     : constant Font_style := (others => False);
-  italic      : constant Font_style := (italic_single => True, others => False);
-  bold        : constant Font_style := (bold_single => True, others => False);
-  bold_italic : constant Font_style := bold or italic;
-  underlined  : constant Font_style := (underlined_single => True, others => False);
-  struck_out  : constant Font_style := (struck_out_single => True, others => False);
-  shadowed    : constant Font_style := (shadowed_single => True, others => False);
-  condensed   : constant Font_style := (condensed_single => True, others => False);
-  extended    : constant Font_style := (extended_single => True, others => False);
+  regular     : constant Font_Style := (others => False);
+  italic      : constant Font_Style := (italic_single => True, others => False);
+  bold        : constant Font_Style := (bold_single => True, others => False);
+  bold_italic : constant Font_Style := bold or italic;
+  underlined  : constant Font_Style := (underlined_single => True, others => False);
+  struck_out  : constant Font_Style := (struck_out_single => True, others => False);
+  shadowed    : constant Font_Style := (shadowed_single => True, others => False);
+  condensed   : constant Font_Style := (condensed_single => True, others => False);
+  extended    : constant Font_Style := (extended_single => True, others => False);
 
-  type Cell_border_single is
+  type Cell_Border_Single is
     (left_single,
      right_single,
      top_single,
      bottom_single);
 
-  type Cell_border is array (Cell_border_single) of Boolean;
+  type Cell_Border is array (Cell_Border_Single) of Boolean;  --  This type is a set.
 
-  no_border : constant Cell_border := (others => False);
-  left      : constant Cell_border := (left_single => True, others => False);
-  right     : constant Cell_border := (right_single => True, others => False);
-  top       : constant Cell_border := (top_single => True, others => False);
-  bottom    : constant Cell_border := (bottom_single => True, others => False);
-  box       : constant Cell_border := (others => True);
+  no_border : constant Cell_Border := (others => False);
+  left      : constant Cell_Border := (left_single => True, others => False);
+  right     : constant Cell_Border := (right_single => True, others => False);
+  top       : constant Cell_Border := (top_single => True, others => False);
+  bottom    : constant Cell_Border := (bottom_single => True, others => False);
+  box       : constant Cell_Border := (others => True);
 
   ----------------------
   -- Output to a file --
   ----------------------
 
-  type XL_file_acc is
+  type XL_File_Acc is
     access Ada.Streams.Stream_IO.File_Type;
 
   type Excel_Out_File is new Excel_Out_Stream with record
-    xl_file   : XL_file_acc := null; -- access to the "physical" Excel file
+    xl_file   : XL_File_Acc := null;  --  access to the "physical" Excel file
   end record;
 
   --  Set the index on the file

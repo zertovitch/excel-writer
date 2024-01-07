@@ -6,20 +6,20 @@ procedure EW_Test is
 
   use Excel_Out;
 
-  procedure Test_def_col_width (ef : Excel_type) is
+  procedure Test_def_col_width (ef : Excel_Type) is
     xl : Excel_Out_File;
   begin
-    xl.Create ("With def col width [" & Excel_type'Image (ef) & "].xls", ef);
-    xl.Write_default_column_width (20);
-    xl.Write_column_width (1, 5);
-    xl.Write_column_width (5, 10, 4);
+    xl.Create ("With def col width [" & Excel_Type'Image (ef) & "].xls", ef);
+    xl.Write_Default_Column_Width (20);
+    xl.Write_Column_Width (1, 5);
+    xl.Write_Column_Width (5, 10, 4);
     xl.Put ("A");
     xl.Put ("B");
     xl.Close;
     --
-    xl.Create ("Without def col width [" & Excel_type'Image (ef) & "].xls", ef);
-    xl.Write_column_width (1, 5);
-    xl.Write_column_width (5, 10, 4);
+    xl.Create ("Without def col width [" & Excel_Type'Image (ef) & "].xls", ef);
+    xl.Write_Column_Width (1, 5);
+    xl.Write_Column_Width (5, 10, 4);
     xl.Put ("A");
     xl.Put ("B");
     xl.Close;
@@ -27,11 +27,11 @@ procedure EW_Test is
 
   --  Test automatic choice for integer output
   --
-  procedure Test_General (ef : Excel_type) is
+  procedure Test_General (ef : Excel_Type) is
     use Ada.Strings, Ada.Strings.Fixed;
     xl : Excel_Out_File;
   begin
-    xl.Create ("Integer [" & Excel_type'Image (ef) & "].xls", ef);
+    xl.Create ("Integer [" & Excel_Type'Image (ef) & "].xls", ef);
     xl.Freeze_Top_Row;
     xl.Put ("x");
     xl.Next;
@@ -81,7 +81,7 @@ procedure EW_Test is
   end Test_General;
 
 begin
-  for ef in Excel_type loop
+  for ef in Excel_Type loop
     Test_def_col_width (ef);
     Test_General (ef);
   end loop;

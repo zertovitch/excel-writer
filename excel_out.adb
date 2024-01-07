@@ -211,13 +211,13 @@ package body Excel_Out is
     Sheet_or_dialogue : constant := 16#10#;
     --  0020H = Chart
     --  0040H = Macro sheet
-    biff_record_identifier : constant array (Excel_type) of Unsigned_16 :=
+    biff_record_identifier : constant array (Excel_Type) of Unsigned_16 :=
       (BIFF2 => 16#0009#,
        BIFF3 => 16#0209#,
        BIFF4 => 16#0409#
        --  BIFF8 => 16#0809#
       );
-    biff_version : constant array (Excel_type) of Unsigned_16 :=
+    biff_version : constant array (Excel_Type) of Unsigned_16 :=
       (BIFF2 => 16#0200#,
        BIFF3 => 16#0300#,
        BIFF4 => 16#0400#
@@ -266,7 +266,7 @@ package body Excel_Out is
       --    null;
     end case;
     --  loop & case avoid omitting any choice
-    for n in Number_format_type'First .. last_custom_number_format loop
+    for n in Number_Format_Type'First .. last_custom_number_format loop
       case n is
         when general    =>  Write_Number_Format_String (xl, "General");
         when decimal_0  =>  Write_Number_Format_String (xl, "0");
@@ -386,7 +386,7 @@ package body Excel_Out is
 
   procedure Define_Number_Format
     (xl            : in out Excel_Out_Stream;
-     format        :    out Number_format_type;
+     format        :    out Number_Format_Type;
      format_string : in     String)
   is
   begin
@@ -410,19 +410,19 @@ package body Excel_Out is
 
   procedure Write_Worksheet_header (xl : in out Excel_Out_Stream'Class) is
 
-    procedure Define_style (fmt : Format_type; style_id : Unsigned_8) is
+    procedure Define_Style (fmt : Format_Type; style_id : Unsigned_8) is
       Base_Level : constant := 255;
     begin
       WriteBiff (xl,
         16#0293#,
         Intel_16 (Unsigned_16 (fmt) + 16#8000#) & style_id & Base_Level
       );
-    end Define_style;
+    end Define_Style;
     --
     Comma_Style     : constant := 3;
     Currency_Style  : constant := 4;
     Percent_Style   : constant := 5;
-    font_for_styles, font_2, font_3 : Font_type;
+    font_for_styles, font_2, font_3 : Font_Type;
     --
     function Encoding_code return Unsigned_16 is  --  5.17 CODEPAGE, p. 145
     begin
@@ -491,7 +491,7 @@ package body Excel_Out is
       end loop;
       --  Final default format index is the last changed xl.def_fmt
     end if;
-    Use_default_format (xl);
+    Use_Default_Format (xl);
     --  Define formats for the BIFF3+ "styles":
     Define_Format (xl, font_for_styles, decimal_2, xl.cma_fmt);
     Define_Format (xl, font_for_styles, currency_0, xl.ccy_fmt);
@@ -503,9 +503,9 @@ package body Excel_Out is
     --        buttons (%)(,) in Excel 95 through 2007 are using these styles;
     --        if the styles are not defined, those buttons are not working
     --        when an Excel Writer sheet is open in MS Excel.
-    Define_style (xl.cma_fmt, Comma_Style);
-    Define_style (xl.ccy_fmt, Currency_Style);
-    Define_style (xl.pct_fmt, Percent_Style);
+    Define_Style (xl.cma_fmt, Comma_Style);
+    Define_Style (xl.ccy_fmt, Currency_Style);
+    Define_Style (xl.pct_fmt, Percent_Style);
     xl.dimrecpos := Index (xl);
     Write_Dimensions (xl);
     xl.is_created := True;
@@ -518,7 +518,7 @@ package body Excel_Out is
      16#0019#  -- system window background colour
     );
 
-  color_code : constant array (Excel_type, Color_type) of Color_pair :=
+  color_code : constant array (Excel_Type, Color_Type) of Color_pair :=
     (BIFF2 =>
        (
          black      => (0, 0),
@@ -557,19 +557,19 @@ package body Excel_Out is
   --  5.115 XF - Extended Format
   procedure Define_Format
     (xl               : in out Excel_Out_Stream;
-     font             : in     Font_type;          -- Default_font(xl), or given by Define_font
-     number_format    : in     Number_format_type; -- built-in, or given by Define_number_format
-     cell_format      :    out Format_type;
+     font             : in     Font_Type;           --  Default_font(xl), or given by Define_font
+     number_format    : in     Number_Format_Type;  --  built-in, or given by Define_number_format
+     cell_format      :    out Format_Type;
      -- Optional parameters --
-     horizontal_align : in     Horizontal_alignment := general_alignment;
-     border           : in     Cell_border := no_border;
-     shaded           : in     Boolean := False;    -- Add a dotted background pattern
-     background_color : in     Color_type := automatic;
-     wrap_text        : in     Boolean := False;
-     vertical_align   : in     Vertical_alignment := bottom_alignment;
-     text_orient      : in     Text_orientation := normal)
+     horizontal_align : in     Horizontal_Alignment := general_alignment;
+     border           : in     Cell_Border          := no_border;
+     shaded           : in     Boolean              := False;    --  Add a dotted background pattern
+     background_color : in     Color_Type           := automatic;
+     wrap_text        : in     Boolean              := False;
+     vertical_align   : in     Vertical_Alignment   := bottom_alignment;
+     text_orient      : in     Text_Orientation     := normal)
   is
-    actual_number_format : Number_format_type := number_format;
+    actual_number_format : Number_Format_Type := number_format;
     cell_is_locked : constant := 1;
     --  ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
     procedure Define_BIFF2_XF is
@@ -577,7 +577,7 @@ package body Excel_Out is
     begin
       border_bits := 0;
       mask := 8;
-      for s in Cell_border_single loop
+      for s in Cell_Border_Single loop
         if border (s) then
           border_bits := border_bits + mask;
         end if;
@@ -591,9 +591,9 @@ package body Excel_Out is
          --  ^ Index to FONT record
          0,
          --  ^ Not used
-         Number_format_type'Pos (actual_number_format) + 16#40# * cell_is_locked,
+         Number_Format_Type'Pos (actual_number_format) + 16#40# * cell_is_locked,
          --  ^ Number format and cell flags
-         Horizontal_alignment'Pos (horizontal_align) +
+         Horizontal_Alignment'Pos (horizontal_align) +
          border_bits +
          Boolean'Pos (shaded) * 128
          --  ^ Horizontal alignment, border style, and background
@@ -611,7 +611,7 @@ package body Excel_Out is
         16#0243#, -- XF code in BIFF3
         (Unsigned_8 (font),
          --  ^ 0 - Index to FONT record
-         Number_format_type'Pos (actual_number_format),
+         Number_Format_Type'Pos (actual_number_format),
          --  ^ 1 - Number format and cell flags
          cell_is_locked,
          --  ^ 2 - XF_TYPE_PROT (5.115.1)
@@ -619,7 +619,7 @@ package body Excel_Out is
          --  ^ 3 - XF_USED_ATTRIB
         ) &
         Intel_16 (
-          Horizontal_alignment'Pos (horizontal_align) +
+          Horizontal_Alignment'Pos (horizontal_align) +
           Boolean'Pos (wrap_text) * 8
         ) &
         --  ^ 4 - Horizontal alignment, text break, parent style XF
@@ -643,14 +643,14 @@ package body Excel_Out is
         16#0443#, -- XF code in BIFF4
         (Unsigned_8 (font),
          --  ^ 0 - Index to FONT record
-         Number_format_type'Pos (actual_number_format),
+         Number_Format_Type'Pos (actual_number_format),
          --  ^ 1 - Number format and cell flags
          cell_is_locked, 0,
          --  ^ 2 - XF type, cell protection, and parent style XF
-         Horizontal_alignment'Pos (horizontal_align) +
+         Horizontal_Alignment'Pos (horizontal_align) +
          Boolean'Pos (wrap_text) * 8 +
-         (Vertical_alignment'Pos (vertical_align) and 3) * 16 +
-         Text_orientation'Pos (text_orient) * 64,
+         (Vertical_Alignment'Pos (vertical_align) and 3) * 16 +
+         Text_Orientation'Pos (text_orient) * 64,
          --  ^ 4 - Alignment (hor & ver), text break, and text orientation
          16#FF#
          --  ^ 3 - XF_USED_ATTRIB
@@ -718,7 +718,7 @@ package body Excel_Out is
           "(including a few pre-defined) is" &
           Integer'Image (XF_Range'Last + 1);
     end if;
-    cell_format := Format_type (xl.xfs);
+    cell_format := Format_Type (xl.xfs);
     xl.xf_def (xl.xfs) := (font => font, numb => number_format);
   end Define_Format;
 
@@ -781,8 +781,8 @@ package body Excel_Out is
     scaling_percents       : Positive := 100;
     fit_width_with_n_pages : Natural := 1; -- 0: as many as possible
     fit_height_with_n_pages : Natural := 1; -- 0: as many as possible
-    orientation            : Orientation_choice := portrait;
-    scale_or_fit           : Scale_or_fit_choice := scale
+    orientation            : Orientation_Choice := portrait;
+    scale_or_fit           : Scale_or_Fit_Choice := scale
   )
   is
   begin
@@ -794,21 +794,21 @@ package body Excel_Out is
       Intel_16 (1) & -- start page number
       Intel_16 (Unsigned_16 (fit_width_with_n_pages)) &
       Intel_16 (Unsigned_16 (fit_height_with_n_pages)) &
-      Intel_16 (2 * Orientation_choice'Pos (orientation))
+      Intel_16 (2 * Orientation_Choice'Pos (orientation))
     );
     --  5.97 SHEETPR p.207 - this is BIFF3+ (cheat if xl.format below) !
     --  NB: this field contains other informations, should be delayed
     --        in case other preferences are to be set
     WriteBiff (xl,
       16#0081#,
-      Intel_16 (256 * Scale_or_fit_choice'Pos (scale_or_fit))
+      Intel_16 (256 * Scale_or_Fit_Choice'Pos (scale_or_fit))
     );
   end Page_Setup;
 
   y_scale : constant := 20; -- scaling to obtain character point (pt) units
 
   --  5.31 DEFAULTROWHEIGHT
-  procedure Write_default_row_height (
+  procedure Write_Default_Row_Height (
         xl     : Excel_Out_Stream;
         height : Positive
   )
@@ -823,28 +823,28 @@ package body Excel_Out is
       when BIFF3 | BIFF4 =>
         WriteBiff (xl, 16#0225#, options_flags & default_twips);
     end case;
-  end Write_default_row_height;
+  end Write_Default_Row_Height;
 
   --  5.32 DEFCOLWIDTH
-  procedure Write_default_column_width (
+  procedure Write_Default_Column_Width (
         xl : in out Excel_Out_Stream;
         width  : Positive)
   is
   begin
     WriteBiff (xl, 16#0055#, Intel_16 (Unsigned_16 (width)));
     xl.defcolwdth := 256 * width;
-  end Write_default_column_width;
+  end Write_Default_Column_Width;
 
-  procedure Write_column_width (
+  procedure Write_Column_Width (
         xl     : in out Excel_Out_Stream;
         column : Positive;
         width  : Natural)
   is
   begin
-    Write_column_width (xl, column, column, width);
-  end Write_column_width;
+    Write_Column_Width (xl, column, column, width);
+  end Write_Column_Width;
 
-  procedure Write_column_width (
+  procedure Write_Column_Width (
     xl            : in out Excel_Out_Stream;
     first_column,
     last_column   : Positive;
@@ -873,7 +873,7 @@ package body Excel_Out is
           xl.std_col_width (j) := False;
         end loop;
     end case;
-  end Write_column_width;
+  end Write_Column_Width;
 
   --  5.88 ROW
   --  The OpenOffice documentation tells nice stories about row blocks,
@@ -881,7 +881,7 @@ package body Excel_Out is
   --  where the column widths are set. Excel saves with blocks of ROW
   --  commands, most of them useless.
 
-  procedure Write_row_height (
+  procedure Write_Row_Height (
     xl     : Excel_Out_Stream;
     row    : Positive;
     height : Natural
@@ -921,22 +921,22 @@ package body Excel_Out is
            --    If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
         );
     end case;
-  end Write_row_height;
+  end Write_Row_Height;
 
   --  5.45 FONT, p.171
   procedure Define_Font
     (xl           : in out Excel_Out_Stream;
      font_name    :        String;
      height       :        Positive;
-     font         :    out Font_type;
-     style        :        Font_style := regular;
-     color        :        Color_type := automatic)
+     font         :    out Font_Type;
+     style        :        Font_Style := regular;
+     color        :        Color_Type := automatic)
   is
     style_bits, mask : Unsigned_16;
   begin
     style_bits := 0;
     mask := 1;
-    for s in Font_style_single loop
+    for s in Font_Style_Single loop
       if style (s) then
         style_bits := style_bits + mask;
       end if;
@@ -974,7 +974,7 @@ package body Excel_Out is
           To_buf_8_bit_length (font_name)
         );
     end case;
-    font := Font_type (xl.fonts);
+    font := Font_Type (xl.fonts);
   end Define_Font;
 
   procedure Jump_to_and_store_max (xl : in out Excel_Out_Stream; r, c : Integer) is
@@ -1355,7 +1355,7 @@ package body Excel_Out is
     end loop;
   end Merge;
 
-  procedure Write_cell_comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String) is
+  procedure Write_Cell_Comment (xl : Excel_Out_Stream; at_row, at_column : Positive; text : String) is
   begin
     if text'Length >= 2048 then
       raise Constraint_Error;
@@ -1376,12 +1376,12 @@ package body Excel_Out is
           To_buf_16_bit_length (text)
         );
     end case;
-  end Write_cell_comment;
+  end Write_Cell_Comment;
 
-  procedure Write_cell_comment_at_cursor (xl : Excel_Out_Stream; text : String) is
+  procedure Write_Cell_Comment_at_Cursor (xl : Excel_Out_Stream; text : String) is
   begin
-    Write_cell_comment (xl, Row (xl), Column (xl), text);
-  end Write_cell_comment_at_cursor;
+    Write_Cell_Comment (xl, Row (xl), Column (xl), text);
+  end Write_Cell_Comment_at_Cursor;
 
   procedure Put_Line (xl : in out Excel_Out_Stream; num : Long_Float) is
   begin
@@ -1466,9 +1466,9 @@ package body Excel_Out is
     Jump (xl, rows => rows, columns => 0);
   end Next_Row;
 
-  procedure Use_format (
+  procedure Use_Format (
     xl           : in out Excel_Out_Stream;
-    format       : in     Format_type
+    format       : in     Format_Type
   )
   is
   begin
@@ -1478,22 +1478,22 @@ package body Excel_Out is
       raise Format_out_of_range;
       --  ^ Raised only if `format` was hacked using Unchecked_Conversion.
     end if;
-  end Use_format;
+  end Use_Format;
 
-  procedure Use_default_format (xl : in out Excel_Out_Stream) is
+  procedure Use_Default_Format (xl : in out Excel_Out_Stream) is
   begin
-    Use_format (xl, xl.def_fmt);
-  end Use_default_format;
+    Use_Format (xl, xl.def_fmt);
+  end Use_Default_Format;
 
-  function Default_font (xl : Excel_Out_Stream) return Font_type is
+  function Default_Font (xl : Excel_Out_Stream) return Font_Type is
   begin
     return xl.def_font;
-  end Default_font;
+  end Default_Font;
 
-  function Default_format (xl : Excel_Out_Stream) return Format_type is
+  function Default_Format (xl : Excel_Out_Stream) return Format_Type is
   begin
     return xl.def_fmt;
-  end Default_format;
+  end Default_Format;
 
   procedure Freeze_Panes (xl : in out Excel_Out_Stream; at_row, at_column : Positive) is
   begin
@@ -1502,10 +1502,10 @@ package body Excel_Out is
     xl.freeze_col := at_column;
   end Freeze_Panes;
 
-  procedure Freeze_Panes_at_cursor (xl : in out Excel_Out_Stream) is
+  procedure Freeze_Panes_at_Cursor (xl : in out Excel_Out_Stream) is
   begin
     Freeze_Panes (xl, xl.curr_row, xl.curr_col);
-  end Freeze_Panes_at_cursor;
+  end Freeze_Panes_at_Cursor;
 
   procedure Freeze_Top_Row (xl : in out Excel_Out_Stream) is
   begin
@@ -1517,16 +1517,16 @@ package body Excel_Out is
     Freeze_Panes (xl, 1, 2);
   end Freeze_First_Column;
 
-  procedure Zoom_level (xl : in out Excel_Out_Stream; numerator, denominator : Positive) is
+  procedure Zoom_Level (xl : in out Excel_Out_Stream; numerator, denominator : Positive) is
   begin
     xl.zoom_num := numerator;
     xl.zoom_den := denominator;
-  end Zoom_level;
+  end Zoom_Level;
 
   procedure Reset (
     xl           : in out Excel_Out_Stream'Class;
-    excel_format :        Excel_type;
-    encoding     :        Encoding_type
+    excel_format :        Excel_Type;
+    encoding     :        Encoding_Type
   )
   is
     dummy_xl_with_defaults : Excel_Out_Pre_Root_Type;
@@ -1676,8 +1676,8 @@ package body Excel_Out is
   procedure Create (
     xl           : in out Excel_Out_File;
     file_name    :        String;
-    excel_format :        Excel_type    := Default_Excel_type;
-    encoding     :        Encoding_type := Default_encoding
+    excel_format :        Excel_Type    := Default_Excel_Type;
+    encoding     :        Encoding_Type := Default_Encoding
   )
   is
     use Ada.Streams, Ada.Streams.Stream_IO;
@@ -1691,7 +1691,7 @@ package body Excel_Out is
 
   procedure Close (xl : in out Excel_Out_File) is
     procedure Dispose is new
-      Ada.Unchecked_Deallocation (Ada.Streams.Stream_IO.File_Type, XL_file_acc);
+      Ada.Unchecked_Deallocation (Ada.Streams.Stream_IO.File_Type, XL_File_Acc);
   begin
     Finish (xl);
     Ada.Streams.Stream_IO.Close (xl.xl_file.all);
@@ -1787,8 +1787,8 @@ package body Excel_Out is
 
   procedure Create (
     xl           : in out Excel_Out_String;
-    excel_format :        Excel_type    := Default_Excel_type;
-    encoding     :        Encoding_type := Default_encoding
+    excel_format :        Excel_Type    := Default_Excel_Type;
+    encoding     :        Encoding_Type := Default_Encoding
   )
   is
   begin
@@ -1828,12 +1828,12 @@ package body Excel_Out is
     return Ada.Streams.Stream_IO.Count (Index (xl.xl_memory));
   end Index;
 
-  function "&"(a, b : Font_style) return Font_style is
+  function "&"(a, b : Font_Style) return Font_Style is
   begin
     return a or b; -- "or" is predefined for sets (=array of Boolean)
   end "&";
 
-  function "&"(a, b : Cell_border) return Cell_border is
+  function "&"(a, b : Cell_Border) return Cell_Border is
   begin
     return a or b; -- "or" is predefined for sets (=array of Boolean)
   end "&";
