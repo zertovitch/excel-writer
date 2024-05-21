@@ -1,9 +1,10 @@
 ------------------------------------------------------------------------------
---  File:            CSV2TeX.adb
+--  File:            csv2tex.adb
 --  Description:     Converts CSV (text with Comma Separated Values) input
 --                   into LaTeX array output. NB: the special characters
 --                   like '%', '\', '&', '{',... should be translated before!
 --                   CSV is "the" ASCII format for Lotus 1-2-3 and MS Excel
+--
 --  Created:         22-Apr-2003
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------

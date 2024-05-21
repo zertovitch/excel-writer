@@ -1,5 +1,5 @@
 ------------------------------------------------------------------------------
---  File:            CSV2XLS.adb
+--  File:            csv2xls.adb
 --  Description:     Converts a CSV (text with Comma Separated Values) input
 --                   into an Excel file. You can specify the separator.
 --                   E.g. If you open in Excel a CSV with semicolons as
@@ -8,13 +8,16 @@
 --                   the text will already have been used as separators and
 --                   you will end up with a total mess. CSV2XLS prevents this
 --                   issue.
+--
 --  Syntax:          csv2xls {option} <data.csv
 --       or          csv2xls {option} data.csv
+--
 --                   Options:
 --                     -c : comma is the separator
 --                     -s : semicolon is the separator
 --                     -t : tab is the separator
 --                     -f : freeze top row (header line)
+--
 --  Created:         29-Apr-2014
 --  Author:          Gautier de Montmollin
 ------------------------------------------------------------------------------

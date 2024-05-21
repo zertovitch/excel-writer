@@ -17,6 +17,7 @@ project Excel_Out_Gnat is
      ("excel_out_demo.adb",
       "biff_dump.adb",
       "spreadsheet_references_demo.adb",
+      "csv2ada.adb",
       "csv2tex.adb",
       "csv2html.adb",
       "csv2xls.adb",
