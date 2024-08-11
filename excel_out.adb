@@ -2,9 +2,10 @@
 --
 --  To do:
 --  =====
+--  - Complete Write_as_Formula
 --  - Unicode (for binary Excel: requires BIFF8, but BIFF8 is pretty difficult)
 --  - border line styles (5.115 XF - Extended Format)
---  - XML-based formats support
+--  - XML-based formats support (XLSX, ODS, ...)
 --  - ...
 
 with Ada.Unchecked_Conversion,
@@ -25,18 +26,18 @@ package body Excel_Out is
   --  and floats in the IEEE format. This is needed for having Excel Writer
   --  totally portable on all systems and processor architectures.
 
-  type Byte_buffer is array (Integer range <>) of Unsigned_8;
-  empty_buffer : constant Byte_buffer := (1 .. 0 => 0);
+  type Byte_Buffer is array (Integer range <>) of Unsigned_8;
+  empty_buffer : constant Byte_Buffer := (1 .. 0 => 0);
 
   --  Put numbers with correct endianess as bytes:
   generic
     type Number is mod <>;
     size : Positive;
-  function Intel_x86_buffer (n : Number) return Byte_buffer;
+  function Intel_x86_buffer (n : Number) return Byte_Buffer;
   pragma Inline (Intel_x86_buffer);
 
-  function Intel_x86_buffer (n : Number) return Byte_buffer is
-    b : Byte_buffer (1 .. size);
+  function Intel_x86_buffer (n : Number) return Byte_Buffer is
+    b : Byte_Buffer (1 .. size);
     m : Number := n;
   begin
     for i in b'Range loop
@@ -48,15 +49,15 @@ package body Excel_Out is
 
   function Intel_32 is new Intel_x86_buffer (Unsigned_32, 4);
 
-  function Intel_16 (n : Unsigned_16) return Byte_buffer is
+  function Intel_16 (n : Unsigned_16) return Byte_Buffer is
     pragma Inline (Intel_16);
   begin
     return (Unsigned_8 (n and 255), Unsigned_8 (Shift_Right (n, 8)));
   end Intel_16;
 
   --  2.5.2 Byte Strings, 8-bit string length (BIFF2-BIFF5), p. 187
-  function To_buf_8_bit_length (s : String) return Byte_buffer is
-    b : Byte_buffer (s'Range);
+  function To_buf_8_bit_length (s : String) return Byte_Buffer is
+    b : Byte_Buffer (s'Range);
   begin
     if s'Length > 255 then -- length doesn't fit in a byte
       raise Constraint_Error;
@@ -68,8 +69,8 @@ package body Excel_Out is
   end To_buf_8_bit_length;
 
   --  2.5.2 Byte Strings, 16-bit string length (BIFF2-BIFF5), p. 187
-  function To_buf_16_bit_length (s : String) return Byte_buffer is
-    b : Byte_buffer (s'Range);
+  function To_buf_16_bit_length (s : String) return Byte_Buffer is
+    b : Byte_Buffer (s'Range);
   begin
     if s'Length > 2**16 - 1 then -- length doesn't fit in a 16-bit number
       raise Constraint_Error;
@@ -107,9 +108,9 @@ package body Excel_Out is
 
    package IEEE_LF is new IEEE_754.Generic_Double_Precision (Long_Float);
 
-  function IEEE_Double_Intel_Portable (x : Long_Float) return Byte_buffer is
+  function IEEE_Double_Intel_Portable (x : Long_Float) return Byte_Buffer is
     pragma Inline (IEEE_Double_Intel_Portable);
-    d : Byte_buffer (1 .. 8);
+    d : Byte_Buffer (1 .. 8);
     --
     f64 : constant IEEE_LF.Float_64 := IEEE_LF.To_IEEE (x);
   begin
@@ -122,7 +123,7 @@ package body Excel_Out is
 
   --  Just spit the bytes of the long float - fast way.
   --  Of course this will work only on an Intel(-like) machine. We check this later.
-  subtype Byte_buffer_8 is Byte_buffer (0 .. 7);
+  subtype Byte_buffer_8 is Byte_Buffer (0 .. 7);
   function IEEE_Double_Intel_Native is new
     Ada.Unchecked_Conversion (Long_Float, Byte_buffer_8);
 
@@ -130,7 +131,7 @@ package body Excel_Out is
   Can_use_native_IEEE : constant Boolean :=
     IEEE_Double_Intel_Portable (x_test) = IEEE_Double_Intel_Native (x_test);
 
-  function IEEE_Double_Intel (x : Long_Float) return Byte_buffer is
+  function IEEE_Double_Intel (x : Long_Float) return Byte_Buffer is
     pragma Inline (IEEE_Double_Intel);
   begin
     if Can_use_native_IEEE then
@@ -145,7 +146,7 @@ package body Excel_Out is
   --  This is possible if and only if Byte = Stream_Element and
   --  arrays types are both packed and aligned the same way.
   --
-  subtype Size_test_a is Byte_buffer (1 .. 19);
+  subtype Size_test_a is Byte_Buffer (1 .. 19);
   subtype Size_test_b is Ada.Streams.Stream_Element_Array (1 .. 19);
   workaround_possible : constant Boolean :=
     Size_test_a'Size = Size_test_b'Size and
@@ -153,7 +154,7 @@ package body Excel_Out is
 
   procedure Block_Write (
     stream : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer : in     Byte_buffer
+    buffer : in     Byte_Buffer
   )
   is
     pragma Inline (Block_Write);
@@ -164,7 +165,7 @@ package body Excel_Out is
     if workaround_possible then
       Ada.Streams.Write (stream, SE_Buffer);
     else
-      Byte_buffer'Write (stream'Access, buffer);
+      Byte_Buffer'Write (stream'Access, buffer);
       --  ^ This was 30x to 70x slower on GNAT 2009
       --    Test in the Zip-Ada project.
     end if;
@@ -177,23 +178,23 @@ package body Excel_Out is
   --  The original Modula-2 code counted on certain assumptions about
   --  record packing & endianess. We write data without these assumptions.
 
-  procedure WriteBiff (
+  procedure Write_Biff (
     xl     : Excel_Out_Stream'Class;
     biff_id : Unsigned_16;
-    data   : Byte_buffer
+    data   : Byte_Buffer
   )
   is
-    pragma Inline (WriteBiff);
+    pragma Inline (Write_Biff);
   begin
     Block_Write (xl.xl_stream.all, Intel_16 (biff_id));
     Block_Write (xl.xl_stream.all, Intel_16 (Unsigned_16 (data'Length)));
     Block_Write (xl.xl_stream.all, data);
-  end WriteBiff;
+  end Write_Biff;
 
   --  5.8  BOF: Beginning of File, p.135
   procedure Write_BOF (xl : Excel_Out_Stream'Class) is
 
-    function BOF_suffix return Byte_buffer is  --  5.8.1 Record BOF
+    function BOF_suffix return Byte_Buffer is  --  5.8.1 Record BOF
     begin
       case xl.xl_format is
         when BIFF2 =>
@@ -224,7 +225,7 @@ package body Excel_Out is
        --  BIFF8 => 16#0600#
       );
   begin
-    WriteBiff (xl,
+    Write_Biff (xl,
       biff_record_identifier (xl.xl_format),
       Intel_16 (biff_version (xl.xl_format)) &
       Intel_16 (Sheet_or_dialogue) &
@@ -237,11 +238,11 @@ package body Excel_Out is
   begin
     case xl.xl_format is
       when BIFF2 | BIFF3 =>
-        WriteBiff (xl, 16#001E#, To_buf_8_bit_length (s));
+        Write_Biff (xl, 16#001E#, To_buf_8_bit_length (s));
       when BIFF4 =>
-        WriteBiff (xl, 16#041E#, (0, 0) & To_buf_8_bit_length (s));
+        Write_Biff (xl, 16#041E#, (0, 0) & To_buf_8_bit_length (s));
      --   when BIFF8 =>
-     --     WriteBiff(xl, 16#041E#, (0, 0) &  --  should be: format index used in other records
+     --     Write_Biff(xl, 16#041E#, (0, 0) &  --  should be: format index used in other records
      --       To_buf_8_bit_length(s));
     end case;
   end Write_Number_Format_String;
@@ -257,11 +258,11 @@ package body Excel_Out is
     --  5.12 BUILTINFMTCOUNT
     case xl.xl_format is
       when BIFF2 =>
-        WriteBiff (xl, 16#001F#, Intel_16 (Unsigned_16 (last_built_in - 5)));
+        Write_Biff (xl, 16#001F#, Intel_16 (Unsigned_16 (last_built_in - 5)));
       when BIFF3 =>
-        WriteBiff (xl, 16#0056#, Intel_16 (Unsigned_16 (last_built_in - 3)));
+        Write_Biff (xl, 16#0056#, Intel_16 (Unsigned_16 (last_built_in - 3)));
       when BIFF4 =>
-        WriteBiff (xl, 16#0056#, Intel_16 (Unsigned_16 (last_built_in + 1)));
+        Write_Biff (xl, 16#0056#, Intel_16 (Unsigned_16 (last_built_in + 1)));
       --  when BIFF8 =>
       --    null;
     end case;
@@ -363,7 +364,7 @@ package body Excel_Out is
     --                  6 2 Index to last used column, increased by 1
     --
     --  Since our row / column counts are 1-based, no need to increase by 1.
-    sheet_bounds : constant Byte_buffer :=
+    sheet_bounds : constant Byte_Buffer :=
       Intel_16 (0) &
       Intel_16 (Unsigned_16 (xl.maxrow)) &
       Intel_16 (0) &
@@ -376,11 +377,11 @@ package body Excel_Out is
   begin
     case xl.xl_format is
       when BIFF2 =>
-        WriteBiff (xl, 16#0000#, sheet_bounds);
+        Write_Biff (xl, 16#0000#, sheet_bounds);
       when BIFF3 | BIFF4 =>
-        WriteBiff (xl, 16#0200#, sheet_bounds & (0, 0));
+        Write_Biff (xl, 16#0200#, sheet_bounds & (0, 0));
       --  when BIFF8 =>
-      --    WriteBiff(xl, 16#0200#, sheet_bounds_32_16 & (0,0));
+      --    Write_Biff(xl, 16#0200#, sheet_bounds_32_16 & (0,0));
     end case;
   end Write_Dimensions;
 
@@ -413,7 +414,7 @@ package body Excel_Out is
     procedure Define_Style (fmt : Format_Type; style_id : Unsigned_8) is
       Base_Level : constant := 255;
     begin
-      WriteBiff (xl,
+      Write_Biff (xl,
         16#0293#,
         Intel_16 (Unsigned_16 (fmt) + 16#8000#) & style_id & Base_Level
       );
@@ -457,16 +458,16 @@ package body Excel_Out is
     --  5.17 CODEPAGE, p. 145
     case xl.xl_format is
       --  when BIFF8 =>   --  UTF-16
-      --    WriteBiff(xl, 16#0042#, Intel_16(16#04B0#));
+      --    Write_Biff(xl, 16#0042#, Intel_16(16#04B0#));
       when others =>
-        WriteBiff (xl, 16#0042#, Intel_16 (Encoding_code));
+        Write_Biff (xl, 16#0042#, Intel_16 (Encoding_code));
     end case;
     --  5.14 CALCMODE
-    WriteBiff (xl, 16#000D#, Intel_16 (1)); --  1 => automatic
+    Write_Biff (xl, 16#000D#, Intel_16 (1)); --  1 => automatic
     --  5.85 REFMODE
-    WriteBiff (xl, 16#000F#, Intel_16 (1)); --  1 => A1 mode
+    Write_Biff (xl, 16#000F#, Intel_16 (1)); --  1 => A1 mode
     --  5.28 DATEMODE
-    WriteBiff (xl, 16#0022#, Intel_16 (0)); --  0 => 1900; 1 => 1904 Date system
+    Write_Biff (xl, 16#0022#, Intel_16 (0)); --  0 => 1900; 1 => 1904 Date system
     --  NB: the 1904 variant (Mac) is ignored by LibreOffice (<= 3.5), then wrong dates !
     --
     Define_Font (xl, "Arial",   10, xl.def_font);
@@ -475,7 +476,7 @@ package body Excel_Out is
     Define_Font (xl, "Calibri", 10, font_3); -- Defined in BIFF3 files written by Excel 2002
     Write_Default_Number_Formats (xl);
     --  5.111 WINDOWPROTECT
-    WriteBiff (xl, 16#0019#, Intel_16 (0));
+    Write_Biff (xl, 16#0019#, Intel_16 (0));
     --  Define default format
     Define_Format (xl, xl.def_font, general, xl.def_fmt);
     if xl.xl_format >= BIFF3 then
@@ -584,7 +585,7 @@ package body Excel_Out is
         mask := mask * 2;
       end loop;
       --  5.115.2 XF Record Contents, p. 221 for BIFF2
-      WriteBiff (
+      Write_Biff (
         xl,
         16#0043#, -- XF code in BIFF2
         (Unsigned_8 (font),
@@ -606,7 +607,7 @@ package body Excel_Out is
     procedure Define_BIFF3_XF is
     begin
       --  5.115.2 XF Record Contents, p. 221 for BIFF3
-      WriteBiff (
+      Write_Biff (
         xl,
         16#0243#, -- XF code in BIFF3
         (Unsigned_8 (font),
@@ -638,7 +639,7 @@ package body Excel_Out is
     procedure Define_BIFF4_XF is
     begin
       --  5.115.2 XF Record Contents, p. 222 for BIFF4
-      WriteBiff (
+      Write_Biff (
         xl,
         16#0443#, -- XF code in BIFF4
         (Unsigned_8 (font),
@@ -724,32 +725,32 @@ package body Excel_Out is
 
   procedure Header (xl : Excel_Out_Stream; page_header_string : String) is
   begin
-    WriteBiff (xl, 16#0014#, To_buf_8_bit_length (page_header_string)); -- 5.55 p.180
+    Write_Biff (xl, 16#0014#, To_buf_8_bit_length (page_header_string)); -- 5.55 p.180
   end Header;
 
   procedure Footer (xl : Excel_Out_Stream; page_footer_string : String) is
   begin
-    WriteBiff (xl, 16#0015#, To_buf_8_bit_length (page_footer_string)); -- 5.48 p.173
+    Write_Biff (xl, 16#0015#, To_buf_8_bit_length (page_footer_string)); -- 5.48 p.173
   end Footer;
 
   procedure Left_Margin (xl : Excel_Out_Stream; inches : Long_Float) is
   begin
-    WriteBiff (xl, 16#0026#, IEEE_Double_Intel (inches));
+    Write_Biff (xl, 16#0026#, IEEE_Double_Intel (inches));
   end Left_Margin;
 
   procedure Right_Margin (xl : Excel_Out_Stream; inches : Long_Float) is
   begin
-    WriteBiff (xl, 16#0027#, IEEE_Double_Intel (inches));
+    Write_Biff (xl, 16#0027#, IEEE_Double_Intel (inches));
   end Right_Margin;
 
   procedure Top_Margin (xl : Excel_Out_Stream; inches : Long_Float) is
   begin
-    WriteBiff (xl, 16#0028#, IEEE_Double_Intel (inches));
+    Write_Biff (xl, 16#0028#, IEEE_Double_Intel (inches));
   end Top_Margin;
 
   procedure Bottom_Margin (xl : Excel_Out_Stream; inches : Long_Float) is
   begin
-    WriteBiff (xl, 16#0029#, IEEE_Double_Intel (inches));
+    Write_Biff (xl, 16#0029#, IEEE_Double_Intel (inches));
   end Bottom_Margin;
 
   procedure Margins
@@ -768,12 +769,12 @@ package body Excel_Out is
 
   procedure Print_Row_Column_Headers (xl : Excel_Out_Stream) is
   begin
-    WriteBiff (xl, 16#002A#, Intel_16 (1));  --  5.81 PRINTHEADERS p.199
+    Write_Biff (xl, 16#002A#, Intel_16 (1));  --  5.81 PRINTHEADERS p.199
   end  Print_Row_Column_Headers;
 
   procedure Print_Gridlines (xl : Excel_Out_Stream) is
   begin
-    WriteBiff (xl, 16#002B#, Intel_16 (1));  --  5.80 PRINTGRIDLINES p.199
+    Write_Biff (xl, 16#002B#, Intel_16 (1));  --  5.80 PRINTGRIDLINES p.199
   end Print_Gridlines;
 
   procedure Page_Setup (
@@ -787,7 +788,7 @@ package body Excel_Out is
   is
   begin
     --  5.73 PAGESETUP p.192 - this is BIFF4+ (cheat if xl.format below)!
-    WriteBiff (xl,
+    Write_Biff (xl,
       16#00A1#,
       Intel_16 (0) & -- paper type undefined
       Intel_16 (Unsigned_16 (scaling_percents)) &
@@ -799,7 +800,7 @@ package body Excel_Out is
     --  5.97 SHEETPR p.207 - this is BIFF3+ (cheat if xl.format below) !
     --  NB: this field contains other informations, should be delayed
     --        in case other preferences are to be set
-    WriteBiff (xl,
+    Write_Biff (xl,
       16#0081#,
       Intel_16 (256 * Scale_or_Fit_Choice'Pos (scale_or_fit))
     );
@@ -813,15 +814,15 @@ package body Excel_Out is
         height : Positive
   )
   is
-    default_twips : constant Byte_buffer := Intel_16 (Unsigned_16 (height * y_scale));
-    options_flags : constant Byte_buffer := (1, 0);
+    default_twips : constant Byte_Buffer := Intel_16 (Unsigned_16 (height * y_scale));
+    options_flags : constant Byte_Buffer := (1, 0);
     --  1 = Row height and default font height do not match
   begin
     case xl.xl_format is
       when BIFF2 =>
-        WriteBiff (xl, 16#0025#, default_twips);
+        Write_Biff (xl, 16#0025#, default_twips);
       when BIFF3 | BIFF4 =>
-        WriteBiff (xl, 16#0225#, options_flags & default_twips);
+        Write_Biff (xl, 16#0225#, options_flags & default_twips);
     end case;
   end Write_Default_Row_Height;
 
@@ -831,7 +832,7 @@ package body Excel_Out is
         width  : Positive)
   is
   begin
-    WriteBiff (xl, 16#0055#, Intel_16 (Unsigned_16 (width)));
+    Write_Biff (xl, 16#0055#, Intel_16 (Unsigned_16 (width)));
     xl.defcolwdth := 256 * width;
   end Write_Default_Column_Width;
 
@@ -855,13 +856,13 @@ package body Excel_Out is
     case xl.xl_format is
       when BIFF2 =>
         --  5.20 COLWIDTH (BIFF2 only)
-        WriteBiff (xl, 16#0024#,
+        Write_Biff (xl, 16#0024#,
           Unsigned_8 (first_column - 1) &
           Unsigned_8 (last_column - 1) &
           Intel_16 (Unsigned_16 (width * 256)));
       when BIFF3 | BIFF4 =>
         --  5.18 COLINFO (BIFF3+)
-        WriteBiff (xl, 16#007D#,
+        Write_Biff (xl, 16#007D#,
           Intel_16 (Unsigned_16 (first_column - 1)) &
           Intel_16 (Unsigned_16 (last_column - 1)) &
           Intel_16 (Unsigned_16 (width * 256)) &
@@ -887,7 +888,7 @@ package body Excel_Out is
     height : Natural
   )
   is
-    row_info_base : Byte_buffer :=
+    row_info_base : Byte_Buffer :=
       Intel_16 (Unsigned_16 (row - 1)) &
       Intel_16 (0)   & -- col. min.
       Intel_16 (255) & -- col. max.
@@ -896,7 +897,7 @@ package body Excel_Out is
   begin
     case xl.xl_format is
       when BIFF2 =>
-        WriteBiff (xl, 16#0008#,
+        Write_Biff (xl, 16#0008#,
           row_info_base &
           (1 .. 3 => 0) &
           Intel_16 (0) -- offset to data
@@ -907,7 +908,7 @@ package body Excel_Out is
           row_info_base (row_info_base'Last - 1 .. row_info_base'Last) :=
             Intel_16 (16#8000#);
         end if;
-        WriteBiff (xl, 16#0208#,
+        Write_Biff (xl, 16#0208#,
           row_info_base &
           --  http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
           (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
@@ -954,20 +955,20 @@ package body Excel_Out is
           raise Font_out_of_range with "Only 4 fonts are allowed in the BIFF2 format";
           --  Reason: in the Cell Attributes (2.5.13), font index is encoded on 2 bits!
         end if;
-        WriteBiff (xl, 16#0031#,
+        Write_Biff (xl, 16#0031#,
           Intel_16 (Unsigned_16 (height * y_scale)) &
           Intel_16 (style_bits) &
           To_buf_8_bit_length (font_name)
         );
         if color /= automatic then
           --  5.47 FONTCOLOR
-          WriteBiff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
+          Write_Biff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
         end if;
       when BIFF3 | BIFF4 =>  --  BIFF8 has 16#0031#, p. 171
         if xl.fonts > 255 then
           raise Font_out_of_range with "Only 256 fonts are allowed in the BIFF3, BIFF4 formats";
         end if;
-        WriteBiff (xl, 16#0231#,
+        Write_Biff (xl, 16#0231#,
           Intel_16 (Unsigned_16 (height * y_scale)) &
           Intel_16 (style_bits) &
           Intel_16 (color_code (BIFF3, color)(for_font)) &
@@ -993,7 +994,7 @@ package body Excel_Out is
   end Jump_to_and_store_max;
 
   --  2.5.13 Cell Attributes (BIFF2 only)
-  function Cell_attributes (xl : Excel_Out_Stream) return Byte_buffer is
+  function Cell_attributes (xl : Excel_Out_Stream) return Byte_Buffer is
   begin
     return
       (Unsigned_8 (xl.xf_in_use),
@@ -1008,51 +1009,130 @@ package body Excel_Out is
     return abs x <= Long_Float'Model_Small;
   end Almost_zero;
 
-  --  Internal
+  --  5.50 FORMULA, p.176 - Internal
   --
-  --  5.71 NUMBER
-  procedure Write_as_double (
-        xl     : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        num    : Long_Float
-  )
+  procedure Write_as_Formula
+    (xl                    : in out Excel_Out_Stream;
+     r, c                  :        Positive;
+     str                   :        String;
+     formula_result        :        Long_Float;
+     recalculate_on_change :        Boolean;
+     recalculate_on_open   :        Boolean;
+     is_valid              :    out Boolean)
   is
-    pragma Inline (Write_as_double);
+
+    --  3.1 Common Formula Structure, p.28
+    --
+    function Tokenize return Byte_Buffer is
+      --  3.4.2 Binary Operator Tokens, p.40
+      tAdd : constant := 16#03#;
+      tMul : constant := 16#05#;
+      --  3.4.4 Constant Operand Tokens, p.41
+      tInt : constant := 16#1E#;  --  3.8.5
+      --  Example of page 30 (2*4+5):
+      test_data : constant Byte_Buffer :=
+        tInt & Intel_16 (2) &
+        tInt & Intel_16 (4) &
+        tMul &
+        tInt & Intel_16 (5) &
+        tAdd;
+    begin
+      is_valid := True;
+      return test_data;
+    end Tokenize;
+
+    function Tokenize_with_Size return Byte_Buffer is
+      data : constant Byte_Buffer := Tokenize;
+    begin
+      case xl.xl_format is
+        when BIFF2 =>
+          if data'Length > 255 then
+            is_valid := False;
+            return empty_buffer;
+          end if;
+          return data'Length & data;
+        when BIFF3 | BIFF4 =>
+          if data'Length > 65535 then
+            is_valid := False;
+            return empty_buffer;
+          end if;
+          return Intel_16 (data'Length) & data;
+      end case;
+    end Tokenize_with_Size;
+
+    rpn_token_array : constant Byte_Buffer := Tokenize_with_Size;
+    --  3.1.6 Additional Token Data:
+    additional_token_data : constant Byte_Buffer := empty_buffer;
+  begin
+    if is_valid then
+      Jump_to_and_store_max (xl, r, c);
+      case xl.xl_format is
+        when BIFF2 =>
+          Write_Biff
+            (xl, 16#0006#,
+             Intel_16 (Unsigned_16 (r - 1)) &
+             Intel_16 (Unsigned_16 (c - 1)) &
+             Cell_attributes (xl) &
+             IEEE_Double_Intel (formula_result) &
+             Boolean'Pos (recalculate_on_change) &
+             rpn_token_array);
+        when BIFF3 | BIFF4 =>
+          Write_Biff
+            (xl, (if xl.xl_format = BIFF3 then 16#0206# else 16#0406#),
+             Intel_16 (Unsigned_16 (r - 1)) &
+             Intel_16 (Unsigned_16 (c - 1)) &
+             Intel_16 (Unsigned_16 (xl.xf_in_use)) &
+             IEEE_Double_Intel (formula_result) &
+             Intel_16
+                  (Boolean'Pos (recalculate_on_change) +
+               2 * Boolean'Pos (recalculate_on_open)) &
+             rpn_token_array);
+      end case;
+      Jump_to (xl, r, c + 1);  --  Store and check new position
+    end if;
+  end Write_as_Formula;
+
+  --  5.71 NUMBER - Internal
+  --
+  procedure Write_as_Double
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     num  :        Long_Float)
+  is
+    pragma Inline (Write_as_Double);
   begin
     Jump_to_and_store_max (xl, r, c);
     case xl.xl_format is
       when BIFF2 =>
-        WriteBiff (xl, 16#0003#,
-          Intel_16 (Unsigned_16 (r - 1)) &
-          Intel_16 (Unsigned_16 (c - 1)) &
-          Cell_attributes (xl) &
-          IEEE_Double_Intel (num)
-        );
+        Write_Biff
+          (xl, 16#0003#,
+           Intel_16 (Unsigned_16 (r - 1)) &
+           Intel_16 (Unsigned_16 (c - 1)) &
+           Cell_attributes (xl) &
+           IEEE_Double_Intel (num));
       when BIFF3 | BIFF4 =>
-        WriteBiff (xl, 16#0203#,
-          Intel_16 (Unsigned_16 (r - 1)) &
-          Intel_16 (Unsigned_16 (c - 1)) &
-          Intel_16 (Unsigned_16 (xl.xf_in_use)) &
-          IEEE_Double_Intel (num)
-        );
+        Write_Biff
+          (xl, 16#0203#,
+           Intel_16 (Unsigned_16 (r - 1)) &
+           Intel_16 (Unsigned_16 (c - 1)) &
+           Intel_16 (Unsigned_16 (xl.xf_in_use)) &
+           IEEE_Double_Intel (num));
     end case;
-    Jump_to (xl, r, c + 1); -- Store and check new position
-  end Write_as_double;
+    Jump_to (xl, r, c + 1);  --  Store and check new position
+  end Write_as_Double;
 
   --  Internal. This is BIFF2 only. BIFF format choice unchecked here.
   --
-  procedure Write_as_16_bit_unsigned (
-        xl : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        num    : Unsigned_16)
+  procedure Write_as_16_bit_unsigned
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     num  :        Unsigned_16)
   is
     pragma Inline (Write_as_16_bit_unsigned);
   begin
     Jump_to_and_store_max (xl, r, c);
     --  5.60 INTEGER
-    WriteBiff (xl, 16#0002#,
+    Write_Biff (xl, 16#0002#,
       Intel_16 (Unsigned_16 (r - 1)) &
       Intel_16 (Unsigned_16 (c - 1)) &
       Cell_attributes (xl) &
@@ -1063,11 +1143,10 @@ package body Excel_Out is
 
   --  Internal. This is BIFF3+. BIFF format choice unchecked here.
   --
-  procedure Write_as_30_bit_signed (
-        xl : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        num    : Integer_32)
+  procedure Write_as_30_bit_signed
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     num  :        Integer_32)
   is
     pragma Inline (Write_as_30_bit_signed);
     RK_val : Unsigned_32;
@@ -1080,7 +1159,7 @@ package body Excel_Out is
     end if;
     Jump_to_and_store_max (xl, r, c);
     --  5.87 RK
-    WriteBiff (xl, 16#027E#,
+    Write_Biff (xl, 16#027E#,
       Intel_16 (Unsigned_16 (r - 1)) &
       Intel_16 (Unsigned_16 (c - 1)) &
       Intel_16 (Unsigned_16 (xl.xf_in_use)) &
@@ -1092,35 +1171,31 @@ package body Excel_Out is
   --
   --  Profile with floating-point number
   --
-  procedure Write (
-        xl     : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        num    : Long_Float
-  )
+  procedure Write
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     num  :        Long_Float)
   is
-    max_16_u : constant := 2.0 ** 16 - 1.0;
+    max_16_u : constant :=   2.0 ** 16 - 1.0;
     min_30_s : constant := -(2.0 ** 29);
-    max_30_s : constant := 2.0 ** 29 - 1.0;
+    max_30_s : constant :=   2.0 ** 29 - 1.0;
   begin
     case xl.xl_format is
       when BIFF2 =>
-        if num >= 0.0 and then
-           num <= max_16_u and then
+        if num in 0.0 .. max_16_u and then
            Almost_zero (num - Long_Float'Floor (num))
         then
           Write_as_16_bit_unsigned (xl, r, c, Unsigned_16 (Long_Float'Floor (num)));
         else
-          Write_as_double (xl, r, c, num);
+          Write_as_Double (xl, r, c, num);
         end if;
       when BIFF3 | BIFF4 =>
-        if num >= min_30_s and then
-           num <= max_30_s and then
+        if num in min_30_s .. max_30_s and then
            Almost_zero (num - Long_Float'Floor (num))
         then
           Write_as_30_bit_signed (xl, r, c, Integer_32 (Long_Float'Floor (num)));
         else
-          Write_as_double (xl, r, c, num);
+          Write_as_Double (xl, r, c, num);
         end if;
     end case;
   end Write;
@@ -1128,11 +1203,10 @@ package body Excel_Out is
   --
   --  Profile with integer number
   --
-  procedure Write (
-        xl : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        num    : Integer)
+  procedure Write
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     num  :        Integer)
   is
   begin
     --  We use an integer representation (and small storage) if possible;
@@ -1142,13 +1216,13 @@ package body Excel_Out is
         if num in 0 .. 2**16 - 1 then
           Write_as_16_bit_unsigned (xl, r, c, Unsigned_16 (num));
         else
-          Write_as_double (xl, r, c, Long_Float (num));
+          Write_as_Double (xl, r, c, Long_Float (num));
         end if;
       when BIFF3 | BIFF4 =>
         if num in -2**29 .. 2**29 - 1 then
           Write_as_30_bit_signed (xl, r, c, Integer_32 (num));
         else
-          Write_as_double (xl, r, c, Long_Float (num));
+          Write_as_Double (xl, r, c, Long_Float (num));
         end if;
     end case;
   end Write;
@@ -1165,32 +1239,32 @@ package body Excel_Out is
   --  end ISO_8859_1_to_UTF_16;
 
   --  5.63 LABEL
-  procedure Write (
-        xl : in out Excel_Out_Stream;
-        r,
-        c      : Positive;
-        str    : String)
+  --
+  procedure Write_as_Label
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     str  :        String)
   is
   begin
     Jump_to_and_store_max (xl, r, c);
     if str'Length > 0 then
       case xl.xl_format is
         when BIFF2 =>
-          WriteBiff (xl, 16#0004#,
+          Write_Biff (xl, 16#0004#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
             Cell_attributes (xl) &
             To_buf_8_bit_length (str)
           );
         when BIFF3 | BIFF4 =>
-          WriteBiff (xl, 16#0204#,
+          Write_Biff (xl, 16#0204#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
             Intel_16 (Unsigned_16 (xl.xf_in_use)) &
             To_buf_16_bit_length (str)
           );
         --  when BIFF8 =>
-        --    WriteBiff(xl, 16#0204#,
+        --    Write_Biff(xl, 16#0204#,
         --      Intel_16(Unsigned_16(r-1)) &
         --      Intel_16(Unsigned_16(c-1)) &
         --      Intel_16(Unsigned_16(xl.xf_in_use)) &
@@ -1198,7 +1272,24 @@ package body Excel_Out is
         --    );
       end case;
     end if;
-    Jump_to (xl, r, c + 1); -- Store and check new position
+    Jump_to (xl, r, c + 1);  --  Store and check new position
+  end Write_as_Label;
+
+  procedure Write
+    (xl   : in out Excel_Out_Stream;
+     r, c :        Positive;
+     str  :        String)
+  is
+    is_valid : Boolean;
+  begin
+    --  !! Uncomment following lines when the formula parser is OK !!
+    --  if str'Length > 0 and str (str'First) in '+' | '-' | '=' then
+    --    Write_as_Formula (xl, r, c, str, 0.0, True, True, is_valid);
+    --    if is_valid then
+    --      return;  --  Formula is valid and has been written.
+    --    end if;
+    --  end if;
+    Write_as_Label (xl, r, c, str);
   end Write;
 
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Ada.Strings.Unbounded.Unbounded_String)
@@ -1335,13 +1426,13 @@ package body Excel_Out is
         --  NB: Only with BIFF4, and only OpenOffice
         --  considers the cells really merged.
         when BIFF2 =>
-          WriteBiff (xl, 16#0001#,
+          Write_Biff (xl, 16#0001#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
             Cell_attributes (xl)
           );
         when BIFF3 | BIFF4 =>
-          WriteBiff (xl, 16#0201#,
+          Write_Biff (xl, 16#0201#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
             Intel_16 (Unsigned_16 (xl.xf_in_use))
@@ -1363,14 +1454,14 @@ package body Excel_Out is
     --  5.70 Note
     case xl.xl_format is
       --  when BIFF8 =>  --  https://msdn.microsoft.com/en-us/library/dd945371(v=office.12).aspx
-      --    WriteBiff(xl, 16#001C#,
+      --    Write_Biff(xl, 16#001C#,
       --      Intel_16(Unsigned_16(row-1)) &
       --      Intel_16(Unsigned_16(column-1)) &
       --      (0, 0) &  --  Show / hide options
       --      (0, 0) --  idObj - it begins to be tough there...
       --    );
       when others =>
-        WriteBiff (xl, 16#001C#,
+        Write_Biff (xl, 16#001C#,
           Intel_16 (Unsigned_16 (at_row - 1)) &
           Intel_16 (Unsigned_16 (at_column - 1)) &
           To_buf_16_bit_length (text)
@@ -1549,7 +1640,7 @@ package body Excel_Out is
       --  5.109 WINDOW1, p. 215
       case xl.xl_format is
         when BIFF2 | BIFF3 | BIFF4 =>  --  NB: more options in BIFF8
-          WriteBiff (xl, 16#003D#,
+          Write_Biff (xl, 16#003D#,
             Intel_16 (120)   & -- Window x
             Intel_16 (120)   & -- Window y
             Intel_16 (21900) & -- Window w
@@ -1564,7 +1655,7 @@ package body Excel_Out is
       --  5.110 WINDOW2
       case xl.xl_format is
         when BIFF2 =>
-          WriteBiff (xl, 16#003E#,
+          Write_Biff (xl, 16#003E#,
             (0, -- Display formulas, not results
              1, -- Show grid lines
              1, -- Show sheet headers
@@ -1578,7 +1669,7 @@ package body Excel_Out is
              0, 0, 0, 0) -- Grid line RGB colour
           );
         when BIFF3 | BIFF4 =>  --  NB: more options in BIFF8
-          WriteBiff (xl, 16#023E#,
+          Write_Biff (xl, 16#023E#,
             --  http://msdn.microsoft.com/en-us/library/dd947893(v=office.12).aspx
             Intel_16 (   -- Option flags:
               0 *   1 + -- Display formulas, not results
@@ -1616,7 +1707,7 @@ package body Excel_Out is
         end if;
       end if;
       --  5.75 PANE
-      WriteBiff (xl, 16#0041#,
+      Write_Biff (xl, 16#0041#,
         Intel_16 (Unsigned_16 (xl.freeze_col) - 1) &
         Intel_16 (Unsigned_16 (xl.freeze_row) - 1) &
         Intel_16 (Unsigned_16 (xl.freeze_row) - 1) &
@@ -1625,7 +1716,7 @@ package body Excel_Out is
       );
     end Write_Pane;
 
-    col_bits : Byte_buffer (1 .. 32) := (others => 0);
+    col_bits : Byte_Buffer (1 .. 32) := (others => 0);
     byte_idx, bit_idx : Positive := 1;
 
   begin
@@ -1635,7 +1726,7 @@ package body Excel_Out is
     Write_Window1;
     Write_Window2;
     --  5.92 SCL = Zoom, Magnification. Defined for BIFF4+ only, but works with BIFF2, BIFF3.
-    WriteBiff (xl, 16#00A0#,
+    Write_Biff (xl, 16#00A0#,
       Intel_16 (Unsigned_16 (xl.zoom_num)) &
       Intel_16 (Unsigned_16 (xl.zoom_den))
     );
@@ -1656,14 +1747,14 @@ package body Excel_Out is
       end loop;
       --  5.51 GCW: Global Column Width - trying to get a correct display by LibreOffice
       --  Result: OK but useless on MS Excel, not working on LibreOffice :-(
-      WriteBiff (xl, 16#00AB#, Intel_16 (32) & col_bits);
+      Write_Biff (xl, 16#00AB#, Intel_16 (32) & col_bits);
       --  if xl.defcolwdth > 0 then
       --    --  5.101 STANDARDWIDTH -- this confuses MS Excel...
-      --    WriteBiff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
+      --    Write_Biff(xl, 16#0099#, Intel_16(Unsigned_16(xl.defcolwdth)));
       --  end if;
     end if;
     --  5.37 EOF: End of File:
-    WriteBiff (xl, 16#000A#, empty_buffer);
+    Write_Biff (xl, 16#000A#, empty_buffer);
     Set_Index (xl, xl.dimrecpos); -- Go back to overwrite the DIMENSION record with correct data
     Write_Dimensions (xl);
     xl.is_closed := True;
