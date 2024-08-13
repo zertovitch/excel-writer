@@ -27,8 +27,7 @@
 
 generic
    type Number is digits <>;
-package IEEE_754.Generic_Double_Precision is
-   pragma Pure (IEEE_754.Generic_Double_Precision);
+package Excel_Out.IEEE_754.Generic_Double_Precision is
    use Interfaces;
 --
 -- Float_64 -- 64-bit double-precision IEEE 754 float. The memory layout
@@ -129,4 +128,4 @@ private
    Negative_Infinity : constant Float_64 := (16#FF#, 16#F8#, others => 0);
    Negative_Zero     : constant Float_64 := (16#80#, others => 0);
 
-end IEEE_754.Generic_Double_Precision;
+end Excel_Out.IEEE_754.Generic_Double_Precision;

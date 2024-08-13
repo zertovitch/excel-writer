@@ -25,7 +25,7 @@
 --  executable file might be covered by the GNU Public License.       --
 --____________________________________________________________________--
 
-package body IEEE_754.Generic_Double_Precision is
+package body Excel_Out.IEEE_754.Generic_Double_Precision is
 
    Exponent_Bias  : constant := 2**10 - 1;
    Exponent_First : constant := -51;
@@ -239,4 +239,4 @@ package body IEEE_754.Generic_Double_Precision is
       end;
    end To_IEEE;
 
-end IEEE_754.Generic_Double_Precision;
+end Excel_Out.IEEE_754.Generic_Double_Precision;

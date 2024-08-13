@@ -1,3 +1,10 @@
+--------------------------------------------------------------------
+--  This is a captive copy of a pure Ada package in the           --
+--  Simple Components software collection, without the eponymous  --
+--  crate's intricacies.                                          --
+--  Source: http://www.dmitry-kazakov.de/ada/components.htm       --
+--------------------------------------------------------------------
+
 --                                                                    --
 --  package IEEE_754                Copyright (c)  Dmitry A. Kazakov  --
 --  Interface                                      Luebeck            --
@@ -27,8 +34,7 @@
 
 with Interfaces;
 
-package IEEE_754 is
-   pragma Pure (IEEE_754);
+private package Excel_Out.IEEE_754 is
 
    subtype Byte is Interfaces.Unsigned_8;
 
@@ -36,4 +42,4 @@ package IEEE_754 is
    Positive_Overflow_Error : exception;
    Negative_Overflow_Error : exception;
 
-end IEEE_754;
+end Excel_Out.IEEE_754;

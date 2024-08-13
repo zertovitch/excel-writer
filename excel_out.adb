@@ -14,9 +14,7 @@ with Ada.Unchecked_Conversion,
 
 with Interfaces;
 
---  Package IEEE_754 is from: Simple components for Ada by Dmitry A. Kazakov
---  http://www.dmitry-kazakov.de/ada/components.htm
-with IEEE_754.Generic_Double_Precision;
+with Excel_Out.IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
 
