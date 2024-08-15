@@ -61,6 +61,8 @@ with Ada.Calendar,
      Ada.Strings.Unbounded,
      Ada.Text_IO;
 
+with Interfaces;
+
 package Excel_Out is
 
   -----------------------------------------------------------------
@@ -396,8 +398,8 @@ package Excel_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "18";
-  reference : constant String := "07-Jan-2024";
+  version   : constant String := "19 Preview 1";
+  reference : constant String := "15-Aug-2024";
   --  Hopefully the latest version is at one of those URLs:
   web       : constant String := "http://excel-writer.sf.net/";
   web2 : constant String := "https://sourceforge.net/projects/excel-writer/";
@@ -611,5 +613,20 @@ private
 
   --  Return the index of the Excel string stream
   function Index (xl : Excel_Out_String) return Ada.Streams.Stream_IO.Count;
+
+  --  Very low level part which deals with transferring data byte-wise.
+
+  type Byte_Buffer is array (Integer range <>) of Interfaces.Unsigned_8;
+  empty_buffer : constant Byte_Buffer := (1 .. 0 => 0);
+
+  --  Put numbers with correct endianess as bytes:
+  generic
+    type Number is mod <>;
+    size : Positive;
+  function Intel_x86_buffer (n : Number) return Byte_Buffer;
+  pragma Inline (Intel_x86_buffer);
+
+  function Intel_16 (n : Interfaces.Unsigned_16) return Byte_Buffer;
+  function Intel_32 (n : Interfaces.Unsigned_32) return Byte_Buffer;
 
 end Excel_Out;

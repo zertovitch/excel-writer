@@ -44,9 +44,7 @@ procedure EW_Test is
     xl.Put  ("2**x - 1");
     xl.Next;
     xl.Put_Line
-      ("Formulas for checking (all results should be 0). " &
-       " NB: the formulas are written as text." &
-       " Edit cells to convert them into real formulas.");
+      ("Formulas for checking (all results should be 0).");
     for power in 0 .. 66 loop
       xl.Put (power);
       xl.Next;
@@ -82,15 +80,46 @@ procedure EW_Test is
 
   procedure Test_Formulas (ef : Excel_Type) is
     xl : Excel_Out_File;
-    procedure Show (formula : String) is
+
+    function Is_Int (s : String) return Boolean is
+    begin
+      declare
+        test : constant Integer := Integer'Value (s);
+        pragma Unreferenced (test);
+      begin
+        return True;
+      end;
+    exception
+      when others =>
+        return False;
+    end Is_Int;
+
+    procedure Show (formula, expected_result : String) is
     begin
       xl.Put (formula);
-      xl.Put_Line ("Formula: " & formula);
+      xl.Put (' ' & formula);
+      if Is_Int (expected_result) then
+        xl.Put (Integer'Value (expected_result));
+      else
+        xl.Put (expected_result);
+      end if;
+      --  !!  Add: IF(a12=c12;"";"WRONG")
+      xl.New_Line;
     end Show;
+
   begin
     xl.Create ("Formulas [" & ef'Image & "].xls", ef);
-    Show ("=1");
-    Show ("=2");
+    xl.Write_Column_Width (1, 2, 50);
+    Show ("=2*4+5",   "13");
+    Show ("=2+4*5",   "22");
+    Show ("=(2+4)*5", "30");
+    Show ("=2^3",     "8");
+    Show ("=A1",      "13");
+    Show ("=BC123",   "0");
+    Show ("=BC$123",  "0");
+    Show ("=$BC123",  "0");
+    Show ("=$BC$123", "0");
+    Show ("=""some""&"" string""", "some string");
     xl.Close;
   end Test_Formulas;
 

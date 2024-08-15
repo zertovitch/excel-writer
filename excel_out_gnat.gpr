@@ -46,8 +46,7 @@ project Excel_Out_Gnat is
      "-gnatyx",       --  Style: check x:no extra parens
      "-gnatye",       --  Style: check e:end/exit labels present
      --  "-gnatyc",       --  Style: check c:comment format (two spaces)
-     "-gnatyt"        --  Style: check t:token separation rules
-   );
+     "-gnatyt");      --  Style: check t:token separation rules
 
    package Compiler is
 
@@ -66,6 +65,11 @@ project Excel_Out_Gnat is
               "-funswitch-loops", "-fweb", "-frename-registers");
       end case;
    end Compiler;
+
+   package Binder is
+      --  -Es: Store tracebacks in exception occurrences, and enable symbolic tracebacks
+      for Default_Switches ("ada") use ("-Es");
+   end Binder;
 
    package Builder is
       --   "If -j0 is used, then the maximum number of simultaneous compilation

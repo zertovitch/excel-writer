@@ -2,7 +2,7 @@
 --
 --  To do:
 --  =====
---  - Complete Write_as_Formula
+--  - Expand supported formulas
 --  - Unicode (for binary Excel: requires BIFF8, but BIFF8 is pretty difficult)
 --  - border line styles (5.115 XF - Extended Format)
 --  - XML-based formats support (XLSX, ODS, ...)
@@ -12,46 +12,34 @@ with Ada.Unchecked_Conversion,
      Ada.Unchecked_Deallocation,
      Ada.Strings.Fixed;
 
-with Interfaces;
-
+with Excel_Out.Formulas;
 with Excel_Out.IEEE_754.Generic_Double_Precision;
 
 package body Excel_Out is
-
-  use Ada.Strings.Unbounded, Interfaces;
-
-  --  Very low level part which deals with transferring data in an endian-neutral way,
-  --  and floats in the IEEE format. This is needed for having Excel Writer
-  --  totally portable on all systems and processor architectures.
-
-  type Byte_Buffer is array (Integer range <>) of Unsigned_8;
-  empty_buffer : constant Byte_Buffer := (1 .. 0 => 0);
-
-  --  Put numbers with correct endianess as bytes:
-  generic
-    type Number is mod <>;
-    size : Positive;
-  function Intel_x86_buffer (n : Number) return Byte_Buffer;
-  pragma Inline (Intel_x86_buffer);
 
   function Intel_x86_buffer (n : Number) return Byte_Buffer is
     b : Byte_Buffer (1 .. size);
     m : Number := n;
   begin
     for i in b'Range loop
-      b (i) := Unsigned_8 (m and 255);
+      b (i) := Interfaces.Unsigned_8 (m and 255);
       m := m / 256;
     end loop;
     return b;
   end Intel_x86_buffer;
 
-  function Intel_32 is new Intel_x86_buffer (Unsigned_32, 4);
+  function Intel_32_Inst is new Intel_x86_buffer (Interfaces.Unsigned_32, 4);
 
-  function Intel_16 (n : Unsigned_16) return Byte_Buffer is
+  function Intel_32 (n : Interfaces.Unsigned_32) return Byte_Buffer renames Intel_32_Inst;
+
+  function Intel_16 (n : Interfaces.Unsigned_16) return Byte_Buffer is
     pragma Inline (Intel_16);
+    use Interfaces;
   begin
     return (Unsigned_8 (n and 255), Unsigned_8 (Shift_Right (n, 8)));
   end Intel_16;
+
+  use Ada.Strings.Unbounded, Interfaces;
 
   --  2.5.2 Byte Strings, 8-bit string length (BIFF2-BIFF5), p. 187
   function To_buf_8_bit_length (s : String) return Byte_Buffer is
@@ -104,7 +92,7 @@ package body Excel_Out is
   --  http://en.wikipedia.org/wiki/IEEE_754-1985#Double-precision_64_bit
   --
 
-   package IEEE_LF is new IEEE_754.Generic_Double_Precision (Long_Float);
+  package IEEE_LF is new IEEE_754.Generic_Double_Precision (Long_Float);
 
   function IEEE_Double_Intel_Portable (x : Long_Float) return Byte_Buffer is
     pragma Inline (IEEE_Double_Intel_Portable);
@@ -1021,26 +1009,30 @@ package body Excel_Out is
 
     --  3.1 Common Formula Structure, p.28
     --
-    function Tokenize return Byte_Buffer is
-      --  3.4.2 Binary Operator Tokens, p.40
-      tAdd : constant := 16#03#;
-      tMul : constant := 16#05#;
-      --  3.4.4 Constant Operand Tokens, p.41
-      tInt : constant := 16#1E#;  --  3.8.5
-      --  Example of page 30 (2*4+5):
-      test_data : constant Byte_Buffer :=
-        tInt & Intel_16 (2) &
-        tInt & Intel_16 (4) &
-        tMul &
-        tInt & Intel_16 (5) &
-        tAdd;
+    function Tokenize (str_trimmed : String) return Byte_Buffer is
     begin
       is_valid := True;
-      return test_data;
+      declare
+        parsed : constant Byte_Buffer := Formulas.Parse_Formula (str_trimmed);
+      begin
+        return parsed;
+      end;
+    exception
+      when others =>
+        return empty_buffer;
     end Tokenize;
 
+    function Tokenize_Skip_Head return Byte_Buffer is
+      start : Integer := str'First;
+    begin
+      while start <= str'Last and then str (start) in ' ' | '=' loop
+        start := start + 1;
+      end loop;
+      return Tokenize (str (start .. str'Last));
+    end Tokenize_Skip_Head;
+
     function Tokenize_with_Size return Byte_Buffer is
-      data : constant Byte_Buffer := Tokenize;
+      data : constant Byte_Buffer := Tokenize_Skip_Head;
     begin
       case xl.xl_format is
         when BIFF2 =>
@@ -1061,6 +1053,7 @@ package body Excel_Out is
     rpn_token_array : constant Byte_Buffer := Tokenize_with_Size;
     --  3.1.6 Additional Token Data:
     additional_token_data : constant Byte_Buffer := empty_buffer;
+    pragma Unreferenced (additional_token_data);
   begin
     if is_valid then
       Jump_to_and_store_max (xl, r, c);
@@ -1280,13 +1273,12 @@ package body Excel_Out is
   is
     is_valid : Boolean;
   begin
-    --  !! Uncomment following lines when the formula parser is OK !!
-    --  if str'Length > 0 and str (str'First) in '+' | '-' | '=' then
-    --    Write_as_Formula (xl, r, c, str, 0.0, True, True, is_valid);
-    --    if is_valid then
-    --      return;  --  Formula is valid and has been written.
-    --    end if;
-    --  end if;
+    if str'Length > 0 and str (str'First) in '=' then
+      Write_as_Formula (xl, r, c, str, 0.0, True, True, is_valid);
+      if is_valid then
+        return;  --  Formula is valid and has been written.
+      end if;
+    end if;
     Write_as_Label (xl, r, c, str);
   end Write;
 

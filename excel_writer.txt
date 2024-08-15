@@ -27,11 +27,11 @@ Contents
 
     - excel_out.ads             : package specification
     - excel_out.adb             : package body
+    - excel_out-*               : private packages used by excel_out.adb
     - excel_out_demo.adb        : demo procedure
     - excel_out_gnat.gpr        : project file for the GNAT compiler
     - excel_out_objectada.prj   : project file for the ObjectAda64 compiler
     - excel_writer.txt          : this file
-    - ieee_754*                 : packages used by excel_out.adb
 
   Some goodies - around Excel, CSV's, spreadsheets in general
   ===========================================================
@@ -45,8 +45,8 @@ Contents
     - extras/spreadsheet_references.adb      : (body)
     - extras/spreadsheet_references_demo.adb : demo procedure for Spreadsheet_references
 
-  Test
-  ====
+  Testing various features of Excel Writer
+  ========================================
 
     - test/ew_test.adb
 
