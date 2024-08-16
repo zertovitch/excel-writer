@@ -1,18 +1,22 @@
 --  Dump the contents of a file in BIFF (Excel .xls) format.
 --  The output is also an Excel file.
 
-with Excel_Out;                         use Excel_Out;
+with Excel_Out;
 
-with Ada.Command_Line;                  use Ada.Command_Line;
+with Ada.Command_Line;
 with Ada.Directories;
 with Ada.Sequential_IO;
-with Ada.Strings.Fixed;                 use Ada.Strings, Ada.Strings.Fixed;
+with Ada.Strings.Fixed;
 with Ada.Strings.Unbounded;
 with Ada.Text_IO;
 
-with Interfaces;                        use Interfaces;
+with Interfaces;
 
 procedure BIFF_Dump is
+
+  use Excel_Out;
+  use Interfaces;
+  use Ada.Strings, Ada.Strings.Fixed;
 
   package BIO is new Ada.Sequential_IO (Unsigned_8);
   use BIO;
@@ -166,6 +170,7 @@ procedure BIFF_Dump is
     end loop;
   end Ignore_from;
 
+  use Ada.Command_Line;
   use Ada.Strings.Unbounded;
 
   excel_file_name : Unbounded_String;

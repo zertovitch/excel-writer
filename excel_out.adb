@@ -33,7 +33,6 @@ package body Excel_Out is
   function Intel_32 (n : Interfaces.Unsigned_32) return Byte_Buffer renames Intel_32_Inst;
 
   function Intel_16 (n : Interfaces.Unsigned_16) return Byte_Buffer is
-    pragma Inline (Intel_16);
     use Interfaces;
   begin
     return (Unsigned_8 (n and 255), Unsigned_8 (Shift_Right (n, 8)));
@@ -1370,10 +1369,9 @@ package body Excel_Out is
   end Put;
 
   procedure Put (xl    : in out Excel_Out_Stream;
-                num   : in Integer;
-                width : in Ada.Text_IO.Field := 0; -- ignored
-                base  : in Ada.Text_IO.Number_Base := 10
-            )
+                 num   : in Integer;
+                 width : in Ada.Text_IO.Field := 0;  --  ignored
+                 base  : in Ada.Text_IO.Number_Base := 10)
   is
   begin
     if base = 10 then
@@ -1918,5 +1916,10 @@ package body Excel_Out is
   begin
     return a or b; -- "or" is predefined for sets (=array of Boolean)
   end "&";
+
+  function Img (x : Integer) return String is
+  begin
+    return Ada.Strings.Fixed.Trim (x'Image, Ada.Strings.Left);
+  end Img;
 
 end Excel_Out;

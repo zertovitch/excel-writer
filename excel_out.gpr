@@ -5,10 +5,10 @@
 --      Project page 1:  http://sf.net/projects/excel-writer/
 --      Project page 2:  https://github.com/zertovitch/excel-writer
 --
---  Build me with "gnatmake -P excel_out_gnat",  "gprbuild -P excel_out_gnat",
+--  Build me with "gnatmake -P excel_out",  "gprbuild -P excel_out",
 --  or open me with GNAT Studio.
 --
-project Excel_Out_Gnat is
+project Excel_Out is
 
    type Excel_Build_Mode_Type is
       ("Debug", "Fast");
@@ -81,4 +81,4 @@ project Excel_Out_Gnat is
       for Default_Switches ("adacontrol") use ("-f", "extras/verif.aru");
    end Ide;
 
-end Excel_Out_Gnat;
+end Excel_Out;

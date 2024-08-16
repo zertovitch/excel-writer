@@ -157,6 +157,13 @@ procedure Excel_Out_Demo is
       xl.Put (Long_Float (row - 100) * 0.001);
       xl.Use_Format (fmt_cust_num);
       xl.Put (Long_Float (row - 15) + 0.123456);
+      xl.Use_Default_Format;
+      --  Formulas:
+      xl.Put ("=""Formula! ""&E" & Img (row));
+      xl.Next (2);
+      xl.Put ("= 10000 + E" & Img (row));
+      xl.Put ("= 10 * " & Img (row));
+      --xl.Put ("= 1 * E15");  --  !! This bugs Excel !...
     end loop;
     xl.Close;
   end Big_Demo;
@@ -218,7 +225,7 @@ procedure Excel_Out_Demo is
     Close (xl);
   end Fancy;
 
-  function My_nice_sheet (size : Positive) return String is
+  function My_Nice_Memory_Sheet (size : Positive) return String is
     xl : Excel_Out_String;
   begin
     xl.Create;
@@ -233,14 +240,14 @@ procedure Excel_Out_Demo is
     end loop;
     xl.Close;
     return xl.Contents;
-  end My_nice_sheet;
+  end My_Nice_Memory_Sheet;
 
   procedure String_Demo is
     use Ada.Streams.Stream_IO;
     f : File_Type;
   begin
     Create (f, Out_File, "from_string.xls");
-    String'Write (Stream (f), My_nice_sheet (200));
+    String'Write (Stream (f), My_Nice_Memory_Sheet (200));
     Close (f);
   end String_Demo;
 
@@ -256,7 +263,7 @@ procedure Excel_Out_Demo is
     t0 := Clock;
     for i in 1 .. iter loop
       declare
-        dummy : constant String := My_nice_sheet (size);
+        dummy : constant String := My_Nice_Memory_Sheet (size);
       begin
         dummy_int := 0 * dummy_int + dummy'Length;
       end;
@@ -279,16 +286,16 @@ procedure Excel_Out_Demo is
   use Ada.Text_IO;
 
 begin
-  Put_Line ("Small demo -> small.xls");
+  Put_Line ("Small demo ----------------------> small.xls");
   Small_Demo;
-  Put_Line ("Big demo -> Big [...].xls");
+  Put_Line ("Big demo ------------------------> big [...].xls");
   for ef in BIFF3 .. BIFF4 loop
     Big_Demo (ef);
   end loop;
-  Put_Line ("Fancy sheet -> sancy.xls");
+  Put_Line ("Fancy sheet ---------------------> fancy.xls");
   Fancy;
-  Put_Line ("Excel sheet in a string demo -> from_string.xls");
+  Put_Line ("Excel sheet in a string demo ----> from_string.xls");
   String_Demo;
-  Put_Line ("Speed test -> speed_test.xls");
+  Put_Line ("Speed test ----------------------> speed_test.xls");
   Speed_Test;
 end Excel_Out_Demo;

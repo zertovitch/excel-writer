@@ -25,13 +25,13 @@ Contents
   Excel Writer
   ============
 
-    - excel_out.ads             : package specification
-    - excel_out.adb             : package body
-    - excel_out-*               : private packages used by excel_out.adb
-    - excel_out_demo.adb        : demo procedure
-    - excel_out_gnat.gpr        : project file for the GNAT compiler
-    - excel_out_objectada.prj   : project file for the ObjectAda64 compiler
-    - excel_writer.txt          : this file
+    - excel_out.ads      : package specification
+    - excel_out.adb      : package body
+    - excel_out-*        : private packages used by excel_out.adb
+    - excel_out_demo.adb : demo procedure
+    - excel_out.gpr      : project file for the AdaCore GNAT compiler
+    - excel_out.prj      : project file for the PTC ObjectAda64 compiler
+    - excel_writer.txt   : this file
 
   Some goodies - around Excel, CSV's, spreadsheets in general
   ===========================================================

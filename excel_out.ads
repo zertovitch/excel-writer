@@ -243,34 +243,36 @@ package Excel_Out is
   -- (3) Cell contents: --
   ------------------------
 
-  --  NB: you need to write with ascending row index and with ascending
-  --      column index within a row; otherwise Excel issues a protest
+  --  Notes:
+  --    - You need to write things with ascending row indexes, and with ascending
+  --        column indexes within a row. Otherwise Excel issues a protest.
+  --    - For strings starting with '=', Excel_Out attempts to turn the contents
+  --        into a formula, exactly as if you were typing the cell content.
 
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Long_Float);
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num : Integer);
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : String);
-  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str : Ada.Strings.Unbounded.Unbounded_String);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num  : Long_Float);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; num  : Integer);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str  : String);
+  procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; str  : Ada.Strings.Unbounded.Unbounded_String);
   procedure Write (xl : in out Excel_Out_Stream; r, c : Positive; date : Ada.Calendar.Time);
 
-  --  "Ada.Text_IO" - like output.
+  --  "Ada.Text_IO"-like variants for output.
   --  No need to specify row & column each time.
   --  Write 'Put(x, content)' where x is an Excel_Out_Stream just
   --  as if x was a File_Type, and vice-versa.
   --
   procedure Put (xl : in out Excel_Out_Stream; num : Long_Float);
   procedure Put (xl    : in out Excel_Out_Stream;
-                num   : in Integer;
-                width : in Ada.Text_IO.Field := 0; -- ignored
-                base  : in Ada.Text_IO.Number_Base := 10
-            );
-  procedure Put (xl : in out Excel_Out_Stream; str : String);
-  procedure Put (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String);
+                 num   : in Integer;
+                 width : in Ada.Text_IO.Field := 0;  --  ignored
+                 base  : in Ada.Text_IO.Number_Base := 10);
+  procedure Put (xl : in out Excel_Out_Stream; str  : String);
+  procedure Put (xl : in out Excel_Out_Stream; str  : Ada.Strings.Unbounded.Unbounded_String);
   procedure Put (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time);
   --
-  procedure Put_Line (xl : in out Excel_Out_Stream; num : Long_Float);
-  procedure Put_Line (xl : in out Excel_Out_Stream; num : Integer);
-  procedure Put_Line (xl : in out Excel_Out_Stream; str : String);
-  procedure Put_Line (xl : in out Excel_Out_Stream; str : Ada.Strings.Unbounded.Unbounded_String);
+  procedure Put_Line (xl : in out Excel_Out_Stream; num  : Long_Float);
+  procedure Put_Line (xl : in out Excel_Out_Stream; num  : Integer);
+  procedure Put_Line (xl : in out Excel_Out_Stream; str  : String);
+  procedure Put_Line (xl : in out Excel_Out_Stream; str  : Ada.Strings.Unbounded.Unbounded_String);
   procedure Put_Line (xl : in out Excel_Out_Stream; date : Ada.Calendar.Time);
   --
   procedure New_Line (xl : in out Excel_Out_Stream; Spacing : Positive := 1);
@@ -364,10 +366,14 @@ package Excel_Out is
 
   Default_Encoding : constant Encoding_Type := Windows_CP_1252;
 
-  -------------------------------------------------------------------
-  --  Here, the derived stream types pre-defined in this package.  --
-  -------------------------------------------------------------------
-  --  * Output to a file:
+  ---------------------------------------------------
+  --  Here come two derived concrete stream types  --
+  --  that are pre-defined in this package.        --
+  ---------------------------------------------------
+
+  -------------------------------
+  --  Stream output to a file  --
+  -------------------------------
 
   type Excel_Out_File is new Excel_Out_Stream with private;
 
@@ -381,7 +387,12 @@ package Excel_Out is
 
   function Is_Open (xl : in Excel_Out_File) return Boolean;
 
-  --  * Output to a string (to be compressed, packaged, transmitted, ... ):
+  ---------------------------------
+  --  Stream output to a string  --
+  ---------------------------------
+
+  --  The output string is (mis)used as a byte buffer,
+  --  to be compressed, packaged, transmitted, ...
 
   type Excel_Out_String is new Excel_Out_Stream with private;
 
@@ -393,6 +404,14 @@ package Excel_Out is
   procedure Close (xl : in out Excel_Out_String);
 
   function Contents (xl : Excel_Out_String) return String;
+
+  --------------------------
+  --  A little goodie...  --
+  --------------------------
+
+  --  Like x'Image, but without leading space.
+  --
+  function Img (x : Integer) return String;
 
   ----------------------------------------------------------------
   --  Information about this package - e.g. for an "about" box  --
@@ -627,6 +646,9 @@ private
   pragma Inline (Intel_x86_buffer);
 
   function Intel_16 (n : Interfaces.Unsigned_16) return Byte_Buffer;
+  pragma Inline (Intel_16);
+
   function Intel_32 (n : Interfaces.Unsigned_32) return Byte_Buffer;
+  pragma Inline (Intel_32);
 
 end Excel_Out;

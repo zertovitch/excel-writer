@@ -109,17 +109,25 @@ procedure EW_Test is
 
   begin
     xl.Create ("Formulas [" & ef'Image & "].xls", ef);
-    xl.Write_Column_Width (1, 2, 50);
-    Show ("=2*4+5",   "13");
-    Show ("=2+4*5",   "22");
-    Show ("=(2+4)*5", "30");
-    Show ("=2^3",     "8");
-    Show ("=A1",      "13");
+    xl.Write_Column_Width (1, 3, 50);
+    xl.Put ("Cell with formula");
+    xl.Put ("How the formula should look like");
+    xl.Put_Line ("How the result should look like");
+    xl.Freeze_Top_Row;
+    Show ("=2*4+5",          "13");
+    Show ("=2+4*5",          "22");
+    Show ("=(2+4)*5",        "30");
+    Show ("=2^3",            "8");
+    Show ("=A2",             "13");
+    Show ("=A2+A3+A4+A5+A6", "86");
     Show ("=BC123",   "0");
     Show ("=BC$123",  "0");
     Show ("=$BC123",  "0");
     Show ("=$BC$123", "0");
     Show ("=""some""&"" string""", "some string");
+    Show
+      ("=A2&"", ""&A3&"", ""&A4&"", ""&A5&"", ""&A6&"", ""&A12",
+       "13, 22, 30, 8, 13, some string");
     xl.Close;
   end Test_Formulas;
 
