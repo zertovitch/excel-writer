@@ -5,6 +5,11 @@ Release:
 ====Date:        Changes:
     ====         =======
 
+19: 17-Aug-2024: added support for basic formulas (numbers,
+                   strings, +, -, *, /, &, cell references);
+                   see ew_test.adb and excel_out_demo.adb for
+                   examples
+
 17: 18-Oct-2018: - time output routine is compatible with
                      Ada implementations' Duration type
                      ranges shorter than GNAT's (e.g., ObjectAda64's)

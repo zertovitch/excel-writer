@@ -12,6 +12,9 @@ package body Excel_Out.Formulas is
     use Ada.Strings.Unbounded;
     use Interfaces;
 
+    --  The scanner and formula parser have been ripped and adapted from
+    --  the HAC Ada Compiler.
+
     --  Ripped from HAC_Sys.Defs:
 
     type KeyWSymbol is
@@ -110,17 +113,17 @@ package body Excel_Out.Formulas is
     package Byte_Vectors is new Ada.Containers.Vectors (Positive, Unsigned_8);
 
     type Compiler_Data is record
-      text : Unbounded_String;
-      pos  : Natural := 0;
-      c : Character;
-      Sy, prev_sy : KeyWSymbol;
-      RNum : Long_Float;
-      INum : Integer;
-      err_msg : Unbounded_String;
-      cur_str : Unbounded_String;
+      text         : Unbounded_String;
+      pos          : Natural := 0;
+      c            : Character;
+      Sy, prev_sy  : KeyWSymbol;
+      RNum         : Long_Float;
+      INum         : Integer;
+      err_msg      : Unbounded_String;
+      cur_str      : Unbounded_String;
       Id_with_case : Unbounded_String;
-      Id     : Unbounded_String;
-      output : Byte_Vectors.Vector;
+      Id           : Unbounded_String;
+      output       : Byte_Vectors.Vector;
     end record;
 
     procedure Error (CD : in out Compiler_Data; message : String) is
