@@ -417,8 +417,8 @@ package Excel_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "19 Preview 1";
-  reference : constant String := "15-Aug-2024";
+  version   : constant String := "19";
+  reference : constant String := "17-Aug-2024";
   --  Hopefully the latest version is at one of those URLs:
   web       : constant String := "http://excel-writer.sf.net/";
   web2 : constant String := "https://sourceforge.net/projects/excel-writer/";
