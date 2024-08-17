@@ -514,6 +514,7 @@ package body Excel_Out.Formulas is
     --  3.4.4 Constant Operand Tokens, p.41
     tStr : constant := 16#17#;  --  3.8.2
     tInt : constant := 16#1E#;  --  3.8.5
+    tNum : constant := 16#1F#;  --  3.8.6
 
     --  3.9 Operand Tokens, p.54
     tRefV : constant := 16#44#;  --  3.9.2
@@ -544,6 +545,7 @@ package body Excel_Out.Formulas is
     type Typen is (Undefined, Ints, Floats, String_Literals);
 
     subtype Numeric_Typ is Typen range Ints .. Floats;
+    pragma Unreferenced (Numeric_Typ);
 
     procedure Ident_or_Cell_Reference
       (CD : in out Compiler_Data;
@@ -619,11 +621,18 @@ package body Excel_Out.Formulas is
               when IntCon =>  --  Literal integer or float.
                 X := Ints;
                 InSymbol (CD);
-                Emit (CD, tInt);
-                Emit (CD, Intel_16 (Unsigned_16 (CD.INum)));
+                if CD.INum in 0 .. 65535 then
+                  Emit (CD, tInt);
+                  Emit (CD, Intel_16 (Unsigned_16 (CD.INum)));
+                else
+                  Emit (CD, tNum);
+                  Emit (CD, IEEE_Double_Intel (Long_Float (CD.INum)));
+                end if;
               when FloatCon =>  --  Literal float.
                 InSymbol (CD);
-                --  !!  Process
+                X := Floats;
+                Emit (CD, tNum);
+                Emit (CD, IEEE_Double_Intel (CD.RNum));
               when LParent =>
                 --  '(' : what is inside the parentheses is an
                 --        expression of the lowest level.
@@ -665,14 +674,7 @@ package body Excel_Out.Formulas is
           Mult_OP := CD.Sy;
           InSymbol (CD);
           Factor (Y);
-          if X in Numeric_Typ and then Y in Numeric_Typ then
-            Emit (CD, (if Mult_OP = Times then tMul else tDiv));
-          elsif Y not in Numeric_Typ then
-            --  N * (something non-numeric)
-            Error (CD, "right operand is not numeric");
-          else
-            Error (CD, "left operand is not numeric");
-          end if;
+          Emit (CD, (if Mult_OP = Times then tMul else tDiv));
         end loop;
       end Term;
 

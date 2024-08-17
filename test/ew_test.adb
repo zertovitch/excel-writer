@@ -120,14 +120,18 @@ procedure EW_Test is
     Show ("=2^3",            "8");
     Show ("=A2",             "13");
     Show ("=A2+A3+A4+A5+A6", "86");
+    Show ("=10+A2", "23");
+    Show ("=10*A2", "130");
     Show ("=BC123",   "0");
     Show ("=BC$123",  "0");
     Show ("=$BC123",  "0");
     Show ("=$BC$123", "0");
     Show ("=""some""&"" string""", "some string");
     Show
-      ("=A2&"", ""&A3&"", ""&A4&"", ""&A5&"", ""&A6&"", ""&A12",
+      ("=A2&"", ""&A3&"", ""&A4&"", ""&A5&"", ""&A6&"", ""&A13",
        "13, 22, 30, 8, 13, some string");
+    Show ("=70000", "70000");  --  Non 16-bit integer
+    Show ("=3.141592653", "3.141592653");
     xl.Close;
   end Test_Formulas;
 

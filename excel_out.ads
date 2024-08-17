@@ -651,4 +651,6 @@ private
   function Intel_32 (n : Interfaces.Unsigned_32) return Byte_Buffer;
   pragma Inline (Intel_32);
 
+  function IEEE_Double_Intel (x : Long_Float) return Byte_Buffer;
+
 end Excel_Out;

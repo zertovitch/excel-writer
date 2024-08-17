@@ -32,6 +32,7 @@ procedure Excel_Out_Demo is
     --  We test the output of some date (here: 2014-03-16 11:55:17)
     some_time : constant Time := Time_Of (2014, 03, 16, Duration ((11.0 * 60.0 + 55.0) * 60.0 + 17.0));
     damier : Natural;
+    first_row : constant := 15;
     use Ada.Characters.Handling;
   begin
     xl.Create ("big [" & To_Lower (ef'Image) & "].xls", ef, Windows_CP_1253);
@@ -150,7 +151,7 @@ procedure Excel_Out_Demo is
     xl.Put (" <- default fmt (general)");
     xl.New_Line;
 
-    for row in 15 .. 300 loop
+    for row in first_row .. 300 loop
       xl.Use_Format (fmt_1);
       xl.Write (row, 3, Long_Float (row) * 0.01);
       xl.Use_Format (fmt_5);
@@ -162,8 +163,13 @@ procedure Excel_Out_Demo is
       xl.Put ("=""Formula! ""&E" & Img (row));
       xl.Next (2);
       xl.Put ("= 10000 + E" & Img (row));
-      xl.Put ("= 10 * " & Img (row));
-      --xl.Put ("= 1 * E15");  --  !! This bugs Excel !...
+      xl.Put ("= 10 * E" & Img (row));
+      xl.Next;
+      if row = first_row then
+        xl.Put (1);
+      else
+        xl.Put ("=L" & Img (row - 1) & "+L" & Img (row - 2));
+      end if;
     end loop;
     xl.Close;
   end Big_Demo;
