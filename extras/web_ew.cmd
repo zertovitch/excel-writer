@@ -13,14 +13,19 @@ echo   end loop;>>small_demo.adb
 echo   xl.Close;>>small_demo.adb
 echo end Small_Demo;>>small_demo.adb
 
+
+gnatmake -P ..\excel_out.gpr
+
 rem Call GNATMake without project file: we want the .ali here.
+gnatmake small_demo.adb -I.. -aO../obj_debug -j0
 
-gnatmake ..\excel_out_demo.adb -I..
-gnatmake small_demo.adb -I..
+set params=-oew_html -b#fffcfb -iew_head.txt -jew_top.txt -kew_bottom.txt
+set params=%params% -I../obj_debug -I..
 
-rem Small_Demo without local references
-perl ew_html.pl small_demo -d -I.. -oew_html
-perl ew_html.pl excel_out_demo excel_out.ads excel_out.adb -I.. -f -d -oew_html
+rem Small_Demo without local references (TBD: -f switch for new GNATHTML)
+gnathtml small_demo.adb %params%
+gnathtml excel_out_demo.adb excel_out.ads excel_out.adb -f %params%
 
-del *.ali
-del *.o
+del small_demo.ali
+del small_demo.o
+REM del small_demo.exe

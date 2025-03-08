@@ -1,0 +1,2 @@
+<meta name="keywords" content="Ada, programming, excel, spreadsheet, biff, xls">
+<link rel="Shortcut Icon" href=../ew.ico>
