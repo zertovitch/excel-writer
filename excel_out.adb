@@ -1272,7 +1272,7 @@ package body Excel_Out is
   is
     is_valid : Boolean;
   begin
-    if str'Length > 0 and str (str'First) in '=' then
+    if str'Length > 0 and then str (str'First) in '=' then
       Write_as_Formula (xl, r, c, str, 0.0, True, True, is_valid);
       if is_valid then
         return;  --  Formula is valid and has been written.
