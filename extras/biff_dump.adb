@@ -474,7 +474,7 @@ begin
         Read (f, b); -- skip Used attributes
         Ignore_from (5); -- skip remaining contents
       when ole_2 =>
-        Put_Line (xl, "This is an OLE-OLE 2 file, eventually wrapping a BIFF one");
+        Put_Line (xl, "This is an OLE-OLE 2 file, possibly wrapping a BIFF one");
         Put_Line (xl, "Check: Microsoft Compound Document File Format, compdocfileformat.pdf");
         Put_Line (xl, "Aborting dump");
         Close (f);

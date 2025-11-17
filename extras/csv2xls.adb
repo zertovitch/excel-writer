@@ -4,7 +4,7 @@
 --                   into an Excel file. You can specify the separator.
 --                   E.g. If you open in Excel a CSV with semicolons as
 --                   separators on a PC with comma being the separator,
---                   and then apply "Text to columns", the eventual commas in
+--                   and then apply "Text to columns", the possible commas in
 --                   the text will already have been used as separators and
 --                   you will end up with a total mess. CSV2XLS prevents this
 --                   issue.
