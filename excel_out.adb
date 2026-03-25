@@ -1140,13 +1140,14 @@ package body Excel_Out is
   is
     pragma Inline (Write_as_30_bit_signed);
     RK_val : Unsigned_32;
-    RK_code : constant := 2; -- Code for signed integer. See 2.5.5 RK Values
+    RK_code : constant := 2;  --  Code for signed integer. See 2.5.5 RK Values
   begin
     if num >= 0 then
-      RK_val := Unsigned_32 (num) * 4 + RK_code;
+      RK_val := Unsigned_32 (num);
     else
-      RK_val := (-Unsigned_32 (-num)) * 4 + RK_code;
+      RK_val := Unsigned_32'Last - Unsigned_32 (-1 - num);
     end if;
+    RK_val := RK_val * 4 + RK_code;
     Jump_to_and_store_max (xl, r, c);
     --  5.87 RK
     Write_Biff (xl, 16#027E#,
