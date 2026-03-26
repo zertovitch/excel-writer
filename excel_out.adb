@@ -137,10 +137,9 @@ package body Excel_Out is
     Size_test_a'Size = Size_test_b'Size and
     Size_test_a'Alignment = Size_test_b'Alignment;
 
-  procedure Block_Write (
-    stream : in out Ada.Streams.Root_Stream_Type'Class;
-    buffer : in     Byte_Buffer
-  )
+  procedure Block_Write
+    (stream : in out Ada.Streams.Root_Stream_Type'Class;
+     buffer : in     Byte_Buffer)
   is
     pragma Inline (Block_Write);
     SE_Buffer   : Ada.Streams.Stream_Element_Array (1 .. buffer'Length);
@@ -160,14 +159,10 @@ package body Excel_Out is
   -- Excel BIFF --
   ----------------
 
-  --  The original Modula-2 code counted on certain assumptions about
-  --  record packing & endianess. We write data without these assumptions.
-
-  procedure Write_Biff (
-    xl     : Excel_Out_Stream'Class;
-    biff_id : Unsigned_16;
-    data   : Byte_Buffer
-  )
+  procedure Write_Biff
+    (xl      : Excel_Out_Stream'Class;
+     biff_id : Unsigned_16;
+     data    : Byte_Buffer)
   is
     pragma Inline (Write_Biff);
   begin
@@ -499,15 +494,14 @@ package body Excel_Out is
 
   type Font_or_Background is (for_font, for_background);
   type Color_pair is array (Font_or_Background) of Unsigned_16;
+
   auto_color : constant Color_pair :=
-    (16#7FFF#, -- system window text colour
-     16#0019#  -- system window background colour
-    );
+    (16#7FFF#,   --  system window text colour
+     16#0019#);  --  system window background colour
 
   color_code : constant array (Excel_Type, Color_Type) of Color_pair :=
     (BIFF2 =>
-       (
-         black      => (0, 0),
+        (black      => (0, 0),
          white      => (1, 1),
          red        => (2, 2),
          green      => (3, 3),
@@ -515,9 +509,8 @@ package body Excel_Out is
          yellow     => (5, 5),
          magenta    => (6, 6),
          cyan       => (7, 7),
-         others     => auto_color
-        ),
-      BIFF3 | BIFF4 =>
+         others     => auto_color),
+     BIFF3 | BIFF4 =>
         (black      => (8, 8),
          white      => (9, 9),
          red        => (10, 10),
@@ -534,9 +527,7 @@ package body Excel_Out is
          teal       => (21, 21),
          silver     => (22, 22),
          grey       => (23, 23),
-         automatic  => auto_color
-        )
-     );
+         automatic  => auto_color));
 
   --  *** Exported procedures **********************************************
 
@@ -558,6 +549,7 @@ package body Excel_Out is
     actual_number_format : Number_Format_Type := number_format;
     cell_is_locked : constant := 1;
     --  ^ Means actually: cell formula protection is possible, and enabled when sheet is protected.
+
     procedure Define_BIFF2_XF is
       border_bits, mask : Unsigned_8;
     begin
@@ -570,21 +562,19 @@ package body Excel_Out is
         mask := mask * 2;
       end loop;
       --  5.115.2 XF Record Contents, p. 221 for BIFF2
-      Write_Biff (
-        xl,
-        16#0043#, -- XF code in BIFF2
-        (Unsigned_8 (font),
-         --  ^ Index to FONT record
-         0,
-         --  ^ Not used
-         Number_Format_Type'Pos (actual_number_format) + 16#40# * cell_is_locked,
-         --  ^ Number format and cell flags
-         Horizontal_Alignment'Pos (horizontal_align) +
-         border_bits +
-         Boolean'Pos (shaded) * 128
-         --  ^ Horizontal alignment, border style, and background
-        )
-      );
+      Write_Biff
+        (xl,
+         16#0043#, -- XF code in BIFF2
+         (Unsigned_8 (font),
+          --  ^ Index to FONT record
+          0,
+          --  ^ Not used
+          Number_Format_Type'Pos (actual_number_format) + 16#40# * cell_is_locked,
+          --  ^ Number format and cell flags
+          Horizontal_Alignment'Pos (horizontal_align) +
+          border_bits +
+          Boolean'Pos (shaded) * 128));
+          --  ^ Horizontal alignment, border style, and background
     end Define_BIFF2_XF;
 
     area_code : Unsigned_16;
@@ -592,66 +582,62 @@ package body Excel_Out is
     procedure Define_BIFF3_XF is
     begin
       --  5.115.2 XF Record Contents, p. 221 for BIFF3
-      Write_Biff (
-        xl,
-        16#0243#, -- XF code in BIFF3
-        (Unsigned_8 (font),
-         --  ^ 0 - Index to FONT record
-         Number_Format_Type'Pos (actual_number_format),
-         --  ^ 1 - Number format and cell flags
-         cell_is_locked,
-         --  ^ 2 - XF_TYPE_PROT (5.115.1)
-         16#FF#
-         --  ^ 3 - XF_USED_ATTRIB
-        ) &
-        Intel_16 (
-          Horizontal_Alignment'Pos (horizontal_align) +
-          Boolean'Pos (wrap_text) * 8
-        ) &
-        --  ^ 4 - Horizontal alignment, text break, parent style XF
-        Intel_16 (area_code) &
-        --  ^ 6 - XF_AREA_34
-        (Boolean'Pos (border (top_single)),
-           Boolean'Pos (border (left_single)),
-           Boolean'Pos (border (bottom_single)),
-           Boolean'Pos (border (right_single))
-        )
-        --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
-        --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
-      );
+      Write_Biff
+        (xl,
+         16#0243#, -- XF code in BIFF3
+         (Unsigned_8 (font),
+          --  ^ 0 - Index to FONT record
+          Number_Format_Type'Pos (actual_number_format),
+          --  ^ 1 - Number format and cell flags
+          cell_is_locked,
+          --  ^ 2 - XF_TYPE_PROT (5.115.1)
+          16#FF#
+          --  ^ 3 - XF_USED_ATTRIB
+         ) &
+         Intel_16 (
+           Horizontal_Alignment'Pos (horizontal_align) +
+           Boolean'Pos (wrap_text) * 8
+         ) &
+         --  ^ 4 - Horizontal alignment, text break, parent style XF
+         Intel_16 (area_code) &
+         --  ^ 6 - XF_AREA_34
+         (Boolean'Pos (border (top_single)),
+            Boolean'Pos (border (left_single)),
+            Boolean'Pos (border (bottom_single)),
+            Boolean'Pos (border (right_single))));
+         --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+         --       Thin, Medium, Dashed, Dotted, Thick, Double, Hair
     end Define_BIFF3_XF;
 
     procedure Define_BIFF4_XF is
     begin
       --  5.115.2 XF Record Contents, p. 222 for BIFF4
-      Write_Biff (
-        xl,
-        16#0443#, -- XF code in BIFF4
-        (Unsigned_8 (font),
-         --  ^ 0 - Index to FONT record
-         Number_Format_Type'Pos (actual_number_format),
-         --  ^ 1 - Number format and cell flags
-         cell_is_locked, 0,
-         --  ^ 2 - XF type, cell protection, and parent style XF
-         Horizontal_Alignment'Pos (horizontal_align) +
-         Boolean'Pos (wrap_text) * 8 +
-         (Vertical_Alignment'Pos (vertical_align) and 3) * 16 +
-         Text_Orientation'Pos (text_orient) * 64,
-         --  ^ 4 - Alignment (hor & ver), text break, and text orientation
-         16#FF#
-         --  ^ 3 - XF_USED_ATTRIB
-        ) &
-        --  ^ 4 - Horizontal alignment, text break, parent style XF
-        Intel_16 (area_code) &
-        --  ^ 6 - XF_AREA_34
-        (Boolean'Pos (border (top_single)),
-           Boolean'Pos (border (left_single)),
-           Boolean'Pos (border (bottom_single)),
-           Boolean'Pos (border (right_single))
-        )
-        --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
-        --        Thin, Medium, Dashed, Dotted, Thick, Double, Hair
-      );
+      Write_Biff
+        (xl,
+         16#0443#, -- XF code in BIFF4
+         (Unsigned_8 (font),
+          --  ^ 0 - Index to FONT record
+          Number_Format_Type'Pos (actual_number_format),
+          --  ^ 1 - Number format and cell flags
+          cell_is_locked, 0,
+          --  ^ 2 - XF type, cell protection, and parent style XF
+          Horizontal_Alignment'Pos (horizontal_align) +
+          Boolean'Pos (wrap_text) * 8 +
+          (Vertical_Alignment'Pos (vertical_align) and 3) * 16 +
+          Text_Orientation'Pos (text_orient) * 64,
+          --  ^ 4 - Alignment (hor & ver), text break, and text orientation
+          16#FF#)
+          --  ^ 3 - XF_USED_ATTRIB
+          &
+          --  ^ 4 - Horizontal alignment, text break, parent style XF
+          Intel_16 (area_code) &
+          --  ^ 6 - XF_AREA_34
+          (Boolean'Pos (border (top_single)),
+             Boolean'Pos (border (left_single)),
+             Boolean'Pos (border (bottom_single)),
+             Boolean'Pos (border (right_single))));
+          --  ^ 8 - XF_BORDER_34 - thin (=1) line; we could have other line styles:
+          --        Thin, Medium, Dashed, Dotted, Thick, Double, Hair
     end Define_BIFF4_XF;
 
   begin
@@ -762,14 +748,13 @@ package body Excel_Out is
     Write_Biff (xl, 16#002B#, Intel_16 (1));  --  5.80 PRINTGRIDLINES p.199
   end Print_Gridlines;
 
-  procedure Page_Setup (
-    xl                     : Excel_Out_Stream;
-    scaling_percents       : Positive := 100;
-    fit_width_with_n_pages : Natural := 1; -- 0: as many as possible
-    fit_height_with_n_pages : Natural := 1; -- 0: as many as possible
-    orientation            : Orientation_Choice := portrait;
-    scale_or_fit           : Scale_or_Fit_Choice := scale
-  )
+  procedure Page_Setup
+    (xl                      : Excel_Out_Stream;
+     scaling_percents        : Positive := 100;
+     fit_width_with_n_pages  : Natural  := 1;  --  0: as many as possible
+     fit_height_with_n_pages : Natural  := 1;  --  0: as many as possible
+     orientation             : Orientation_Choice  := portrait;
+     scale_or_fit            : Scale_or_Fit_Choice := scale)
   is
   begin
     --  5.73 PAGESETUP p.192 - this is BIFF4+ (cheat if xl.format below)!
@@ -794,10 +779,7 @@ package body Excel_Out is
   y_scale : constant := 20; -- scaling to obtain character point (pt) units
 
   --  5.31 DEFAULTROWHEIGHT
-  procedure Write_Default_Row_Height (
-        xl     : Excel_Out_Stream;
-        height : Positive
-  )
+  procedure Write_Default_Row_Height (xl : Excel_Out_Stream; height : Positive)
   is
     default_twips : constant Byte_Buffer := Intel_16 (Unsigned_16 (height * y_scale));
     options_flags : constant Byte_Buffer := (1, 0);
@@ -812,49 +794,47 @@ package body Excel_Out is
   end Write_Default_Row_Height;
 
   --  5.32 DEFCOLWIDTH
-  procedure Write_Default_Column_Width (
-        xl : in out Excel_Out_Stream;
-        width  : Positive)
+  procedure Write_Default_Column_Width (xl : in out Excel_Out_Stream; width : Positive)
   is
   begin
     Write_Biff (xl, 16#0055#, Intel_16 (Unsigned_16 (width)));
     xl.defcolwdth := 256 * width;
   end Write_Default_Column_Width;
 
-  procedure Write_Column_Width (
-        xl     : in out Excel_Out_Stream;
-        column : Positive;
-        width  : Natural)
+  procedure Write_Column_Width
+    (xl     : in out Excel_Out_Stream;
+     column :        Positive;
+     width  :        Natural)
   is
   begin
     Write_Column_Width (xl, column, column, width);
   end Write_Column_Width;
 
-  procedure Write_Column_Width (
-    xl            : in out Excel_Out_Stream;
-    first_column,
-    last_column   : Positive;
-    width         : Natural
-  )
+  procedure Write_Column_Width
+    (xl            : in out Excel_Out_Stream;
+     first_column  : in     Positive;
+     last_column   : in     Positive;
+     width         : in     Natural)
   is
   begin
     case xl.xl_format is
       when BIFF2 =>
         --  5.20 COLWIDTH (BIFF2 only)
-        Write_Biff (xl, 16#0024#,
-          Unsigned_8 (first_column - 1) &
-          Unsigned_8 (last_column - 1) &
-          Intel_16 (Unsigned_16 (width * 256)));
+        Write_Biff
+          (xl, 16#0024#,
+           Unsigned_8 (first_column - 1) &
+           Unsigned_8 (last_column - 1) &
+           Intel_16 (Unsigned_16 (width * 256)));
       when BIFF3 | BIFF4 =>
         --  5.18 COLINFO (BIFF3+)
-        Write_Biff (xl, 16#007D#,
-          Intel_16 (Unsigned_16 (first_column - 1)) &
-          Intel_16 (Unsigned_16 (last_column - 1)) &
-          Intel_16 (Unsigned_16 (width * 256)) &
-          Intel_16 (0) & -- Index to XF record (5.115) for default column formatting
-          Intel_16 (0) & -- Option flags
-          (0, 0)         -- Not used
-        );
+        Write_Biff
+          (xl, 16#007D#,
+           Intel_16 (Unsigned_16 (first_column - 1)) &
+           Intel_16 (Unsigned_16 (last_column - 1)) &
+           Intel_16 (Unsigned_16 (width * 256)) &
+           Intel_16 (0) &  --  Index to XF record (5.115) for default column formatting
+           Intel_16 (0) &  --  Option flags
+           (0, 0));        --  Not used
         for j in first_column .. last_column loop
           xl.std_col_width (j) := False;
         end loop;
@@ -867,11 +847,10 @@ package body Excel_Out is
   --  where the column widths are set. Excel saves with blocks of ROW
   --  commands, most of them useless.
 
-  procedure Write_Row_Height (
-    xl     : Excel_Out_Stream;
-    row    : Positive;
-    height : Natural
-  )
+  procedure Write_Row_Height
+    (xl     : Excel_Out_Stream;
+     row    : Positive;
+     height : Natural)
   is
     row_info_base : Byte_Buffer :=
       Intel_16 (Unsigned_16 (row - 1)) &
@@ -882,30 +861,30 @@ package body Excel_Out is
   begin
     case xl.xl_format is
       when BIFF2 =>
-        Write_Biff (xl, 16#0008#,
-          row_info_base &
-          (1 .. 3 => 0) &
-          Intel_16 (0) -- offset to data
-        );
+        Write_Biff
+          (xl, 16#0008#,
+           row_info_base &
+           (1 .. 3 => 0) &
+           Intel_16 (0));  --  offset to data
       when BIFF3 | BIFF4 =>
         if height = 0 then -- proper hiding (needed with LibreOffice)
           fDyZero := 1;
           row_info_base (row_info_base'Last - 1 .. row_info_base'Last) :=
             Intel_16 (16#8000#);
         end if;
-        Write_Biff (xl, 16#0208#,
-          row_info_base &
-          --  http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
-          (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
-           0, 0,  -- unused1 (2 bytes): Undefined and MUST be ignored.
-           fDyZero *  32 +  -- D - fDyZero (1 bit): row is hidden
-                 1 *  64 +  -- E - fUnsynced (1 bit): row height was manually set
-                 0 * 128,   -- F - fGhostDirty (1 bit): the row was formatted
-           1) &   -- reserved3 (1 byte): MUST be 1, and MUST be ignored
-           Intel_16 (15)
-           --  ^ ixfe_val, then 4 bits.
-           --    If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
-        );
+        Write_Biff
+          (xl, 16#0208#,
+           row_info_base &
+           --  http://msdn.microsoft.com/en-us/library/dd906757(v=office.12).aspx
+           (0, 0,  -- reserved1 (2 bytes): MUST be zero, and MUST be ignored.
+            0, 0,  -- unused1 (2 bytes): Undefined and MUST be ignored.
+            fDyZero *  32 +  -- D - fDyZero (1 bit): row is hidden
+                  1 *  64 +  -- E - fUnsynced (1 bit): row height was manually set
+                  0 * 128,   -- F - fGhostDirty (1 bit): the row was formatted
+            1) &   -- reserved3 (1 byte): MUST be 1, and MUST be ignored
+            Intel_16 (15));
+            --  ^ ixfe_val, then 4 bits.
+            --    If fGhostDirty is 0, ixfe_val is undefined and MUST be ignored.
     end case;
   end Write_Row_Height;
 
@@ -940,11 +919,11 @@ package body Excel_Out is
           raise Font_out_of_range with "Only 4 fonts are allowed in the BIFF2 format";
           --  Reason: in the Cell Attributes (2.5.13), font index is encoded on 2 bits!
         end if;
-        Write_Biff (xl, 16#0031#,
-          Intel_16 (Unsigned_16 (height * y_scale)) &
-          Intel_16 (style_bits) &
-          To_buf_8_bit_length (font_name)
-        );
+        Write_Biff
+          (xl, 16#0031#,
+           Intel_16 (Unsigned_16 (height * y_scale)) &
+           Intel_16 (style_bits) &
+           To_buf_8_bit_length (font_name));
         if color /= automatic then
           --  5.47 FONTCOLOR
           Write_Biff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
@@ -953,12 +932,12 @@ package body Excel_Out is
         if xl.fonts > 255 then
           raise Font_out_of_range with "Only 256 fonts are allowed in the BIFF3, BIFF4 formats";
         end if;
-        Write_Biff (xl, 16#0231#,
-          Intel_16 (Unsigned_16 (height * y_scale)) &
-          Intel_16 (style_bits) &
-          Intel_16 (color_code (BIFF3, color)(for_font)) &
-          To_buf_8_bit_length (font_name)
-        );
+        Write_Biff
+          (xl, 16#0231#,
+           Intel_16 (Unsigned_16 (height * y_scale)) &
+           Intel_16 (style_bits) &
+           Intel_16 (color_code (BIFF3, color)(for_font)) &
+           To_buf_8_bit_length (font_name));
     end case;
     font := Font_Type (xl.fonts);
   end Define_Font;
@@ -985,8 +964,7 @@ package body Excel_Out is
       (Unsigned_8 (xl.xf_in_use),
        Unsigned_8 (xl.xf_def (xl.xf_in_use).numb) + 16#40# *
        Unsigned_8 (xl.xf_def (xl.xf_in_use).font),
-       0
-      );
+       0);
   end Cell_attributes;
 
   function Almost_zero (x : Long_Float) return Boolean is
@@ -1122,16 +1100,16 @@ package body Excel_Out is
   begin
     Jump_to_and_store_max (xl, r, c);
     --  5.60 INTEGER
-    Write_Biff (xl, 16#0002#,
-      Intel_16 (Unsigned_16 (r - 1)) &
-      Intel_16 (Unsigned_16 (c - 1)) &
-      Cell_attributes (xl) &
-      Intel_16 (num)
-    );
-    Jump_to (xl, r, c + 1); -- Store and check new position
+    Write_Biff
+      (xl, 16#0002#,
+       Intel_16 (Unsigned_16 (r - 1)) &
+       Intel_16 (Unsigned_16 (c - 1)) &
+       Cell_attributes (xl) &
+       Intel_16 (num));
+    Jump_to (xl, r, c + 1);  --  Store and check new position
   end Write_as_16_bit_unsigned;
 
-  --  Internal. This is BIFF3+. BIFF format choice unchecked here.
+  --  Internal. This is BIFF3+. BIFF format choice is unchecked here.
   --
   procedure Write_as_30_bit_signed
     (xl   : in out Excel_Out_Stream;
@@ -1150,12 +1128,12 @@ package body Excel_Out is
     RK_val := RK_val * 4 + RK_code;
     Jump_to_and_store_max (xl, r, c);
     --  5.87 RK
-    Write_Biff (xl, 16#027E#,
-      Intel_16 (Unsigned_16 (r - 1)) &
-      Intel_16 (Unsigned_16 (c - 1)) &
-      Intel_16 (Unsigned_16 (xl.xf_in_use)) &
-      Intel_32 (RK_val)
-    );
+    Write_Biff
+      (xl, 16#027E#,
+       Intel_16 (Unsigned_16 (r - 1)) &
+       Intel_16 (Unsigned_16 (c - 1)) &
+       Intel_16 (Unsigned_16 (xl.xf_in_use)) &
+       Intel_32 (RK_val));
     Jump_to (xl, r, c + 1); -- Store and check new position
   end Write_as_30_bit_signed;
 
@@ -1167,13 +1145,13 @@ package body Excel_Out is
      r, c :        Positive;
      num  :        Long_Float)
   is
-    max_16_u : constant :=   2.0 ** 16 - 1.0;
-    min_30_s : constant := -(2.0 ** 29);
-    max_30_s : constant :=   2.0 ** 29 - 1.0;
+    max_16_unsigned : constant :=   2.0 ** 16 - 1.0;
+    min_30_signed   : constant := -(2.0 ** 29);
+    max_30_signed   : constant :=   2.0 ** 29 - 1.0;
   begin
     case xl.xl_format is
       when BIFF2 =>
-        if num in 0.0 .. max_16_u and then
+        if num in 0.0 .. max_16_unsigned and then
            Almost_zero (num - Long_Float'Floor (num))
         then
           Write_as_16_bit_unsigned (xl, r, c, Unsigned_16 (Long_Float'Floor (num)));
@@ -1181,7 +1159,7 @@ package body Excel_Out is
           Write_as_Double (xl, r, c, num);
         end if;
       when BIFF3 | BIFF4 =>
-        if num in min_30_s .. max_30_s and then
+        if num in min_30_signed .. max_30_signed and then
            Almost_zero (num - Long_Float'Floor (num))
         then
           Write_as_30_bit_signed (xl, r, c, Integer_32 (Long_Float'Floor (num)));
@@ -1199,6 +1177,8 @@ package body Excel_Out is
      r, c :        Positive;
      num  :        Integer)
   is
+    min_30_signed   : constant := -(2 ** 29);
+    max_30_signed   : constant :=   2 ** 29 - 1;
   begin
     --  We use an integer representation (and small storage) if possible;
     --  we need to use a floating-point in all other cases
@@ -1210,7 +1190,7 @@ package body Excel_Out is
           Write_as_Double (xl, r, c, Long_Float (num));
         end if;
       when BIFF3 | BIFF4 =>
-        if num in -2**29 .. 2**29 - 1 then
+        if num in min_30_signed .. max_30_signed then
           Write_as_30_bit_signed (xl, r, c, Integer_32 (num));
         else
           Write_as_Double (xl, r, c, Long_Float (num));
@@ -1241,26 +1221,26 @@ package body Excel_Out is
     if str'Length > 0 then
       case xl.xl_format is
         when BIFF2 =>
-          Write_Biff (xl, 16#0004#,
-            Intel_16 (Unsigned_16 (r - 1)) &
-            Intel_16 (Unsigned_16 (c - 1)) &
-            Cell_attributes (xl) &
-            To_buf_8_bit_length (str)
-          );
+          Write_Biff
+            (xl, 16#0004#,
+             Intel_16 (Unsigned_16 (r - 1)) &
+             Intel_16 (Unsigned_16 (c - 1)) &
+             Cell_attributes (xl) &
+             To_buf_8_bit_length (str));
         when BIFF3 | BIFF4 =>
-          Write_Biff (xl, 16#0204#,
-            Intel_16 (Unsigned_16 (r - 1)) &
-            Intel_16 (Unsigned_16 (c - 1)) &
-            Intel_16 (Unsigned_16 (xl.xf_in_use)) &
-            To_buf_16_bit_length (str)
-          );
+          Write_Biff
+            (xl, 16#0204#,
+             Intel_16 (Unsigned_16 (r - 1)) &
+             Intel_16 (Unsigned_16 (c - 1)) &
+             Intel_16 (Unsigned_16 (xl.xf_in_use)) &
+             To_buf_16_bit_length (str));
         --  when BIFF8 =>
-        --    Write_Biff(xl, 16#0204#,
-        --      Intel_16(Unsigned_16(r-1)) &
-        --      Intel_16(Unsigned_16(c-1)) &
-        --      Intel_16(Unsigned_16(xl.xf_in_use)) &
-        --      To_buf_16_bit_length(ISO_8859_1_to_UTF_16(str))
-        --    );
+        --    Write_Biff
+        --      (xl, 16#0204#,
+        --       Intel_16(Unsigned_16(r-1)) &
+        --       Intel_16(Unsigned_16(c-1)) &
+        --       Intel_16(Unsigned_16(xl.xf_in_use)) &
+        --       To_buf_16_bit_length(ISO_8859_1_to_UTF_16(str)));
       end case;
     end if;
     Jump_to (xl, r, c + 1);  --  Store and check new position
@@ -1418,14 +1398,12 @@ package body Excel_Out is
           Write_Biff (xl, 16#0001#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
-            Cell_attributes (xl)
-          );
+            Cell_attributes (xl));
         when BIFF3 | BIFF4 =>
           Write_Biff (xl, 16#0201#,
             Intel_16 (Unsigned_16 (r - 1)) &
             Intel_16 (Unsigned_16 (c - 1)) &
-            Intel_16 (Unsigned_16 (xl.xf_in_use))
-          );
+            Intel_16 (Unsigned_16 (xl.xf_in_use)));
       end case;
       Jump_to (xl, r, c + 1); -- Store and check new position
     end Blank;
@@ -1546,10 +1524,9 @@ package body Excel_Out is
     Jump (xl, rows => rows, columns => 0);
   end Next_Row;
 
-  procedure Use_Format (
-    xl           : in out Excel_Out_Stream;
-    format       : in     Format_Type
-  )
+  procedure Use_Format
+    (xl           : in out Excel_Out_Stream;
+     format       : in     Format_Type)
   is
   begin
     if Integer (format) in XF_Range'Range then
@@ -1603,11 +1580,10 @@ package body Excel_Out is
     xl.zoom_den := denominator;
   end Zoom_Level;
 
-  procedure Reset (
-    xl           : in out Excel_Out_Stream'Class;
-    excel_format :        Excel_Type;
-    encoding     :        Encoding_Type
-  )
+  procedure Reset
+    (xl           : in out Excel_Out_Stream'Class;
+     excel_format :        Excel_Type;
+     encoding     :        Encoding_Type)
   is
     dummy_xl_with_defaults : Excel_Out_Pre_Root_Type;
   begin
@@ -1753,12 +1729,11 @@ package body Excel_Out is
   -- Output to a file --
   ----------------------
 
-  procedure Create (
-    xl           : in out Excel_Out_File;
-    file_name    :        String;
-    excel_format :        Excel_Type    := Default_Excel_Type;
-    encoding     :        Encoding_Type := Default_Encoding
-  )
+  procedure Create
+    (xl           : in out Excel_Out_File;
+     file_name    :        String;
+     excel_format :        Excel_Type    := Default_Excel_Type;
+     encoding     :        Encoding_Type := Default_Encoding)
   is
     use Ada.Streams, Ada.Streams.Stream_IO;
   begin
@@ -1865,11 +1840,10 @@ package body Excel_Out is
 
   --- ***
 
-  procedure Create (
-    xl           : in out Excel_Out_String;
-    excel_format :        Excel_Type    := Default_Excel_Type;
-    encoding     :        Encoding_Type := Default_Encoding
-  )
+  procedure Create
+    (xl           : in out Excel_Out_String;
+     excel_format :        Excel_Type    := Default_Excel_Type;
+     encoding     :        Encoding_Type := Default_Encoding)
   is
   begin
     Reset (xl, excel_format, encoding);

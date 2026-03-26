@@ -113,9 +113,9 @@ package Excel_Out is
   procedure Write_Column_Width (xl : in out Excel_Out_Stream; column : Positive; width : Natural);
   procedure Write_Column_Width
     (xl            : in out Excel_Out_Stream;
-     first_column,
-     last_column   : Positive;
-     width         : Natural);
+     first_column  : in     Positive;
+     last_column   : in     Positive;
+     width         : in     Natural);
 
   --  * The row height unit is in font points, as appearing when you
   --      resize a row in Excel. A zero height means the row is hidden.
