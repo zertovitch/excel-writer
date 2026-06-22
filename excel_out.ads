@@ -173,6 +173,17 @@ package Excel_Out is
      black, white, red, green, blue, yellow, magenta, cyan,
      dark_red, dark_green, dark_blue, olive, purple, teal, silver, grey);
 
+  type Custom_Color_Type is range 1 .. 56;
+
+  type Base_Color_Value is range 0 .. 255;
+
+  type RGB is record red, green, blue : Base_Color_Value; end record;
+
+  type RGB_Array is array (Custom_Color_Type range <>) of RGB;
+
+  --  Define custom colors.
+  procedure Define_Palette (xl : Excel_Out_Stream; palette : RGB_Array);
+
   type Font_Style is private;
 
   --  For combining font styles (e.g.: bold & underlined):
@@ -196,6 +207,15 @@ package Excel_Out is
      --  Optional:
      style        :        Font_Style := regular;
      color        :        Color_Type := automatic);
+
+  procedure Define_Font
+    (xl           : in out Excel_Out_Stream;
+     font_name    :        String;
+     height       :        Positive;
+     font         :    out Font_Type;
+     --  Optional:
+     style        :        Font_Style := regular;
+     color        :        Custom_Color_Type);  --  Use custom colors defined with Define_Palette
 
   type Horizontal_Alignment is
     (general_alignment, to_left, centred, to_right, filled,
@@ -417,8 +437,8 @@ package Excel_Out is
   --  Information about this package - e.g. for an "about" box  --
   ----------------------------------------------------------------
 
-  version   : constant String := "19";
-  reference : constant String := "25-Mar-2026";
+  version   : constant String := "20, Preview 1";
+  reference : constant String := "22-Jun-2026";
   --  Hopefully the latest version is at one of those URLs:
   web       : constant String := "http://excel-writer.sf.net/";
   web2 : constant String := "https://sourceforge.net/projects/excel-writer/";

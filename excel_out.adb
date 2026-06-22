@@ -493,13 +493,16 @@ package body Excel_Out is
   end Write_Worksheet_header;
 
   type Font_or_Background is (for_font, for_background);
-  type Color_pair is array (Font_or_Background) of Unsigned_16;
 
-  auto_color : constant Color_pair :=
+  subtype Color_Index is Interfaces.Unsigned_16;
+
+  type Color_Pair is array (Font_or_Background) of Color_Index;
+
+  auto_color : constant Color_Pair :=
     (16#7FFF#,   --  system window text colour
      16#0019#);  --  system window background colour
 
-  color_code : constant array (Excel_Type, Color_Type) of Color_pair :=
+  color_code : constant array (Excel_Type, Color_Type) of Color_Pair :=
     (BIFF2 =>
         (black      => (0, 0),
          white      => (1, 1),
@@ -888,14 +891,37 @@ package body Excel_Out is
     end case;
   end Write_Row_Height;
 
+  --  5.74 PALETTE, p.195
+  procedure Define_Palette (xl : Excel_Out_Stream; palette : RGB_Array) is
+
+    --  LISP-like recursive function for converting the palette...
+    function To_Buffer (p : RGB_Array) return Byte_Buffer is
+    (if p'Length = 0 then
+       empty_buffer
+     else
+       Intel_32
+         (Unsigned_32 (p (p'First).blue)  * 256 * 256 +
+          Unsigned_32 (p (p'First).green) * 256 +
+          Unsigned_32 (p (p'First).red))
+       & To_Buffer (p (p'First + 1 .. p'Last)));
+
+  begin
+    Write_Biff
+      (xl, 16#0092#,
+       Intel_16 (Unsigned_16 (palette'Length)) &
+       To_Buffer (palette));
+  end Define_Palette;
+
   --  5.45 FONT, p.171
+  --  Internal version
   procedure Define_Font
     (xl           : in out Excel_Out_Stream;
      font_name    :        String;
      height       :        Positive;
      font         :    out Font_Type;
      style        :        Font_Style := regular;
-     color        :        Color_Type := automatic)
+     color        :        Unsigned_16;
+     is_automatic :        Boolean)
   is
     style_bits, mask : Unsigned_16;
   begin
@@ -924,9 +950,9 @@ package body Excel_Out is
            Intel_16 (Unsigned_16 (height * y_scale)) &
            Intel_16 (style_bits) &
            To_buf_8_bit_length (font_name));
-        if color /= automatic then
+        if not is_automatic then
           --  5.47 FONTCOLOR
-          Write_Biff (xl, 16#0045#, Intel_16 (color_code (BIFF2, color)(for_font)));
+          Write_Biff (xl, 16#0045#, Intel_16 (color));
         end if;
       when BIFF3 | BIFF4 =>  --  BIFF8 has 16#0031#, p. 171
         if xl.fonts > 255 then
@@ -936,10 +962,49 @@ package body Excel_Out is
           (xl, 16#0231#,
            Intel_16 (Unsigned_16 (height * y_scale)) &
            Intel_16 (style_bits) &
-           Intel_16 (color_code (BIFF3, color)(for_font)) &
+           Intel_16 (color) &
            To_buf_8_bit_length (font_name));
     end case;
     font := Font_Type (xl.fonts);
+  end Define_Font;
+
+  procedure Define_Font
+    (xl           : in out Excel_Out_Stream;
+     font_name    :        String;
+     height       :        Positive;
+     font         :    out Font_Type;
+     style        :        Font_Style := regular;
+     color        :        Color_Type := automatic)
+  is
+  begin
+    Define_Font
+      (xl           => xl,
+       font_name    => font_name,
+       height       => height,
+       font         => font,
+       style        => style,
+       color        => color_code (xl.xl_format, color)(for_font),
+       is_automatic => color = automatic);
+  end Define_Font;
+
+  procedure Define_Font
+    (xl           : in out Excel_Out_Stream;
+     font_name    :        String;
+     height       :        Positive;
+     font         :    out Font_Type;
+     --  Optional:
+     style        :        Font_Style := regular;
+     color        :        Custom_Color_Type)
+  is
+  begin
+    Define_Font
+      (xl           => xl,
+       font_name    => font_name,
+       height       => height,
+       font         => font,
+       style        => style,
+       color        => 7 + Unsigned_16 (color),  --  5.74.2 First colour from user-defined PALETTE record
+       is_automatic => False);
   end Define_Font;
 
   procedure Jump_to_and_store_max (xl : in out Excel_Out_Stream; r, c : Integer) is

@@ -135,9 +135,9 @@ procedure Excel_Out_Demo is
     xl.Write (11, 15, (1.0 + Long_Float'Model_Epsilon) * Long_Float'Model_Small);
     xl.Next;
     --  Testing a specific code page (Windows_CP_1253), which was set upon the Create call above.
-    xl.Put_Line ("A few Greek letters (alpha, beta, gamma): " &
-      Character'Val (16#E1#) & ", " & Character'Val (16#E2#) & ", " & Character'Val (16#E3#)
-    );
+    xl.Put_Line
+      ("A few Greek letters (alpha, beta, gamma): " &
+       Character'Val (16#E1#) & ", " & Character'Val (16#E2#) & ", " & Character'Val (16#E3#));
     --  Date: 2014-03-16 11:55:15
     xl.Use_Format (fmt_date_2);
     xl.Put (some_time);
@@ -196,10 +196,10 @@ procedure Excel_Out_Demo is
     xl.Define_Font ("Calibri", 15, font_title, bold, white);
     xl.Define_Font ("Calibri", 10, font_normal);
     xl.Define_Font ("Calibri", 10, font_normal_grey, color => grey);
-    xl.Define_Format (font_title, general, fmt_title,
-      border => bottom, background_color => dark_blue,
-      vertical_align => centred
-    );
+    xl.Define_Format
+      (font_title, general, fmt_title,
+       border => bottom, background_color => dark_blue,
+       vertical_align => centred);
     xl.Define_Format (font_normal, general, fmt_subtitle, border => bottom);
     xl.Define_Format (font_normal, dd_mm_yyyy, fmt_date, background_color => silver);
     xl.Define_Format (font_normal, decimal_0_thousands_separator, fmt_amount);
@@ -276,18 +276,43 @@ procedure Excel_Out_Demo is
     end loop;
     t1 := Clock;
     secs := Long_Float (t1 - t0);
-    xl.Put_Line (
-      "Time (seconds) for creating" &
-      iter'Image & " sheets with" &
-      size'Image & " x" &
-      size'Image & " =" &
-      Integer'Image (size**2) & " cells"
-    );
+    xl.Put_Line
+      ("Time (seconds) for creating" &
+       iter'Image & " sheets with" &
+       size'Image & " x" &
+       size'Image & " =" &
+       Integer'Image (size**2) & " cells");
     xl.Put_Line (secs);
     xl.Put_Line ("Sheets per second");
     xl.Put_Line (Long_Float (iter) / secs);
     xl.Close;
   end Speed_Test;
+
+  procedure Custom_Colors is
+    xl : Excel_Out.Excel_Out_File;
+    palette : RGB_Array (1 .. 17);
+    font : array (palette'Range) of Font_Type;
+    fmt  : array (palette'Range) of Format_Type;
+  begin
+    for i in palette'Range loop
+      palette (i) :=
+         (red => Base_Color_Value (i) * 15, green => 0, blue => 0);
+    end loop;
+    xl.Create ("custom_colors.xls");
+    xl.Define_Palette (palette);
+    for i in palette'Range loop
+      xl.Define_Font ("Calibri", 12, font (i), bold, i);
+    end loop;
+    for i in palette'Range loop
+      xl.Define_Format (font (i), general, fmt (i));
+    end loop;
+    for i in palette'Range loop
+      xl.Use_Format (fmt (i));
+      xl.Put_Line ("Font #" & i'Image);
+    end loop;
+
+    xl.Close;
+  end Custom_Colors;
 
   use Ada.Text_IO;
 
@@ -302,6 +327,8 @@ begin
   Fancy;
   Put_Line ("Excel sheet in a string demo ----> from_string.xls");
   String_Demo;
+  Put_Line ("Custom colors -------------------> custom_colors.xls");
+  Custom_Colors;
   Put_Line ("Speed test ----------------------> speed_test.xls");
   Speed_Test;
 end Excel_Out_Demo;
