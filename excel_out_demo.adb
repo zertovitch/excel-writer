@@ -291,8 +291,8 @@ procedure Excel_Out_Demo is
   procedure Custom_Colors is
     xl : Excel_Out.Excel_Out_File;
     palette : RGB_Array (1 .. 17);
-    font : array (palette'Range) of Font_Type;
-    fmt  : array (palette'Range) of Format_Type;
+    font   : array (palette'Range) of Font_Type;
+    format : array (palette'Range) of Format_Type;
   begin
     for i in palette'Range loop
       palette (i) :=
@@ -302,15 +302,10 @@ procedure Excel_Out_Demo is
     xl.Define_Palette (palette);
     for i in palette'Range loop
       xl.Define_Font ("Calibri", 12, font (i), bold, i);
+      xl.Define_Format (font (i), general, format (i));
+      xl.Use_Format (format (i));
+      xl.Put_Line ("Font" & i'Image);
     end loop;
-    for i in palette'Range loop
-      xl.Define_Format (font (i), general, fmt (i));
-    end loop;
-    for i in palette'Range loop
-      xl.Use_Format (fmt (i));
-      xl.Put_Line ("Font #" & i'Image);
-    end loop;
-
     xl.Close;
   end Custom_Colors;
 
